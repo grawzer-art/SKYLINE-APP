@@ -1,26 +1,121 @@
 @import "tailwindcss";
 
+/* ---------- Design tokens ---------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --jet-black: #080a0d;
+  --cloud-white: #f5f5f3;
+  --silver: #c0c0c0;
+  --sky-blue: #8fb8ff;
+  --ibiza-sunset: #ff7a45;
+
+  --surface-1: #0f1217;
+  --surface-2: #161a21;
+  --line: rgb(245 245 243 / 0.1);
+  --text-dim: rgb(245 245 243 / 0.68); /* ≥ 7:1 sur Jet Black */
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --nav-h: 68px;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-jet: var(--jet-black);
+  --color-cloud: var(--cloud-white);
+  --color-silver: var(--silver);
+  --color-sky: var(--sky-blue);
+  --color-sunset: var(--ibiza-sunset);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-dim: var(--text-dim);
+
+  --font-display: var(--font-display-stack);
+  --font-sans: var(--font-body-stack);
+  --font-mono: var(--font-mono-stack);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/*
+ * Polices : les fichiers officiels (Helvetica Now) ne sont pas fournis.
+ * On tente d'abord une installation locale, puis des substituts proches.
+ * Pour brancher les vraies polices : voir README › « Typographies ».
+ */
+@font-face {
+  font-family: "Skyline Display";
+  src: local("Helvetica Now Display Extended Bold"), local("HelveticaNowDisplay-ExtBd");
+  font-weight: 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Skyline Text";
+  src: local("Helvetica Now Text"), local("HelveticaNowText-Regular");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Skyline Text";
+  src: local("Helvetica Now Text Medium"), local("HelveticaNowText-Medium");
+  font-weight: 500;
+  font-display: swap;
 }
 
+:root {
+  --font-display-stack: "Skyline Display", "Helvetica Neue", Helvetica, Arimo, Arial, sans-serif;
+  --font-body-stack: "Skyline Text", "Helvetica Neue", Helvetica, Arimo, Arial, sans-serif;
+  --font-mono-stack: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* ---------- Base ---------- */
+html {
+  background: var(--jet-black);
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+}
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--jet-black);
+  color: var(--cloud-white);
+  font-family: var(--font-body-stack);
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-display-stack);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  /* Simule l'esprit « Extended » avec les substituts : lettres larges, serrées en interligne. */
+  font-stretch: 125%;
+  line-height: 0.92;
+}
+.font-mono { font-variant-numeric: tabular-nums; }
+
+/* Focus clavier visible, uniquement quand pertinent */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--sky-blue);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Défilement horizontal discret (filtres, cartes) */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Grain léger pour casser les aplats */
+.grain::after {
+  content: "";
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.5'/></svg>");
+  opacity: 0.07; mix-blend-mode: overlay;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

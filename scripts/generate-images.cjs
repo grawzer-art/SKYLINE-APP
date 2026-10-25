@@ -1,0 +1,83 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
+/**
+ * Génère les visuels PLACEHOLDER (SVG → JPG) dans public/images.
+ * À remplacer par de vraies photographies : gardez simplement les mêmes noms
+ * de fichiers, ou changez les chemins dans src/data/demo.ts.
+ * Usage : node scripts/generate-images.cjs
+ */
+const { chromium } = require("playwright");
+const path = require("path");
+
+const clouds = (id, seed, freq, color, op, y0, y1, contrast = 2.2) => `
+<filter id="${id}" x="0" y="0" width="100%" height="100%">
+  <feTurbulence type="fractalNoise" baseFrequency="${freq}" numOctaves="5" seed="${seed}"/>
+  <feColorMatrix type="matrix" values="0 0 0 0 ${color[0]}  0 0 0 0 ${color[1]}  0 0 0 0 ${color[2]}  0 0 0 ${contrast} -${contrast * 0.62}"/>
+</filter>
+<mask id="m${id}"><linearGradient id="g${id}" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="${y0}" stop-color="#000"/><stop offset="${y1}" stop-color="#fff"/></linearGradient>
+  <rect width="100%" height="100%" fill="url(#g${id})"/></mask>
+<rect width="100%" height="100%" filter="url(#${id})" opacity="${op}" mask="url(#m${id})"/>`;
+
+const grad = (stops) => `<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">${stops
+  .map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join("")}</linearGradient>`;
+
+const scenes = {
+  hero: { w: 1200, h: 1600, svg: (w, h) => `
+    <defs>${grad([[0, "#0a1426"], [0.22, "#1d3a6b"], [0.42, "#6b86b8"], [0.58, "#f09a6c"], [0.7, "#ffc08a"], [1, "#ffd9b0"]])}
+    <radialGradient id="sun" cx="0.62" cy="0.6" r="0.45"><stop offset="0" stop-color="#fff1d6" stop-opacity=".95"/><stop offset=".35" stop-color="#ffb27a" stop-opacity=".55"/><stop offset="1" stop-color="#ff7a45" stop-opacity="0"/></radialGradient></defs>
+    <rect width="${w}" height="${h}" fill="url(#sky)"/><rect width="${w}" height="${h}" fill="url(#sun)"/>
+    ${clouds("a", 3, "0.0028 0.008", [0.62, 0.7, 0.9], 0.7, 0.3, 0.75, 2.6)}
+    ${clouds("b", 11, "0.005 0.012", [1, 0.82, 0.72], 0.9, 0.5, 0.9, 2.8)}
+    ${clouds("c", 21, "0.008 0.018", [0.99, 0.97, 0.97], 1, 0.66, 1, 3)}
+    ${clouds("d", 41, "0.012 0.03", [0.9, 0.85, 0.9], 0.9, 0.82, 1, 3.2)}` },
+  experience: { w: 1200, h: 900, svg: (w, h) => `
+    <defs><linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#05070a"/><stop offset="1" stop-color="#1a1018"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.85" r="0.6"><stop offset="0" stop-color="#ff7a45" stop-opacity=".55"/><stop offset="1" stop-color="#ff7a45" stop-opacity="0"/></radialGradient>
+    <linearGradient id="win" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fb8ff"/><stop offset=".6" stop-color="#e8855a"/><stop offset="1" stop-color="#ffb27a"/></linearGradient>
+    <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fb8ff" stop-opacity=".5"/><stop offset="1" stop-color="#8fb8ff" stop-opacity="0"/></linearGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="14"/></filter></defs>
+    <rect width="${w}" height="${h}" fill="url(#sky)"/><rect width="${w}" height="${h}" fill="url(#glow)"/>
+    ${[0, 1, 2, 3].map((i) => `<g transform="translate(${130 + i * 270} 90)"><rect width="150" height="230" rx="75" fill="#0b0d12" stroke="#222831" stroke-width="6"/><rect x="14" y="14" width="122" height="202" rx="61" fill="url(#win)"/></g>`).join("")}
+    ${[0, 1, 2].map((i) => `<polygon points="${300 + i * 270},300 ${240 + i * 270 + 60},300 ${150 + i * 270},900 ${420 + i * 270},900" fill="url(#beam)" filter="url(#blur)" opacity=".5"/>`).join("")}
+    <rect x="360" y="610" width="480" height="30" rx="6" fill="#10141a"/>
+    <rect x="390" y="590" width="170" height="30" rx="6" fill="#1b212b"/><rect x="640" y="590" width="170" height="30" rx="6" fill="#1b212b"/>
+    <circle cx="475" cy="598" r="12" fill="#ff7a45" opacity=".8"/><circle cx="725" cy="598" r="12" fill="#8fb8ff" opacity=".8"/>
+    <path d="M520 590 C520 480 540 450 600 450 C660 450 680 480 680 590 Z" fill="#06080b"/><circle cx="600" cy="420" r="38" fill="#06080b"/>
+    <path d="M560 405 C560 365 640 365 640 405" fill="none" stroke="#c0c0c0" stroke-width="7"/>
+    ${clouds("a", 5, "0.004 0.01", [0.6, 0.55, 0.7], 0.22, 0.4, 1)}` },
+  sunset: { w: 1200, h: 900, svg: (w, h) => `
+    <defs>${grad([[0, "#0e1830"], [0.4, "#6a4a7a"], [0.62, "#ff7a45"], [0.64, "#ffb27a"], [0.641, "#17314f"], [1, "#07101c"]])}
+    <radialGradient id="sun" cx="0.5" cy="0.62" r="0.3"><stop offset="0" stop-color="#fff0d0"/><stop offset=".2" stop-color="#ffd2a0" stop-opacity=".9"/><stop offset="1" stop-color="#ff7a45" stop-opacity="0"/></radialGradient></defs>
+    <rect width="${w}" height="${h}" fill="url(#sky)"/>
+    ${clouds("a", 8, "0.004 0.016", [1, 0.62, 0.5], 0.7, 0.05, 0.62)}
+    <rect width="${w}" height="${h}" fill="url(#sun)" opacity=".9"/>
+    ${[...Array(26)].map((_, i) => `<rect x="${w / 2 - 20 - i * 12}" y="${h * 0.65 + i * 9}" width="${40 + i * 24}" height="3" fill="#ffd2a0" opacity="${0.7 - i * 0.025}"/>`).join("")}` },
+  day: { w: 1200, h: 900, svg: (w, h) => `
+    <defs>${grad([[0, "#2f6fd6"], [0.55, "#8fb8ff"], [1, "#d9e8ff"]])}</defs>
+    <rect width="${w}" height="${h}" fill="url(#sky)"/>
+    ${clouds("a", 2, "0.004 0.01", [1, 1, 1], 0.6, 0.1, 0.8)}${clouds("b", 14, "0.007 0.016", [1, 1, 1], 0.95, 0.45, 1, 2.8)}` },
+  night: { w: 1200, h: 900, svg: (w, h) => `
+    <defs>${grad([[0, "#03050a"], [0.6, "#0b1730"], [1, "#2a3f6b"]])}</defs>
+    <rect width="${w}" height="${h}" fill="url(#sky)"/>
+    ${[...Array(140)].map((_, i) => { const r = (n) => (Math.sin(i * 999 + n) * 10000) % 1; return `<circle cx="${Math.abs(r(1)) * w}" cy="${Math.abs(r(2)) * h * 0.75}" r="${0.6 + Math.abs(r(3)) * 1.6}" fill="#f5f5f3" opacity="${0.3 + Math.abs(r(4)) * 0.7}"/>`; }).join("")}
+    ${clouds("a", 31, "0.004 0.012", [0.45, 0.55, 0.8], 0.55, 0.5, 1)}` },
+};
+
+(async () => {
+  const browser = await chromium.launch();
+  for (const [name, { w, h, svg }] of Object.entries(scenes)) {
+    const page = await browser.newPage({ viewport: { width: w, height: h } });
+    await page.setContent(`<body style="margin:0"><svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">${svg(w, h)}</svg></body>`);
+    await page.screenshot({ path: path.join(__dirname, "../public/images", `${name}.jpg`), type: "jpeg", quality: 82 });
+    await page.close();
+    console.log("✓", name);
+  }
+  // Icônes PWA
+  for (const s of [192, 512]) {
+    const page = await browser.newPage({ viewport: { width: s, height: s } });
+    await page.setContent(`<body style="margin:0;background:#080A0D;display:grid;place-items:center;height:100vh"><svg width="${s * 0.6}" viewBox="0 0 24 24" fill="none" stroke="#F5F5F3" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" stroke="#FF7A45"/></svg></body>`);
+    await page.screenshot({ path: path.join(__dirname, "../public", `icon-${s}.png`) });
+    await page.close();
+  }
+  await browser.close();
+})();
