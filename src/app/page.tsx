@@ -1,22 +1,15 @@
-import { Hero } from "@/components/preboarding/Hero";
-import { Countdown } from "@/components/preboarding/Countdown";
-import { ExperienceCard } from "@/components/preboarding/ExperienceCard";
-import { QuickLinks } from "@/components/preboarding/QuickLinks";
-import { UpdatesFeed } from "@/components/preboarding/UpdatesFeed";
-import { Checklist } from "@/components/preboarding/Checklist";
-import { CrewPreview } from "@/components/preboarding/CrewPreview";
-import { DemoFooter } from "@/components/preboarding/DemoFooter";
+import { HomeHero } from "@/components/home/HomeHero";
+import { PriorityFeature } from "@/components/home/PriorityFeature";
+import { DemoFooter } from "@/components/layout/DemoFooter";
+import { LegacyCleanup } from "@/components/screens/LegacyCleanup";
 
-export default function PreBoardingPage() {
+/** HOME — THE EXPERIENCE : un hero éditorial, un seul contenu prioritaire. */
+export default function HomePage() {
   return (
     <>
-      <Hero />
-      <Countdown />
-      <ExperienceCard />
-      <QuickLinks />
-      <UpdatesFeed />
-      <Checklist />
-      <CrewPreview />
+      <LegacyCleanup />
+      <HomeHero />
+      <PriorityFeature />
       <DemoFooter />
     </>
   );

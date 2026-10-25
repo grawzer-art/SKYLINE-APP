@@ -19,14 +19,16 @@ export const event = {
   year: 2027,
   /** Date fictive du décollage. Modifiable : toute ISO 8601 valide. */
   departureISO: "2027-06-18T08:00:00+02:00",
+  /** Fin fictive de l'édition : sert aux ambiances « pendant » / « après ». */
+  endISO: "2027-06-20T23:00:00+02:00",
   tagline: "LA FÊTE COMMENCE À 10 000 MÈTRES.",
   signature: "THE JOURNEY NEVER ENDS.",
 };
 
 export const user = {
   firstName: "Alex",
-  initials: "AM",
-  passLabel: "Participant · Démo",
+  fullName: "Alex Martin",
+  memberLine: "Membre SKYLINE 2027",
   notifications: [
     { id: "n1", title: "Bienvenue à bord", body: "Ton profil de démonstration est prêt.", time: "Il y a 2 h" },
     { id: "n2", title: "Checklist mise à jour", body: "Deux nouvelles étapes de préparation.", time: "Hier" },
@@ -35,7 +37,7 @@ export const user = {
 };
 
 export const images = {
-  hero: "/images/hero.jpg",
+  hero: "/images/hero-v2.jpg",
   experience: "/images/experience.jpg",
   sunset: "/images/sunset.jpg",
   day: "/images/day.jpg",
@@ -109,17 +111,6 @@ export const news: NewsItem[] = [
   },
 ];
 
-export type ChecklistItem = { id: string; label: string; icon: string };
-
-export const checklist: ChecklistItem[] = [
-  { id: "c1", label: "Pièce d'identité à vérifier", icon: "idcard" },
-  { id: "c2", label: "Bagage cabine", icon: "luggage" },
-  { id: "c3", label: "Rejoindre mon crew", icon: "users" },
-  { id: "c4", label: "Tenue de vol", icon: "shirt" },
-  { id: "c5", label: "Casque et batterie externe", icon: "headphones" },
-  { id: "c6", label: "Activer les mises à jour (bientôt)", icon: "bell" },
-];
-
 export type CrewMember = {
   id: string; name: string; role: string; city: string; hue: number; bio: string; seat: string;
 };
@@ -135,25 +126,31 @@ export const crew = {
   ] satisfies CrewMember[],
 };
 
-export type NavId = "home" | "pass" | "explore" | "club" | "more";
+export type NavId = "home" | "flight" | "explore" | "club";
 
-export const placeholders: Record<Exclude<NavId, "home">, {
-  title: string; subtitle: string; icon: string; image: string; upcoming: string[];
+/** Informations pratiques, conservées de la V1 sous forme discrète (profil). Démo — pas un conseil officiel. */
+export const practicalInfo = [
+  { id: "i1", title: "Pièce d'identité", text: "Pense à vérifier sa validité avant le départ. Les exigences officielles dépendent de ton itinéraire." },
+  { id: "i2", title: "Bagages", text: "Exemple de consigne : un bagage cabine et un accessoire personnel. Règles réelles à confirmer." },
+  { id: "i3", title: "Départ", text: "France → Ibiza. Aéroport et horaire à annoncer : aucune information vérifiée dans cette démo." },
+];
+
+export const profileLinks = {
+  help: "Contact et assistance : disponibles avec la phase de réservation. Aucune adresse réelle n'est affichée dans cette démo.",
+  about: "SKYLINE est une expérience de musique électronique et de voyage vers Ibiza. THE JOURNEY NEVER ENDS.",
+};
+
+/** Écrans temporaires (V2 : seul HOME est conçu). `needs` = contenus qui devront être fournis. */
+export const placeholders: Record<Exclude<NavId, "home" | "explore">, {
+  title: string; subtitle: string; icon: string; image: string; upcoming: string[]; note?: string;
 }> = {
-  pass: {
-    title: "MY PASS", subtitle: "Ton espace participant.", icon: "ticket", image: images.night,
-    upcoming: ["Documents de voyage", "Informations d'embarquement", "Réservations"],
-  },
-  explore: {
-    title: "EXPLORE", subtitle: "Ibiza, du ciel à la plage.", icon: "compass", image: images.sunset,
-    upcoming: ["Programme jour par jour", "Lieux et adresses", "Line-up complète"],
+  flight: {
+    title: "MY FLIGHT", subtitle: "Votre accès SKYLINE.", icon: "plane", image: images.night,
+    upcoming: ["Pass digital SKYLINE", "Réservation confirmée", "Détails de départ vérifiés", "Documents essentiels"],
+    note: "Le pass SKYLINE n'est pas un titre de transport : il ne remplace pas la carte d'embarquement de la compagnie aérienne.",
   },
   club: {
     title: "SKYLINE CLUB", subtitle: "THE JOURNEY NEVER ENDS.", icon: "club", image: images.day,
-    upcoming: ["Archives des éditions", "Espace anciens participants", "Événements privés"],
-  },
-  more: {
-    title: "MORE", subtitle: "Réglages et informations.", icon: "more", image: images.experience,
-    upcoming: ["Profil", "Aide & contact", "À propos de SKYLINE"],
+    upcoming: ["Carte de membre", "Historique de participation", "Archives photo et vidéo officielles", "Contenus exclusifs"],
   },
 };

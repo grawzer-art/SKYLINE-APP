@@ -65,3 +65,7 @@ Extensible : une nouvelle section (réservations, documents, programme, archives
 ## V1.1 — direction artistique
 Refonte visuelle de PRE-BOARDING d'après la planche validée. Rapport, comparatif et assets manquants : `docs/skyline-v1.1/work/V1.1_REPORT.md`.
 Typographies : titres en **Archivo** (licence OFL, substitut de Helvetica Now Extended), chiffres en **JetBrains Mono** ; voir `public/fonts/README.md` pour brancher les fichiers officiels.
+
+## V2 — Private Members Experience (branche `v2-private-members`)
+HOME redessinée (hero éditorial, ambiance par phase), navigation à 4 onglets (HOME / MY FLIGHT / EXPLORE / CLUB), profil à la place de MORE, checklist supprimée.
+Rapport, captures et assets requis : `docs/skyline-v2/V2_REPORT.md`. Aperçu des ambiances : `/?phase=before|during|after`.

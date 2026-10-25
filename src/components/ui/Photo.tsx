@@ -5,9 +5,9 @@ import { cn } from "@/lib/cn";
 
 /** Photo plein cadre avec repli (dégradé de marque) si l'image manque ou échoue. */
 export function Photo({
-  src, alt = "", priority, provisional, tagClassName, sizes = "(max-width: 480px) 100vw, 480px", className, imgClassName,
+  src, alt = "", priority, provisional, tagClassName, objectPosition, sizes = "(max-width: 480px) 100vw, 480px", className, imgClassName,
 }: {
-  src?: string; alt?: string; priority?: boolean; provisional?: boolean; tagClassName?: string; sizes?: string; className?: string; imgClassName?: string;
+  src?: string; alt?: string; priority?: boolean; provisional?: boolean; tagClassName?: string; objectPosition?: string; sizes?: string; className?: string; imgClassName?: string;
 }) {
   const [failed, setFailed] = useState(false);
   return (
@@ -15,7 +15,7 @@ export function Photo({
       {src && !failed && (
         <Image
           src={src} alt={alt} fill priority={priority} sizes={sizes}
-          onError={() => setFailed(true)}
+          onError={() => setFailed(true)} style={objectPosition ? { objectPosition } : undefined}
           className={cn("object-cover", imgClassName)}
         />
       )}

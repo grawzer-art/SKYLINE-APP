@@ -23,15 +23,15 @@ const grad = (stops) => `<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">${
 
 const scenes = {
   // PLACEHOLDERS PHOTO — volontairement sans silhouette, sans avion, sans personnage.
-  hero: { w: 1170, h: 1400, svg: (w, h) => `
-    <defs>${grad([[0, "#0b1a33"], [0.25, "#1f4a8c"], [0.48, "#6f9fe0"], [0.62, "#bcd3f3"], [0.7, "#f4d9c0"], [1, "#f0b98e"]])}
-    <radialGradient id="sun" cx="0.72" cy="0.64" r="0.42"><stop offset="0" stop-color="#fff3dc" stop-opacity=".95"/><stop offset=".4" stop-color="#ffd2a0" stop-opacity=".45"/><stop offset="1" stop-color="#ffd2a0" stop-opacity="0"/></radialGradient></defs>
+  hero: { w: 1170, h: 2532, svg: (w, h) => `
+    <defs>${grad([[0, "#0a1630"], [0.14, "#16407f"], [0.28, "#4f86d6"], [0.37, "#a9c8f0"], [0.42, "#f6dcc4"], [1, "#f0b98e"]])}
+    <radialGradient id="sun" cx="0.78" cy="0.41" r="0.3"><stop offset="0" stop-color="#fff3dc" stop-opacity=".95"/><stop offset=".4" stop-color="#ffd2a0" stop-opacity=".45"/><stop offset="1" stop-color="#ffd2a0" stop-opacity="0"/></radialGradient></defs>
     <rect width="${w}" height="${h}" fill="url(#sky)"/><rect width="${w}" height="${h}" fill="url(#sun)"/>
-    ${clouds("a", 3, "0.0022 0.010", [0.9, 0.93, 1], 0.55, 0.4, 0.75, 2.8)}
-    <g transform="translate(0 14)">${clouds("s1", 17, "0.004 0.013", [0.34, 0.44, 0.66], 0.85, 0.58, 0.82, 3.2)}</g>
-    ${clouds("b", 17, "0.004 0.013", [1, 0.96, 0.92], 0.95, 0.58, 0.82, 3.2)}
-    <g transform="translate(0 18)">${clouds("s2", 29, "0.007 0.02", [0.4, 0.46, 0.62], 0.9, 0.74, 0.95, 3.4)}</g>
-    ${clouds("c", 29, "0.007 0.02", [1, 0.97, 0.94], 1, 0.74, 0.95, 3.4)}` },
+    ${clouds("a", 3, "0.0022 0.0055", [0.9, 0.93, 1], 0.5, 0.2, 0.44, 2.8)}
+    <g transform="translate(0 16)">${clouds("s1", 17, "0.0035 0.008", [0.34, 0.44, 0.66], 0.85, 0.4, 0.6, 3.2)}</g>
+    ${clouds("b", 17, "0.0035 0.008", [1, 0.96, 0.92], 0.95, 0.4, 0.6, 3.2)}
+    <g transform="translate(0 22)">${clouds("s2", 29, "0.006 0.013", [0.4, 0.46, 0.62], 0.9, 0.5, 0.78, 3.4)}</g>
+    ${clouds("c", 29, "0.006 0.013", [1, 0.97, 0.94], 1, 0.5, 0.78, 3.4)}` },
   experience: { w: 1200, h: 750, svg: (w, h) => `
     <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#070b14"/><stop offset=".55" stop-color="#101c3a"/><stop offset="1" stop-color="#2a1c2c"/></linearGradient>
     <filter id="bl"><feGaussianBlur stdDeviation="22"/></filter><filter id="bl2"><feGaussianBlur stdDeviation="6"/></filter></defs>
@@ -61,7 +61,7 @@ const scenes = {
   for (const [name, { w, h, svg }] of Object.entries(scenes)) {
     const page = await browser.newPage({ viewport: { width: w, height: h } });
     await page.setContent(`<body style="margin:0"><svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">${svg(w, h)}</svg></body>`);
-    await page.screenshot({ path: path.join(__dirname, "../public/images", `${name}.jpg`), type: "jpeg", quality: 82 });
+    await page.screenshot({ path: path.join(__dirname, "../public/images", `${name === "hero" ? "hero-v2" : name}.jpg`), type: "jpeg", quality: 82 });
     await page.close();
     console.log("✓", name);
   }

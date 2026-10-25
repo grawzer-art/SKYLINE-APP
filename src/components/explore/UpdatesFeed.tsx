@@ -20,7 +20,7 @@ export function UpdatesFeed() {
   const count = (f: Filter) => (f === "all" ? news.length : news.filter((n) => n.category === f).length);
 
   return (
-    <Section id="updates" eyebrow="Latest Updates" title="Actualités">
+    <Section id="updates" eyebrow="Latest" title="Annonces">
       <div role="group" aria-label="Filtrer les actualités" className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 pb-1">
         {newsFilters.map((f) => (
           <button key={f.id} type="button" onClick={() => setFilter(f.id)} aria-pressed={filter === f.id}

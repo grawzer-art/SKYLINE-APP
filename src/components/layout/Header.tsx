@@ -6,6 +6,7 @@ import { user } from "@/data/demo";
 import { cn } from "@/lib/cn";
 import { Avatar } from "@/components/ui/Avatar";
 import { Sheet } from "@/components/ui/Sheet";
+import { ProfileSheet } from "@/components/layout/ProfileSheet";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { useLocalStorage } from "@/lib/useLocalStorage";
 
@@ -13,6 +14,7 @@ import { useLocalStorage } from "@/lib/useLocalStorage";
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [profile, setProfile] = useState(false);
   const [seen, setSeen] = useLocalStorage<boolean>("skyline.demo.notifications.seen.v1", false);
 
   useEffect(() => {
@@ -41,13 +43,14 @@ export function Header() {
               <Bell size={21} strokeWidth={1.5} aria-hidden />
               {!seen && <span className="absolute right-[11px] top-[11px] size-2 rounded-full bg-sunset ring-2 ring-jet" />}
             </button>
-            <Link href="/more" aria-label="Mon profil" className="grid size-11 place-items-center rounded-full">
-              <Avatar name={`${user.firstName} Martin`} hue={215} size={30} />
-            </Link>
+            <button type="button" onClick={() => setProfile(true)} aria-label="Mon profil" aria-haspopup="dialog" className="grid size-11 place-items-center rounded-full transition active:scale-95">
+              <Avatar name={user.fullName} hue={215} size={30} />
+            </button>
           </div>
         </div>
       </header>
 
+      <ProfileSheet open={profile} onClose={() => setProfile(false)} />
       <Sheet open={open} onClose={() => setOpen(false)} eyebrow="DÉMO" title="Notifications">
         <ul className="divide-y divide-line">
           {user.notifications.map((n) => (
