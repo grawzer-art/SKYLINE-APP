@@ -22,29 +22,22 @@ const grad = (stops) => `<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">${
   .map(([o, c]) => `<stop offset="${o}" stop-color="${c}"/>`).join("")}</linearGradient>`;
 
 const scenes = {
-  hero: { w: 1200, h: 1600, svg: (w, h) => `
-    <defs>${grad([[0, "#0a1426"], [0.22, "#1d3a6b"], [0.42, "#6b86b8"], [0.58, "#f09a6c"], [0.7, "#ffc08a"], [1, "#ffd9b0"]])}
-    <radialGradient id="sun" cx="0.62" cy="0.6" r="0.45"><stop offset="0" stop-color="#fff1d6" stop-opacity=".95"/><stop offset=".35" stop-color="#ffb27a" stop-opacity=".55"/><stop offset="1" stop-color="#ff7a45" stop-opacity="0"/></radialGradient></defs>
+  // PLACEHOLDERS PHOTO — volontairement sans silhouette, sans avion, sans personnage.
+  hero: { w: 1170, h: 1400, svg: (w, h) => `
+    <defs>${grad([[0, "#0b1a33"], [0.25, "#1f4a8c"], [0.48, "#6f9fe0"], [0.62, "#bcd3f3"], [0.7, "#f4d9c0"], [1, "#f0b98e"]])}
+    <radialGradient id="sun" cx="0.72" cy="0.64" r="0.42"><stop offset="0" stop-color="#fff3dc" stop-opacity=".95"/><stop offset=".4" stop-color="#ffd2a0" stop-opacity=".45"/><stop offset="1" stop-color="#ffd2a0" stop-opacity="0"/></radialGradient></defs>
     <rect width="${w}" height="${h}" fill="url(#sky)"/><rect width="${w}" height="${h}" fill="url(#sun)"/>
-    ${clouds("a", 3, "0.0028 0.008", [0.62, 0.7, 0.9], 0.7, 0.3, 0.75, 2.6)}
-    ${clouds("b", 11, "0.005 0.012", [1, 0.82, 0.72], 0.9, 0.5, 0.9, 2.8)}
-    ${clouds("c", 21, "0.008 0.018", [0.99, 0.97, 0.97], 1, 0.66, 1, 3)}
-    ${clouds("d", 41, "0.012 0.03", [0.9, 0.85, 0.9], 0.9, 0.82, 1, 3.2)}` },
-  experience: { w: 1200, h: 900, svg: (w, h) => `
-    <defs><linearGradient id="sky" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#05070a"/><stop offset="1" stop-color="#1a1018"/></linearGradient>
-    <radialGradient id="glow" cx="0.5" cy="0.85" r="0.6"><stop offset="0" stop-color="#ff7a45" stop-opacity=".55"/><stop offset="1" stop-color="#ff7a45" stop-opacity="0"/></radialGradient>
-    <linearGradient id="win" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fb8ff"/><stop offset=".6" stop-color="#e8855a"/><stop offset="1" stop-color="#ffb27a"/></linearGradient>
-    <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8fb8ff" stop-opacity=".5"/><stop offset="1" stop-color="#8fb8ff" stop-opacity="0"/></linearGradient>
-    <filter id="blur"><feGaussianBlur stdDeviation="14"/></filter></defs>
-    <rect width="${w}" height="${h}" fill="url(#sky)"/><rect width="${w}" height="${h}" fill="url(#glow)"/>
-    ${[0, 1, 2, 3].map((i) => `<g transform="translate(${130 + i * 270} 90)"><rect width="150" height="230" rx="75" fill="#0b0d12" stroke="#222831" stroke-width="6"/><rect x="14" y="14" width="122" height="202" rx="61" fill="url(#win)"/></g>`).join("")}
-    ${[0, 1, 2].map((i) => `<polygon points="${300 + i * 270},300 ${240 + i * 270 + 60},300 ${150 + i * 270},900 ${420 + i * 270},900" fill="url(#beam)" filter="url(#blur)" opacity=".5"/>`).join("")}
-    <rect x="360" y="610" width="480" height="30" rx="6" fill="#10141a"/>
-    <rect x="390" y="590" width="170" height="30" rx="6" fill="#1b212b"/><rect x="640" y="590" width="170" height="30" rx="6" fill="#1b212b"/>
-    <circle cx="475" cy="598" r="12" fill="#ff7a45" opacity=".8"/><circle cx="725" cy="598" r="12" fill="#8fb8ff" opacity=".8"/>
-    <path d="M520 590 C520 480 540 450 600 450 C660 450 680 480 680 590 Z" fill="#06080b"/><circle cx="600" cy="420" r="38" fill="#06080b"/>
-    <path d="M560 405 C560 365 640 365 640 405" fill="none" stroke="#c0c0c0" stroke-width="7"/>
-    ${clouds("a", 5, "0.004 0.01", [0.6, 0.55, 0.7], 0.22, 0.4, 1)}` },
+    ${clouds("a", 3, "0.0022 0.010", [0.9, 0.93, 1], 0.55, 0.4, 0.75, 2.8)}
+    <g transform="translate(0 14)">${clouds("s1", 17, "0.004 0.013", [0.34, 0.44, 0.66], 0.85, 0.58, 0.82, 3.2)}</g>
+    ${clouds("b", 17, "0.004 0.013", [1, 0.96, 0.92], 0.95, 0.58, 0.82, 3.2)}
+    <g transform="translate(0 18)">${clouds("s2", 29, "0.007 0.02", [0.4, 0.46, 0.62], 0.9, 0.74, 0.95, 3.4)}</g>
+    ${clouds("c", 29, "0.007 0.02", [1, 0.97, 0.94], 1, 0.74, 0.95, 3.4)}` },
+  experience: { w: 1200, h: 750, svg: (w, h) => `
+    <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#070b14"/><stop offset=".55" stop-color="#101c3a"/><stop offset="1" stop-color="#2a1c2c"/></linearGradient>
+    <filter id="bl"><feGaussianBlur stdDeviation="22"/></filter><filter id="bl2"><feGaussianBlur stdDeviation="6"/></filter></defs>
+    <rect width="${w}" height="${h}" fill="url(#bg)"/>
+    <g filter="url(#bl)">${[[180,200,120,"#8fb8ff",.55],[420,120,90,"#ff7a45",.45],[700,260,150,"#8fb8ff",.4],[960,150,110,"#ff7a45",.5],[1080,420,130,"#8fb8ff",.35],[300,430,100,"#ff7a45",.3]].map(([x,y,r,c,o])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${c}" opacity="${o}"/>`).join("")}</g>
+    <g filter="url(#bl2)">${[...Array(46)].map((_, i) => { const r = (n) => Math.abs((Math.sin(i * 77.7 + n * 13.1) * 10000) % 1); return `<circle cx="${r(1) * w}" cy="${r(2) * h * 0.8}" r="${3 + r(3) * 9}" fill="${r(4) > .5 ? "#c9dcff" : "#ffb089"}" opacity="${0.25 + r(5) * 0.5}"/>`; }).join("")}</g>` },
   sunset: { w: 1200, h: 900, svg: (w, h) => `
     <defs>${grad([[0, "#0e1830"], [0.4, "#6a4a7a"], [0.62, "#ff7a45"], [0.64, "#ffb27a"], [0.641, "#17314f"], [1, "#07101c"]])}
     <radialGradient id="sun" cx="0.5" cy="0.62" r="0.3"><stop offset="0" stop-color="#fff0d0"/><stop offset=".2" stop-color="#ffd2a0" stop-opacity=".9"/><stop offset="1" stop-color="#ff7a45" stop-opacity="0"/></radialGradient></defs>

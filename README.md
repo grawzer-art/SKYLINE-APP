@@ -61,3 +61,7 @@ Extensible : une nouvelle section (réservations, documents, programme, archives
 - Pas de service worker / mode hors‑ligne (le manifest est prêt).
 - Checklist stockée localement, par navigateur.
 - Hors périmètre, volontairement : authentification, paiement, carte d'embarquement, QR codes, base de données, messagerie, push, compagnie aérienne.
+
+## V1.1 — direction artistique
+Refonte visuelle de PRE-BOARDING d'après la planche validée. Rapport, comparatif et assets manquants : `docs/skyline-v1.1/work/V1.1_REPORT.md`.
+Typographies : titres en **Archivo** (licence OFL, substitut de Helvetica Now Extended), chiffres en **JetBrains Mono** ; voir `public/fonts/README.md` pour brancher les fichiers officiels.

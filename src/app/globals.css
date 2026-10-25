@@ -11,11 +11,11 @@
   --surface-1: #0f1217;
   --surface-2: #161a21;
   --line: rgb(245 245 243 / 0.1);
-  --text-dim: rgb(245 245 243 / 0.68); /* ≥ 7:1 sur Jet Black */
+  --text-dim: rgb(245 245 243 / 0.66); /* texte secondaire, contraste > 7:1 sur Jet Black */
 
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --nav-h: 68px;
+  --nav-h: 60px;
 }
 
 @theme inline {
@@ -59,13 +59,15 @@
 }
 
 :root {
-  --font-display-stack: "Skyline Display", "Helvetica Neue", Helvetica, Arimo, Arial, sans-serif;
+  /* 1) Helvetica Now (si les fichiers licenciés sont branchés) → 2) substitut OFL Archivo (axe de largeur) */
+  --font-display-stack: "Skyline Display", "Archivo Variable", "Helvetica Neue", Arial, sans-serif;
   --font-body-stack: "Skyline Text", "Helvetica Neue", Helvetica, Arimo, Arial, sans-serif;
-  --font-mono-stack: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-mono-stack: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 /* ---------- Base ---------- */
 html {
+  scroll-behavior: smooth;
   background: var(--jet-black);
   color-scheme: dark;
   -webkit-text-size-adjust: 100%;
@@ -84,10 +86,9 @@ body {
   font-family: var(--font-display-stack);
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.01em;
-  /* Simule l'esprit « Extended » avec les substituts : lettres larges, serrées en interligne. */
-  font-stretch: 125%;
-  line-height: 0.92;
+  letter-spacing: -0.005em;
+  font-stretch: 125%; /* « Extended » : axe wdth d'Archivo ; sans effet sur les polices à largeur fixe */
+  line-height: 0.98;
 }
 .font-mono { font-variant-numeric: tabular-nums; }
 

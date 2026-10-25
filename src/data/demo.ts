@@ -6,6 +6,12 @@
 
 export type NewsCategory = "artists" | "travel" | "program";
 
+/** true tant que les photos officielles ne sont pas fournies : affiche « visuel provisoire ». */
+export const PLACEHOLDER_PHOTOS = true;
+
+/** Wordmark officiel : renseigner le chemin du SVG fourni (ex. "/brand/skyline-wordmark.svg"). Sinon substitut typographique. */
+export const brand = { wordmarkSrc: undefined as string | undefined };
+
 export const DEMO_NOTICE = "Données de démonstration — contenus fictifs";
 
 export const event = {
@@ -38,7 +44,7 @@ export const images = {
 
 export const experience = {
   eyebrow: "SKYLINE EXPERIENCE",
-  title: "UN CLUB À 10 000 MÈTRES",
+  title: "LE DJ SET DANS L'AVION",
   teaser: "Un DJ set live en plein vol, avant deux jours de musique à Ibiza.",
   cta: "Découvrir le concept",
   image: images.experience,
@@ -75,43 +81,43 @@ export const newsFilters: { id: "all" | NewsCategory; label: string }[] = [
 
 export const news: NewsItem[] = [
   {
-    id: "u1", category: "artists", tag: "ARTISTE", date: "12 oct.",
-    title: "Premier nom de la line-up",
-    excerpt: "Un DJ fictif ouvrira le set en altitude.",
-    body: ["« DJ Aurora » (artiste fictif) assurera le set principal à bord.", "Les autres noms seront dévoilés progressivement. Cette annonce est un exemple de contenu."],
+    id: "u1", category: "artists", tag: "ARTISTES", date: "12 oct.",
+    title: "Nouvel artiste bientôt dévoilé",
+    excerpt: "Restez connectés…",
+    body: ["Une première annonce de line-up est en préparation.", "Contenu de démonstration : aucun artiste n'est confirmé."],
     image: images.night,
   },
   {
     id: "u2", category: "travel", tag: "VOYAGE", date: "10 oct.",
     title: "Bagages : ce qu'il faut savoir",
-    excerpt: "Une valise cabine et un sac léger par participant.",
-    body: ["Pour la démonstration : un bagage cabine et un accessoire personnel.", "Les règles réelles seront publiées avec la phase de réservation."],
+    excerpt: "Cabine et accessoire personnel.",
+    body: ["Exemple de consigne de voyage : un bagage cabine et un accessoire personnel.", "Les règles réelles seront publiées avec la phase de réservation."],
     image: images.day,
   },
   {
-    id: "u3", category: "artists", tag: "ARTISTE", date: "6 oct.",
-    title: "Sunset session confirmée",
-    excerpt: "Un live au coucher du soleil, côté mer.",
-    body: ["Un format live à l'heure dorée est prévu (contenu fictif).", "Lieu et horaires seront communiqués plus tard."],
+    id: "u3", category: "artists", tag: "ARTISTES", date: "6 oct.",
+    title: "Line-up : les prochaines annonces",
+    excerpt: "Les noms seront dévoilés progressivement.",
+    body: ["Le calendrier des annonces sera communiqué dans l'app.", "Contenu de démonstration."],
     image: images.sunset,
   },
   {
     id: "u4", category: "travel", tag: "VOYAGE", date: "2 oct.",
-    title: "Point de rendez-vous",
-    excerpt: "Un seul aéroport de départ, annoncé bientôt.",
-    body: ["Information de démonstration : le lieu de rendez-vous sera précisé dans l'app.", "Aucune réservation n'est possible dans cette version."],
+    title: "France → Ibiza : départ à préciser",
+    excerpt: "Le lieu de rendez-vous sera annoncé.",
+    body: ["L'aéroport et l'horaire de départ ne sont pas encore définis.", "Aucune réservation n'est possible dans cette version."],
   },
 ];
 
-export type ChecklistItem = { id: string; label: string; hint: string };
+export type ChecklistItem = { id: string; label: string; icon: string };
 
 export const checklist: ChecklistItem[] = [
-  { id: "c1", label: "Vérifier la validité de ma pièce d'identité", hint: "Valable après la date du retour." },
-  { id: "c2", label: "Prévoir mon bagage cabine", hint: "Léger : tu danseras mieux." },
-  { id: "c3", label: "Rejoindre mon crew", hint: "Retrouve ton groupe dans My Crew." },
-  { id: "c4", label: "Préparer ma tenue de vol", hint: "Confort d'abord, style ensuite." },
-  { id: "c5", label: "Charger casque et batterie externe", hint: "Pour ne rien manquer." },
-  { id: "c6", label: "Activer les mises à jour", hint: "Fonction à venir (phase 2)." },
+  { id: "c1", label: "Pièce d'identité à vérifier", icon: "idcard" },
+  { id: "c2", label: "Bagage cabine", icon: "luggage" },
+  { id: "c3", label: "Rejoindre mon crew", icon: "users" },
+  { id: "c4", label: "Tenue de vol", icon: "shirt" },
+  { id: "c5", label: "Casque et batterie externe", icon: "headphones" },
+  { id: "c6", label: "Activer les mises à jour (bientôt)", icon: "bell" },
 ];
 
 export type CrewMember = {

@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import "@fontsource-variable/archivo/wdth.css"; // substitut OFL de Helvetica Now Extended
+import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 

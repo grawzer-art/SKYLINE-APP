@@ -5,9 +5,9 @@ import { cn } from "@/lib/cn";
 
 /** Photo plein cadre avec repli (dégradé de marque) si l'image manque ou échoue. */
 export function Photo({
-  src, alt = "", priority, sizes = "(max-width: 480px) 100vw, 480px", className, imgClassName,
+  src, alt = "", priority, provisional, tagClassName, sizes = "(max-width: 480px) 100vw, 480px", className, imgClassName,
 }: {
-  src?: string; alt?: string; priority?: boolean; sizes?: string; className?: string; imgClassName?: string;
+  src?: string; alt?: string; priority?: boolean; provisional?: boolean; tagClassName?: string; sizes?: string; className?: string; imgClassName?: string;
 }) {
   const [failed, setFailed] = useState(false);
   return (
@@ -18,6 +18,11 @@ export function Photo({
           onError={() => setFailed(true)}
           className={cn("object-cover", imgClassName)}
         />
+      )}
+      {provisional && (
+        <span className={cn("pointer-events-none absolute right-3 top-3 rounded-full border border-cloud/25 bg-jet/45 px-2.5 py-1 font-mono text-[0.56rem] uppercase tracking-[0.16em] text-cloud/70 backdrop-blur", tagClassName)}>
+          Visuel provisoire
+        </span>
       )}
     </div>
   );
