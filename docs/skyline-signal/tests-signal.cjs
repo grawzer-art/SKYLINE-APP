@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
+/* Tests de recette SKYLINE SIGNAL — lancer `next start -p 3100` puis `node docs/skyline-signal/tests-signal.cjs` (Playwright requis). */
 const { chromium } = require("playwright");
 const B = "http://localhost:3100";
 let fails = 0; const ok = (l, c) => { if (!c) fails++; console.log(c ? "PASS" : "FAIL", l); };
