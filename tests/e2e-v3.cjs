@@ -52,6 +52,7 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
   {
     const { ctx, p } = await mk(); await seed(p, eligible); const vis = (t) => p.getByText(t).locator("visible=true");
     await p.goto(B + "/v3/club/space"); await p.waitForTimeout(900);
+    await p.getByRole("button", { name: "Modifier" }).first().click(); await p.waitForTimeout(500);
     await p.getByLabel("Pseudo").fill("A"); ok("SPACE : pseudo trop court signalé", (await vis("Au moins 2 caractères.").count()) === 1);
     await p.getByLabel("Pseudo").fill("dj.fan.com"); ok("SPACE : pseudo avec lien refusé", (await vis(/Pas de lien ni d'identifiant/).count()) === 1);
     await p.getByLabel("Pseudo").fill("Alex2"); await p.getByLabel("Description courte").fill("x".repeat(200)); ok("SPACE : description limitée à 140", (await vis("140/140").count()) === 1);
@@ -61,14 +62,15 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
     await p.locator("input[type=file]").setInputFiles(png); await p.waitForTimeout(400);
     ok("PHOTO : aperçu local + « en cours de vérification »", (await p.locator("img[src^='blob:']").count()) >= 1 && (await vis(/En cours de vérification/).count()) === 1);
     await p.getByRole("button", { name: "Retirer la photo" }).click(); ok("PHOTO : retrait", (await p.locator("img[src^='blob:']").count()) === 0);
-    ok("VISIBILITÉ : désactivée par défaut", !(await p.getByRole("switch", { name: /annuaire/ }).isChecked()));
-    await p.locator("label").filter({ hasText: /annuaire/ }).first().click(); await p.waitForTimeout(300); ok("VISIBILITÉ : activable (éligible)", await p.getByRole("switch", { name: /annuaire/ }).isChecked());
+    await p.getByRole("button", { name: "Terminé" }).click(); await p.waitForTimeout(500);
+    ok("VISIBILITÉ : désactivée par défaut", !(await p.getByRole("switch", { name: /Profil (privé|visible)/ }).isChecked()));
+    await p.locator("label").filter({ hasText: /Profil (privé|visible)/ }).first().click(); await p.waitForTimeout(300); ok("VISIBILITÉ : activable (éligible)", await p.getByRole("switch", { name: /Profil (privé|visible)/ }).isChecked());
     ok("APERÇU : reflète le profil", (await p.getByText("Alex2").locator("visible=true").count()) >= 1);
     ok("ÉDITIONS : l'espace persiste (Ibiza 2027 + prochaines)", (await vis("Ibiza 2027").count()) >= 1 && (await vis(/prochaines éditions/).count()) === 1);
-    await p.reload(); await p.waitForTimeout(900); ok("SPACE : sauvegarde locale persistante", (await p.getByLabel("Pseudo").inputValue()) === "Alex2");
+    await p.reload(); await p.waitForTimeout(900); await p.getByRole("button", { name: "Modifier" }).first().click(); await p.waitForTimeout(500); ok("SPACE : sauvegarde locale persistante", (await p.getByLabel("Pseudo").inputValue()) === "Alex2");
     await ctx.close();
     const c2 = await mk(); await c2.p.goto(B + "/v3/club/space"); await c2.p.waitForTimeout(800);
-    ok("VISIBILITÉ : refusée sans éligibilité (lien vers l'activation)", !(await c2.p.locator("label").filter({ hasText: /annuaire/ }).first().click().then(() => c2.p.waitForTimeout(300)).then(() => c2.p.getByRole("switch", { name: /annuaire/ }).isChecked())) && (await c2.p.getByRole("link", { name: /conditions/ }).count()) === 1);
+    ok("VISIBILITÉ : refusée sans éligibilité (lien vers l'activation)", !(await c2.p.locator("label").filter({ hasText: /Profil (privé|visible)/ }).first().click().then(() => c2.p.waitForTimeout(300)).then(() => c2.p.getByRole("switch", { name: /Profil (privé|visible)/ }).isChecked())) && (await c2.p.getByRole("link", { name: /conditions/ }).count()) === 1);
     await c2.ctx.close();
   }
 
@@ -170,7 +172,7 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
     const { ctx, p } = await mk(); await seed(p, { ...eligible, me: { pseudo: "Alex", city: "Paris", bio: "", genres: ["House"], visible: true }, locale: "en" }); const vis = (t) => p.getByText(t).locator("visible=true");
     await p.goto(B + "/v3/club/members"); await p.waitForTimeout(1000);
     ok("EN : annuaire traduit", (await vis("8 visible members").count()) === 1 && (await vis(/Alphabetical order/).count()) === 1);
-    await p.goto(B + "/v3/club/space"); await p.waitForTimeout(800); ok("EN : My Space traduit", (await vis("Short description").count()) === 1 && (await vis(/follows you from one edition/).count()) === 1);
+    await p.goto(B + "/v3/club/space"); await p.waitForTimeout(800); ok("EN : My Space traduit", (await p.getByRole("button", { name: "Edit" }).first().count()) === 1);
     await p.goto(B + "/v3/club/messages"); await p.waitForTimeout(800); ok("EN : messages traduits", (await vis("Conversations").count()) >= 1 && (await vis(/1 unread/).count()) === 1);
     await p.goto(B + "/v3/explore/radio"); await p.waitForTimeout(800); ok("EN : radio traduite", (await vis("Official playlists").count()) === 1);
     await ctx.close();

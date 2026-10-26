@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Sheet } from "@/components/ui/Sheet";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { Icon } from "@/components/ui/Icon";
@@ -23,6 +23,8 @@ export function V3Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { state, update, t } = useCommunity();
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => { const on = () => setScrolled(window.scrollY > 24); on(); window.addEventListener("scroll", on, { passive: true }); return () => window.removeEventListener("scroll", on); }, []);
   const active = (href: string) => (href === "/" ? false : pathname.startsWith(href)); // « Home » ramène à l'accueil de l'application
   const bare = pathname.startsWith("/v3/wireframes") || pathname.startsWith("/v3/screens");
 
@@ -30,8 +32,8 @@ export function V3Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <header className="fixed inset-x-0 top-0 z-50 mx-auto w-full max-w-[480px] border-b border-line bg-jet/85 px-5 pt-[var(--safe-top)] backdrop-blur-xl">
-        <p className="pt-1.5 font-mono text-[0.5rem] uppercase tracking-[0.2em] text-sunset">Prototype V3 · données fictives · aucun envoi réel</p>
+      <header className={cn("fixed inset-x-0 top-0 z-50 mx-auto w-full max-w-[480px] border-b px-5 pt-[var(--safe-top)] transition-[background-color,backdrop-filter,border-color] duration-300", scrolled ? "border-line bg-jet/85 backdrop-blur-xl" : "border-transparent bg-gradient-to-b from-jet/80 to-transparent")}>
+        <p className="pt-1.5 font-mono text-[0.48rem] uppercase tracking-[0.2em] text-sunset/80">Prototype V3 · données fictives · aucun envoi réel</p>
         <div className="flex h-12 items-center justify-between">
           <Link href="/v3" aria-label="SKYLINE — accueil du prototype" className="flex min-h-11 items-center"><Wordmark /></Link>
           <div className="flex items-center gap-1.5">

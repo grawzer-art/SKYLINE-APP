@@ -1,66 +1,62 @@
 "use client";
 import Link from "next/link";
+import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight } from "lucide-react";
-import { ScreenTitle, Block, DemoTag } from "./ui";
-import { Emblem } from "@/components/ui/Emblem";
+import { Backdrop, MembershipCard, NavTile } from "./visual";
+import { images } from "@/data/demo";
+import { visuals } from "@/data/visuals";
+import { ease } from "@/design/motion";
 import { useCommunity } from "@/lib/useCommunity";
 
-/** CLUB : carte membre (noir / argent / blanc), accès communautaire, puis les espaces. */
+/** CLUB : l'entrée du membership. Un héros photographique, la carte membre comme objet, puis les quatre espaces. */
 export function V3Club() {
   const c = useCommunity();
   const { t, state } = c;
+  const reduce = useReducedMotion();
   const nReq = c.pendingRequests.length;
-  const items = [
-    { label: "My Space", href: "/v3/club/space", hint: t("space.persist"), badge: 0 },
-    { label: "Members", href: "/v3/club/members", hint: c.eligible ? t("members.footer").split(".")[0] + "." : t("gate.locked.text"), badge: 0 },
-    { label: "Messages", href: "/v3/club/messages", hint: !c.eligible ? t("gate.locked.text") : nReq ? `${t("messages.tab.requests.n", { n: nReq })}` : c.unreadTotal ? t("messages.unread", { count: c.unreadTotal }) : t("messages.tab.chats"), badge: c.eligible ? nReq + c.unreadTotal : 0 },
-    { label: "Souvenirs", href: "/v3/club/memories", hint: "Archives officielles", badge: 0 },
-  ];
+  const msgBadge = c.eligible && nReq + c.unreadTotal > 0 ? t("common.new") : undefined;
+  const rise = (d: number) => ({ initial: reduce ? false : { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.8, ease, delay: d } } as const);
+  const locked = !c.eligible;
+
   return (
     <>
-      <ScreenTitle eyebrow="The membership" title="Club" />
-      <Block>
-        <article aria-label="Carte membre" className="border border-silver/50 bg-jet p-5">
-          <div className="flex items-start justify-between"><Emblem size={72} /><DemoTag /></div>
-          <p className="mt-6 font-mono text-[0.56rem] uppercase tracking-[0.24em] text-silver">Member</p>
-          <p className="font-display mt-1.5 text-[1.4rem]">{state.me.pseudo}</p>
-          <dl className="mt-5 flex justify-between border-t border-silver/30 pt-3 font-mono text-[0.58rem] uppercase tracking-[0.16em]">
-            <div><dt className="text-cloud/45">Depuis</dt><dd className="mt-1">{state.phase === "before" ? "Inscrit · Ibiza 2027" : "Ibiza 2027"}</dd></div>
-            <div className="text-right"><dt className="text-cloud/45">N°</dt><dd className="mt-1">[Attribué]</dd></div>
-          </dl>
-        </article>
-      </Block>
+      <section aria-labelledby="club-title" className="relative isolate px-5 pb-0 pt-[calc(var(--safe-top)+6.5rem)]">
+        <Backdrop src={images.before} position="30% 55%" strength="deep" className="!bottom-[-3rem]" />
+        <motion.p {...rise(0.05)} className="font-mono text-[0.62rem] uppercase tracking-[0.24em] text-sky">{t("club.eyebrow")}</motion.p>
+        <motion.h1 id="club-title" {...rise(0.12)} className="font-display mt-2 text-[clamp(2.4rem,13vw,3.6rem)] leading-[0.9]">{t("club.title")}</motion.h1>
+        <motion.p {...rise(0.2)} className="font-tagline mt-3 text-[0.68rem] text-cloud/85">{t("club.tagline")}</motion.p>
+        <div className="mt-9"><MembershipCard name={state.me.pseudo} since={t("club.card.since.value")} number={t("club.card.pending")} member={t("club.card.member")} sinceLabel={t("club.card.since")} numberLabel={t("club.card.number")} demo /></div>
+      </section>
 
-      <Block>
-        {c.eligible ? (
-          <p className="flex items-center gap-2 font-mono text-[0.58rem] uppercase tracking-[0.18em] text-sky"><span aria-hidden className="size-1.5 rounded-full bg-sky" />{t("gate.done.title")}</p>
-        ) : (
-          <Link href="/v3/club/community" className="group block border border-sky/50 p-4">
-            <span className="font-display block text-[1.02rem]">{t("gate.title")}</span>
-            <span className="mt-1 block text-[0.82rem] text-cloud/75">{t("gate.intro").split(".")[0]}.</span>
-            <span className="mt-3 inline-flex items-center gap-2 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-sky">{t("gate.locked.cta")} <ArrowRight size={14} strokeWidth={1.5} aria-hidden className="transition group-hover:translate-x-1" /></span>
+      <section className="px-5 pt-7">
+        {locked ? (
+          <Link href="/v3/club/community" className="group block rounded-[6px] border border-sky/50 bg-jet/60 p-5 backdrop-blur-sm transition active:scale-[0.99]">
+            <span className="font-display block text-[1.1rem]">{t("club.join")}</span>
+            <span className="mt-1.5 block text-[0.86rem] leading-snug text-cloud/75">{t("club.join.text")}</span>
+            <span className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-cloud px-5 font-mono text-[0.64rem] uppercase tracking-[0.16em] text-jet">{t("club.join.cta")} <ArrowRight size={14} strokeWidth={1.75} aria-hidden className="transition group-hover:translate-x-1" /></span>
           </Link>
+        ) : (
+          <p className="flex items-center gap-2 font-mono text-[0.6rem] uppercase tracking-[0.2em] text-sky"><span aria-hidden className="size-1.5 rounded-full bg-sky" />{t("club.active")}</p>
         )}
-      </Block>
+      </section>
 
-      <Block className="pt-2">
-        <ul className="divide-y divide-line border-y border-line">
-          {items.map((i) => (
-            <li key={i.href}>
-              <Link href={i.href} className="group flex min-h-[4.25rem] items-center justify-between gap-4 py-3">
-                <span className="min-w-0"><span className="font-display block text-[1.02rem]">{i.label}</span><span className="mt-0.5 block truncate text-[0.8rem] text-dim">{i.hint}</span></span>
-                <span className="flex items-center gap-3">{!!i.badge && <span className="border border-sky/60 px-1.5 py-0.5 font-mono text-[0.52rem] uppercase tracking-[0.14em] text-sky">{t("common.new")}</span>}<ArrowRight size={16} strokeWidth={1.5} aria-hidden className="text-silver transition group-hover:translate-x-1" /></span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </Block>
-      <Block label="Historique de participation">
-        {state.phase === "before"
-          ? <p className="text-[0.88rem] text-dim">Aucune édition pour l&apos;instant. Votre participation à Ibiza 2027 apparaîtra ici.</p>
-          : <p className="border-b border-line py-3 text-[0.92rem]">Ibiza 2027 <span className="ml-2 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-dim">[Dates officielles]</span></p>}
-      </Block>
-      <Block label="À venir"><p className="text-[0.88rem] text-dim">Les prochaines éditions et accès anticipés apparaîtront ici lorsqu&apos;ils seront réellement proposés.</p></Block>
+      <nav aria-label={t("club.title")} className="space-y-2.5 px-5 pt-5">
+        <NavTile href="/v3/club/space" title="My Space" sub={t("club.tile.space")} visual={visuals.ceiling} />
+        <NavTile href="/v3/club/members" title="Members" sub={locked ? t("club.tile.locked") : t("club.tile.members")} visual={visuals.airport} locked={locked} />
+        <NavTile href="/v3/club/messages" title="Messages" sub={locked ? t("club.tile.locked") : nReq ? t("messages.tab.requests.n", { n: nReq }) : c.unreadTotal ? t("messages.unread", { count: c.unreadTotal }) : t("club.tile.messages")} visual={visuals.sunset} badge={msgBadge} locked={locked} />
+        <NavTile href="/v3/club/memories" title="Souvenirs" sub={t("club.tile.souvenirs")} visual={visuals.warm} />
+      </nav>
+
+      <section className="px-5 pt-10">
+        <h2 className="font-mono text-[0.58rem] uppercase tracking-[0.22em] text-cloud/55">{t("club.history")}</h2>
+        <p className="mt-3 flex items-baseline justify-between border-b border-line pb-3 text-[0.95rem]">
+          {state.phase === "before" ? <span className="text-cloud/65">{t("club.history.empty")}</span> : <><span>Ibiza 2027</span><span className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-dim">{t("club.history.dates")}</span></>}
+        </p>
+        <h2 className="mt-7 font-mono text-[0.58rem] uppercase tracking-[0.22em] text-cloud/55">{t("club.next")}</h2>
+        <p className="mt-3 text-[0.85rem] text-cloud/65">{t("club.next.text")}</p>
+      </section>
+
+      <p className="font-tagline px-5 pb-2 pt-10 text-center text-[0.58rem] text-silver/70">{t("club.signature")}</p>
     </>
   );
 }

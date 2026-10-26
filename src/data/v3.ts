@@ -41,18 +41,20 @@ export const seedIntro: Record<string, string> = { m3: "Salut ! On a l'air d'aim
 export type RadioItem = { id: string; slot: string };
 /** SKYLINE RADIO — tout est placeholder jusqu'à réception de contenus AUTORISÉS (voir registre des droits). */
 export const radio = {
-  featured: { id: "sel1", slot: "Visuel officiel · 4:5" },
+  featured: { id: "sel1", slot: "Visuel officiel · 4:5", cover: "sunset" as const },
   selections: [
-    { id: "sel1", slot: "Visuel officiel · 1:1", tracks: 4 },
-    { id: "sel2", slot: "Visuel officiel · 1:1", tracks: 4 },
+    { id: "sel1", slot: "Visuel officiel · 1:1", tracks: 4, cover: "sunset" as const },
+    { id: "sel2", slot: "Visuel officiel · 1:1", tracks: 4, cover: "airport" as const },
+    { id: "sel3", slot: "Visuel officiel · 1:1", tracks: 4, cover: "warm" as const },
   ],
   djs: [
     { id: "dj1", slot: "Portrait officiel · 4:5", mixes: ["mix1"] },
     { id: "dj2", slot: "Portrait officiel · 4:5", mixes: ["mix2"] },
+    { id: "dj3", slot: "Portrait officiel · 4:5", mixes: [] as string[] },
   ],
   mixes: [
-    { id: "mix1", slot: "Pochette officielle · 1:1", dj: "dj1" },
-    { id: "mix2", slot: "Pochette officielle · 1:1", dj: "dj2" },
+    { id: "mix1", slot: "Pochette officielle · 1:1", dj: "dj1", cover: "blue" as const },
+    { id: "mix2", slot: "Pochette officielle · 1:1", dj: "dj2", cover: "laser" as const },
   ],
 };
 
