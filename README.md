@@ -73,3 +73,6 @@ Rapport, captures et assets requis : `docs/skyline-v2/V2_REPORT.md`. Ambiances :
 
 ## SKYLINE SIGNAL (branche `feat/skyline-signal-experience`)
 Révélations privées en plein écran (`/signal/[slug]`) : Artist, Location, Exclusive Mix. Données : `src/data/signals.ts` (serveur uniquement) + `signal-types.ts`. Rapport, captures, démonstration : `docs/skyline-signal/SIGNAL_REPORT.md`.
+
+## V3 — conception (branche `design/v3-product-ux`)
+Dossier produit et UX : `docs/skyline-v3/00_README.md`. Prototype navigable (données fictives) : `/v3`, plan des écrans : `/v3/screens`, wireframes : `/v3/wireframes`. Aucun backend ; la production n'est pas affectée.

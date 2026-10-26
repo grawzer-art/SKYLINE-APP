@@ -7,7 +7,7 @@ import { ease } from "@/design/motion";
 export default function Template({ children }: { children: React.ReactNode }) {
   const reduce = useReducedMotion();
   const pathname = usePathname();
-  if (pathname.startsWith("/signal/")) return <>{children}</>; // une transformation parente casserait le plein écran (position: fixed)
+  if (pathname.startsWith("/signal/") || pathname.startsWith("/v3")) return <>{children}</>; // une transformation parente casserait le plein écran (position: fixed)
   return (
     <motion.div initial={reduce ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, ease }}>
       {children}
