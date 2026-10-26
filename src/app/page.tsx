@@ -1,5 +1,6 @@
 import { HomeHero } from "@/components/home/HomeHero";
-import { SignalBand } from "@/components/signal/SignalBand";
+import { SignalCard } from "@/components/signal/SignalCard";
+import { getFeaturedSignal } from "@/data/signals";
 import { DemoFooter } from "@/components/layout/DemoFooter";
 import { LegacyCleanup } from "@/components/screens/LegacyCleanup";
 
@@ -9,7 +10,7 @@ export default function HomePage() {
     <>
       <LegacyCleanup />
       <HomeHero />
-      <SignalBand />
+      <SignalCard signal={getFeaturedSignal()} />
       <DemoFooter compact />
     </>
   );

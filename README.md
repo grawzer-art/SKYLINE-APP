@@ -70,3 +70,6 @@ Typographies : titres en **Archivo** (licence OFL, substitut de Helvetica Now Ex
 HOME redessinée, navigation à 4 onglets (HOME / MY FLIGHT / EXPLORE / CLUB), profil à la place de MORE, checklist supprimée, **SKYLINE SIGNAL** (révélations privées).
 Logos officiels : `public/brand/` (dérivés du fichier fourni), branchés dans `src/data/demo.ts` (`brand.*`) — aucun logo n'est recréé. Photos authentiques : `public/photos/`.
 Rapport, captures et assets requis : `docs/skyline-v2/V2_REPORT.md`. Ambiances : `/?phase=before|during|after`.
+
+## SKYLINE SIGNAL (branche `feat/skyline-signal-experience`)
+Révélations privées en plein écran (`/signal/[slug]`) : Artist, Location, Exclusive Mix. Données : `src/data/signals.ts` (serveur uniquement) + `signal-types.ts`. Rapport, captures, démonstration : `docs/skyline-signal/SIGNAL_REPORT.md`.

@@ -1,31 +1,39 @@
 "use client";
-import { useState } from "react";
-import { signals, type Signal } from "@/data/demo";
+import Link from "next/link";
+import { formatSignalDate, signalTypeLabels, type Signal } from "@/data/signal-types";
+import { Photo } from "@/components/ui/Photo";
+import { rememberOpen } from "@/lib/signalNav";
 import { useSignals } from "@/lib/useSignals";
-import { SignalReveal } from "./SignalReveal";
+import { cn } from "@/lib/cn";
 
-/** Archive des révélations : tout reste consultable après ouverture. */
-export function SignalList() {
-  const { isSeen, markSeen } = useSignals();
-  const [open, setOpen] = useState<Signal | null>(null);
+/** EXPLORE : toutes les révélations publiées, de la plus récente à la plus ancienne. Toujours consultables. */
+export function SignalList({ items }: { items: Signal[] }) {
+  const { isSeen } = useSignals();
   return (
     <section aria-labelledby="signal-title" className="px-5 pt-10">
       <p className="font-mono text-[0.6rem] uppercase tracking-[0.22em] text-sky">Skyline Signal</p>
       <h2 id="signal-title" className="font-display mt-1.5 text-[1.15rem]">Révélations</h2>
       <ul className="mt-4 divide-y divide-line border-y border-line">
-        {signals.map((s) => (
-          <li key={s.id}>
-            <button type="button" onClick={() => { setOpen(s); markSeen(s.id); }} aria-haspopup="dialog" className="flex min-h-16 w-full items-center gap-4 py-3 text-left">
-              <span aria-hidden className={`size-1.5 shrink-0 rounded-full ${isSeen(s.id) ? "bg-transparent" : "bg-sunset"}`} />
-              <span className="min-w-0 flex-1">
-                <span className="block font-mono text-[0.58rem] uppercase tracking-[0.18em] text-dim">{s.kindLabel} · {s.date}{!isSeen(s.id) && <span className="sr-only"> — nouveau</span>}</span>
-                <span className="mt-1 block text-[0.95rem]">{s.title}</span>
-              </span>
-            </button>
-          </li>
-        ))}
+        {items.map((s) => {
+          const fresh = !isSeen(s.id);
+          return (
+            <li key={s.id}>
+              <Link href={`/signal/${s.slug}`} onClick={(e) => rememberOpen(e.currentTarget)} className="flex min-h-[4.75rem] w-full items-center gap-4 py-3">
+                <span className="relative size-14 shrink-0 overflow-hidden rounded-[3px]"><Photo src={s.image.src} sizes="56px" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2 font-mono text-[0.56rem] uppercase tracking-[0.18em]">
+                    <span className={signalTypeLabels[s.type].tone === "sunset" ? "text-sunset" : "text-sky"}>{signalTypeLabels[s.type].label}</span>
+                    <span className="text-dim">· {formatSignalDate(s.publishedAt)}</span>
+                    {s.demo && <span className="border border-cloud/25 px-1 text-cloud/55">Démo</span>}
+                  </span>
+                  <span className="mt-1 block text-[0.95rem] leading-snug">{s.title}</span>
+                </span>
+                {fresh && <span className={cn("shrink-0 border border-sky/60 px-1.5 py-0.5 font-mono text-[0.56rem] uppercase tracking-[0.18em] text-sky")}>New<span className="sr-only"> — nouvelle révélation</span></span>}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
-      <SignalReveal signal={open} onClose={() => setOpen(null)} />
     </section>
   );
 }

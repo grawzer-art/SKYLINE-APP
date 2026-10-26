@@ -14,8 +14,8 @@ const FOCUSABLE = 'a[href],button:not([disabled]),input,[tabindex]:not([tabindex
  * - le bouton retour du navigateur/iPhone ferme le panneau (entrée d'historique dédiée) ;
  * - focus piégé dans le panneau, restauré à la fermeture ; scroll du fond verrouillé.
  */
-export function Sheet({ open, onClose, title, eyebrow, children, variant = "sheet", origin }: {
-  open: boolean; onClose: () => void; title: string; eyebrow?: string; children: ReactNode; variant?: "sheet" | "immersive"; origin?: { x: number; y: number };
+export function Sheet({ open, onClose, title, eyebrow, children }: {
+  open: boolean; onClose: () => void; title: string; eyebrow?: string; children: ReactNode;
 }) {
   const reduce = useReducedMotion();
   const hydrated = useHydrated();
@@ -64,32 +64,6 @@ export function Sheet({ open, onClose, title, eyebrow, children, variant = "shee
 
   const close = useCallback(() => onClose(), [onClose]);
   if (!hydrated) return null;
-
-  if (variant === "immersive") {
-    // Le cercle de révélation part du point touché (coordonnées écran → repère du panneau, centré, 480 px max).
-    const left = Math.max(0, (window.innerWidth - Math.min(480, window.innerWidth)) / 2);
-    const at = origin ? `${Math.round(origin.x - left)}px ${Math.round(origin.y)}px` : "50% 92%";
-    // Ouverture immersive : révélation circulaire depuis le bas (fondu simple si reduced-motion).
-    return createPortal(
-      <AnimatePresence>
-        {open && (
-          <motion.div ref={panel} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}
-            className="fixed inset-0 z-[100] mx-auto flex w-full max-w-[480px] flex-col overflow-hidden bg-jet"
-            initial={reduce ? { opacity: 0 } : { clipPath: `circle(0px at ${at})` }}
-            animate={reduce ? { opacity: 1 } : { clipPath: `circle(1800px at ${at})` }}
-            exit={{ opacity: 0, transition: { duration: 0.25 } }}
-            transition={reduce ? transitions.quick : { duration: 1.1, ease: [0.22, 1, 0.36, 1] }}>
-            <button type="button" onClick={close} aria-label="Fermer"
-              className="absolute right-4 top-[max(0.75rem,var(--safe-top))] z-10 inline-flex h-11 items-center gap-2 rounded-full border border-cloud/30 bg-jet/55 pl-4 pr-3.5 font-mono text-[0.62rem] uppercase tracking-[0.18em] backdrop-blur transition active:scale-95">
-              Fermer <X size={18} strokeWidth={1.5} aria-hidden />
-            </button>
-            <div className="flex-1 overflow-y-auto overscroll-contain">{children}</div>
-          </motion.div>
-        )}
-      </AnimatePresence>,
-      document.body,
-    );
-  }
 
   return createPortal(
     <AnimatePresence>

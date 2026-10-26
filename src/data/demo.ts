@@ -166,37 +166,3 @@ export const placeholders: Record<Exclude<NavId, "home" | "explore">, {
     upcoming: ["Carte de membre", "Historique de participation", "Archives photo et vidéo officielles", "Contenus exclusifs"],
   },
 };
-
-/** SKYLINE SIGNAL — révélations privées. Contenus de DÉMONSTRATION : aucun artiste, lieu ou mix n'est réel. */
-export type SignalKind = "artist" | "venue" | "mix" | "video" | "partner";
-export type Signal = {
-  id: string; kind: SignalKind; kindLabel: string; title: string; teaser: string; body: string[]; date: string;
-  /** Orange = révélations musicales ; bleu ciel = le reste. */
-  tone: "sunset" | "sky"; mediaSlot: string; media?: string;
-};
-export const signals: Signal[] = [
-  {
-    id: "s1", kind: "artist", kindLabel: "Artiste", tone: "sunset", date: "24 oct.",
-    title: "Un premier nom rejoint la line-up",
-    teaser: "Un contenu privé vous attend.",
-    body: ["Ici s'afficherait l'annonce officielle d'un artiste, réservée aux membres avant sa diffusion publique.", "Contenu de démonstration : aucun artiste n'est confirmé."],
-    mediaSlot: "Portrait officiel de l'artiste · 4:5",
-  },
-  {
-    id: "s2", kind: "venue", kindLabel: "Lieu", tone: "sky", date: "17 oct.",
-    title: "Un lieu à Ibiza se dévoile",
-    teaser: "Première révélation de la programmation.",
-    body: ["Ici s'afficherait la révélation d'un lieu de l'édition.", "Contenu de démonstration : aucun lieu n'est confirmé."],
-    mediaSlot: "Photo officielle du lieu · 4:5", media: images.airport,
-  },
-  {
-    id: "s3", kind: "mix", kindLabel: "Mix exclusif", tone: "sunset", date: "9 oct.",
-    title: "Un mix à écouter avant le départ",
-    teaser: "Disponible uniquement pour les membres.",
-    body: ["Ici s'afficherait un mix exclusif autorisé par l'artiste et le diffuseur.", "Contenu de démonstration : aucun média n'est intégré."],
-    mediaSlot: "Visuel officiel du mix · 1:1", media: images.motion,
-  },
-];
-
-/** Révélation mise en avant sur HOME (démo : lieu illustré par une photo authentique de l'arrivée à Ibiza). */
-export const FEATURED_SIGNAL_ID = "s2";

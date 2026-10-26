@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Header } from "./Header";
 import { BottomNav } from "./BottomNav";
+import { getPublishedSignals } from "@/data/signals";
 
 /** Colonne « téléphone » centrée, pleine largeur sur mobile. */
 export function AppShell({ children }: { children: ReactNode }) {
@@ -11,7 +12,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </a>
       <Header />
       <main id="main" className="overflow-x-clip pb-[calc(var(--nav-h)+var(--safe-bottom)+1.5rem)]">{children}</main>
-      <BottomNav />
+      <BottomNav signalIds={getPublishedSignals().map((x) => x.id)} />
     </div>
   );
 }

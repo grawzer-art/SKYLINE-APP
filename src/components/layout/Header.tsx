@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { user } from "@/data/demo";
@@ -12,6 +13,7 @@ import { useLocalStorage } from "@/lib/useLocalStorage";
 
 /** Header compact (une seule ligne). Transparent sur la photo, vitré après défilement. */
 export function Header() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState(false);
@@ -24,6 +26,7 @@ export function Header() {
     return () => window.removeEventListener("scroll", on);
   }, []);
 
+  if (pathname.startsWith("/signal/")) return null; // l'expérience SIGNAL a son propre en-tête
   return (
     <>
       <header
