@@ -3,13 +3,12 @@ import { brand } from "@/data/demo";
 import { cn } from "@/lib/cn";
 
 /**
- * Wordmark SKYLINE OFFICIEL uniquement. Aucune recréation typographique : tant que le fichier fourni
- * (SVG/PNG, variante blanche sur fond sombre) n'est pas renseigné dans `brand.wordmarkSrc`,
- * un emplacement clairement identifié s'affiche à sa place.
+ * Wordmark SKYLINE OFFICIEL uniquement (fichier fourni, variante blanche sur fond sombre). Aucune recréation
+ * typographique : sans fichier dans `brand.wordmarkSrc`, un emplacement clairement identifié s'affiche.
  */
 export function Wordmark({ className }: { className?: string }) {
   if (brand.wordmarkSrc) {
-    return <Image src={brand.wordmarkSrc} alt="SKYLINE" width={160} height={32} priority className={cn("h-6 w-auto", className)} />;
+    return <Image src={brand.wordmarkSrc} alt="SKYLINE" width={Math.round(20 * brand.wordmarkRatio * 2)} height={40} priority className={cn("h-5 w-auto", className)} />;
   }
   return (
     <span role="img" aria-label="SKYLINE (emplacement du wordmark officiel)"

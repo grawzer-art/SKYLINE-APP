@@ -68,5 +68,5 @@ Typographies : titres en **Archivo** (licence OFL, substitut de Helvetica Now Ex
 
 ## V2 — Private Members Experience (branche `v2-private-members`)
 HOME redessinée, navigation à 4 onglets (HOME / MY FLIGHT / EXPLORE / CLUB), profil à la place de MORE, checklist supprimée, **SKYLINE SIGNAL** (révélations privées).
-Logos : emplacements prêts (`brand.wordmarkSrc`, `brand.emblemSrc` dans `src/data/demo.ts`) — aucun logo n'est recréé. Photos : emplacements « Photo à fournir ».
+Logos officiels : `public/brand/` (dérivés du fichier fourni), branchés dans `src/data/demo.ts` (`brand.*`) — aucun logo n'est recréé. Photos authentiques : `public/photos/`.
 Rapport, captures et assets requis : `docs/skyline-v2/V2_REPORT.md`. Ambiances : `/?phase=before|during|after`.

@@ -34,3 +34,7 @@ Build, lint ; ~28 vérifications d'interaction OK (SIGNAL, retour système, pers
 13 photographies de la première édition (fournies par SKYLINE) sont dans `public/photos/` (redimensionnées à 1200 px, ≈ 2,4 Mo au total). Hero « avant » : coucher de soleil au hublot ; « pendant » : fête en cabine ; « après » : escalier de nuit ; DJ set : présentation du concept (HOME → Explore) ; photos des Signals « lieu » et « mix ».
 Toutes les images générées ont été supprimées. Le Signal « artiste » garde volontairement un emplacement : aucune annonce d'artiste fictive ne doit s'appuyer sur le visage d'une vraie personne.
 Droits à confirmer avant diffusion publique : accord des personnes photographiées (participants, DJ) et crédit photographe.
+
+## Mise à jour — logos officiels
+Fichier fourni : emblème circulaire noir sur blanc (JPG). Dérivés dans `public/brand/` : `skyline-emblem-white.png` et `skyline-emblem-black.png` (fond rendu transparent, couleurs Cloud White / Jet Black ; conversion de couleur uniquement, aucun redessin) et `skyline-wordmark-white.png` (simple rognage du mot SKYLINE dans l'emblème, sans retouche). Branchés via `brand.wordmarkSrc` / `brand.emblemSrc`. Usages : wordmark dans le header, emblème dans le profil et le pied de page, icône d'écran d'accueil.
+Limites : fichiers matriciels (pas de SVG) → à remplacer par les SVG officiels ; le « wordmark seul » du brand book (avec ®, « EVENT » espacé) n'a pas été fourni : le mot rogné de l'emblème en tient lieu, à faire valider ; variante argentée non dérivée (Club à venir).

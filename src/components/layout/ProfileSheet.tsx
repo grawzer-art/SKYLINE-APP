@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { crew, practicalInfo, profileLinks, user } from "@/data/demo";
-import { Avatar } from "@/components/ui/Avatar";
+import { Emblem } from "@/components/ui/Emblem";
 import { Sheet } from "@/components/ui/Sheet";
 import { Icon } from "@/components/ui/Icon";
 
@@ -34,7 +34,7 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
   return (
     <Sheet open={open} onClose={onClose} eyebrow="Profil · Démo" title={user.fullName}>
       <div className="flex items-center gap-4 pb-5">
-        <Avatar name={user.fullName} size={56} />
+        <Emblem size={64} />
         <div>
           <p className="font-medium">{user.memberLine}</p>
           <p className="text-sm text-dim">Profil de démonstration</p>

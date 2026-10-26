@@ -10,9 +10,15 @@ export type NewsCategory = "artists" | "travel" | "program";
 export const PLACEHOLDER_PHOTOS = false;
 
 export const brand = {
-  /** Fichiers officiels à fournir (SVG/PNG). Tant qu'ils sont absents, un emplacement clairement identifié s'affiche — jamais de logo recréé. */
-  wordmarkSrc: undefined as string | undefined, // ex. "/brand/skyline-wordmark-white.svg"
-  emblemSrc: undefined as string | undefined,   // ex. "/brand/skyline-emblem-white.svg"
+  /**
+   * Logos officiels fournis (PNG dérivés du fichier original noir sur blanc : fond rendu transparent, couleur Cloud White ;
+   * le mot est un simple rognage de l'emblème). À remplacer par les SVG officiels dès qu'ils existent.
+   * Si absent : emplacement identifié — jamais de logo recréé.
+   */
+  wordmarkSrc: "/brand/skyline-wordmark-white.png" as string | undefined,
+  wordmarkRatio: 931 / 156,
+  emblemSrc: "/brand/skyline-emblem-white.png" as string | undefined,
+  emblemRatio: 1102 / 1171,
 };
 
 export const DEMO_NOTICE = "Données de démonstration — contenus fictifs";

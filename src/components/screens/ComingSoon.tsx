@@ -12,7 +12,7 @@ export function ComingSoon({ id }: { id: "flight" | "club" }) {
         <Photo src={p.image} />
         <div className="absolute inset-0 bg-gradient-to-t from-jet via-jet/80 via-45% to-jet/30" />
       </div>
-      <span className="grid size-14 place-items-center rounded-full border border-line bg-cloud/10 text-sunset backdrop-blur"><Icon name={p.icon} size={26} /></span>
+      <span className="grid size-14 place-items-center rounded-full border border-line bg-cloud/10 text-sky backdrop-blur"><Icon name={p.icon} size={26} /></span>
       <p className="mt-6 font-mono text-[0.7rem] uppercase tracking-[0.24em] text-sky">En préparation</p>
       <h1 id="soon-title" className="font-display mt-3 text-[clamp(2.6rem,13vw,4rem)]">{p.title}</h1>
       <p className="mt-4 max-w-[32ch] text-[1.02rem] text-cloud/85">{p.subtitle}</p>
@@ -20,7 +20,7 @@ export function ComingSoon({ id }: { id: "flight" | "club" }) {
       <ul className="mt-8 space-y-2">
         {p.upcoming.map((u) => (
           <li key={u} className="flex items-center gap-3 rounded-2xl border border-line bg-jet/50 px-4 py-3.5 text-sm backdrop-blur">
-            <span className="size-1.5 rounded-full bg-sunset" aria-hidden /> {u}
+            <span className="size-1.5 rounded-full bg-sky" aria-hidden /> {u}
             <span className="ml-auto font-mono text-[0.62rem] uppercase tracking-[0.16em] text-dim">Phase 2</span>
           </li>
         ))}
