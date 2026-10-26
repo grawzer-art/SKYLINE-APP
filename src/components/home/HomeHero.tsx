@@ -16,7 +16,7 @@ const phases: Record<EventPhase, {
 }> = {
   before: {
     eyebrow: "Pre-boarding / 2027", lines: ["La fête", "commence", "à 10 000", "mètres."], accentLine: 2, accent: "text-sky",
-    image: images.before, objectPos: "30% 50%", cta: { label: "My Flight", href: "/flight" }, countdown: "departure", countdownLabel: "Départ dans",
+    image: images.before, objectPos: "30% 100%", cta: { label: "My Flight", href: "/flight" }, countdown: "departure", countdownLabel: "Départ dans",
   },
   during: {
     eyebrow: "Ibiza / 2027 — en cours", lines: ["Bienvenue", "à Ibiza."], accentLine: 1, accent: "text-sunset",
@@ -57,12 +57,12 @@ export function HomeHero() {
 
   return (
     <section aria-labelledby="home-title"
-      className="relative isolate flex min-h-[calc(100svh-var(--nav-h)-var(--safe-bottom)-5.25rem)] flex-col justify-between overflow-hidden pb-6 pt-[calc(var(--safe-top)+4.5rem)]">
+      className="relative isolate flex min-h-[calc(100svh-var(--nav-h)-var(--safe-bottom)-15rem)] flex-col justify-between overflow-hidden pb-5 pt-[calc(var(--safe-top)+4.5rem)]">
       {/* Photographie : révélation lente à l'arrivée ; changement d'ambiance par phase */}
       <motion.div key={phase} className="absolute inset-0 -z-10" initial={reduce ? false : { opacity: 0, scale: 1.08 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.6, ease }}>
         <Photo src={cfg.image} priority provisional={PLACEHOLDER_PHOTOS} alt="" tagClassName="top-[calc(var(--safe-top)+4rem)]" objectPosition={cfg.objectPos} />
         <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-jet/65 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 h-[68%] bg-gradient-to-t from-jet via-jet/70 via-45% to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-jet/95 via-jet/45 via-55% to-transparent" />
       </motion.div>
 
       {/* Identité membre — discrète, façon étiquette */}
@@ -72,18 +72,14 @@ export function HomeHero() {
         </p>
       </motion.div>
 
-      {/* Légende verticale — détail éditorial / aviation */}
-      <p aria-hidden className="pointer-events-none absolute right-3 top-[26%] font-tagline text-[0.55rem] text-cloud/55 [writing-mode:vertical-rl]">
-        From France to Ibiza — 2027
-      </p>
 
-      <div className="px-5">
-        <motion.p {...rise(0.3)} className={cn("font-mono text-[0.66rem] uppercase tracking-[0.22em]", phase === "before" ? "text-sky" : cfg.accent)}>{cfg.eyebrow}</motion.p>
-        <motion.h1 id="home-title" {...rise(0.42)} className="font-display mt-4 text-[clamp(2rem,10vw,3.1rem)] text-cloud">
+      <div className="px-5 [text-shadow:0_1px_16px_rgb(0_0_0/0.7)]">
+        <motion.p {...rise(0.3)} className={cn("font-mono text-[0.66rem] uppercase tracking-[0.22em]", phase === "before" ? "text-cloud/90" : cfg.accent)}>{cfg.eyebrow}</motion.p>
+        <motion.h1 id="home-title" {...rise(0.42)} className="font-display mt-4 text-[clamp(1.7rem,8.4vw,2.5rem)] text-cloud">
           {cfg.lines.map((l, i) => <span key={l} className={cn("block", i === cfg.accentLine && cfg.accent)}>{l}</span>)}
         </motion.h1>
 
-        <motion.div {...rise(0.6)} className="mt-8 flex items-end justify-between gap-4 border-t border-cloud/20 pt-4">
+        <motion.div {...rise(0.6)} className="mt-6 flex items-end justify-between gap-4 border-t border-cloud/20 pt-3.5">
           {cfg.countdown ? (
             <QuietCountdown target={cfg.countdown === "end" ? event.endISO : event.departureISO} label={cfg.countdownLabel ?? ""} />
           ) : <p className="font-mono text-[0.58rem] uppercase tracking-[0.22em] text-cloud/60">Édition {event.year}</p>}

@@ -10,7 +10,7 @@ export default function HomePage() {
       <LegacyCleanup />
       <HomeHero />
       <SignalBand />
-      <DemoFooter />
+      <DemoFooter compact />
     </>
   );
 }

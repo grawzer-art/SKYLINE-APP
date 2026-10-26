@@ -197,3 +197,6 @@ export const signals: Signal[] = [
     mediaSlot: "Visuel officiel du mix · 1:1", media: images.motion,
   },
 ];
+
+/** Révélation mise en avant sur HOME (démo : lieu illustré par une photo authentique de l'arrivée à Ibiza). */
+export const FEATURED_SIGNAL_ID = "s2";
