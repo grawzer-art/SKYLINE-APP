@@ -16,15 +16,15 @@ const phases: Record<EventPhase, {
 }> = {
   before: {
     eyebrow: "Pre-boarding / 2027", lines: ["La fête", "commence", "à 10 000", "mètres."], accentLine: 2, accent: "text-sky",
-    image: images.hero, objectPos: "50% 100%", cta: { label: "My Flight", href: "/flight" }, countdown: "departure", countdownLabel: "Départ dans",
+    image: images.before, objectPos: "30% 50%", cta: { label: "My Flight", href: "/flight" }, countdown: "departure", countdownLabel: "Départ dans",
   },
   during: {
     eyebrow: "Ibiza / 2027 — en cours", lines: ["Bienvenue", "à Ibiza."], accentLine: 1, accent: "text-sunset",
-    image: images.sunset, objectPos: "50% 60%", cta: { label: "My Flight", href: "/flight" }, countdown: "end", countdownLabel: "Fin dans",
+    image: images.during, objectPos: "50% 40%", cta: { label: "My Flight", href: "/flight" }, countdown: "end", countdownLabel: "Fin dans",
   },
   after: {
     eyebrow: "SKYLINE Club", lines: ["The journey", "never ends."], accentLine: 1, accent: "text-silver",
-    image: images.night, objectPos: "50% 40%", cta: { label: "Mon Club", href: "/club" }, countdown: null,
+    image: images.after, objectPos: "50% 30%", cta: { label: "Mon Club", href: "/club" }, countdown: null,
   },
 };
 

@@ -16,7 +16,7 @@ export function SignalReveal({ signal, onClose }: { signal: Signal | null; onClo
       {signal && (
         <article className="flex min-h-full flex-col">
           <div className="relative h-[52dvh] shrink-0">
-            <Photo slotLabel={signal.mediaSlot} provisional={PLACEHOLDER_PHOTOS} />
+            <Photo src={signal.media} alt="" slotLabel={signal.mediaSlot} provisional={PLACEHOLDER_PHOTOS} />
             <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-jet to-transparent" />
           </div>
           <div className="px-5 pb-[max(2rem,var(--safe-bottom))]">

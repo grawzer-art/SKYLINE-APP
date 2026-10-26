@@ -29,3 +29,8 @@ Build, lint ; ~28 vérifications d'interaction OK (SIGNAL, retour système, pers
 | Photos réelles pour EXPLORE, CLUB (archives, aftermovies) | Hors mission |
 | MY FLIGHT, EXPLORE éditorial, CLUB (carte membre noir/argent/blanc) | Non conçus — attendre la validation de HOME |
 | Safari iOS réel / performances appareil | Non testé ici |
+
+## Mise à jour — photographies authentiques intégrées
+13 photographies de la première édition (fournies par SKYLINE) sont dans `public/photos/` (redimensionnées à 1200 px, ≈ 2,4 Mo au total). Hero « avant » : coucher de soleil au hublot ; « pendant » : fête en cabine ; « après » : escalier de nuit ; DJ set : présentation du concept (HOME → Explore) ; photos des Signals « lieu » et « mix ».
+Toutes les images générées ont été supprimées. Le Signal « artiste » garde volontairement un emplacement : aucune annonce d'artiste fictive ne doit s'appuyer sur le visage d'une vraie personne.
+Droits à confirmer avant diffusion publique : accord des personnes photographiées (participants, DJ) et crédit photographe.

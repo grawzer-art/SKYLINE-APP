@@ -2,6 +2,7 @@
 import { experience } from "@/data/demo";
 import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
+import { Photo } from "@/components/ui/Photo";
 import { Sheet } from "@/components/ui/Sheet";
 
 /** Panneau de présentation du concept (fonction conservée de la V1). */
@@ -9,6 +10,10 @@ export function ExperienceSheet({ open, onClose }: { open: boolean; onClose: () 
   const { concept } = experience;
   return (
     <Sheet open={open} onClose={onClose} eyebrow={experience.eyebrow} title="Le concept SKYLINE">
+      <div className="relative -mx-5 mb-5 aspect-[4/3] overflow-hidden">
+        <Photo src={experience.image} alt="DJ set à bord de l'avion SKYLINE" objectPosition="50% 45%" sizes="(max-width: 480px) 100vw, 480px" />
+        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-surface-1 to-transparent" />
+      </div>
       <p className="leading-relaxed text-cloud/85">{experience.teaser}</p>
       <p className="mt-3 leading-relaxed text-cloud/85">{concept.intro}</p>
       <ul className="mt-5 divide-y divide-line border-y border-line">
