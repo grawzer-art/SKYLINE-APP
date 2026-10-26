@@ -12,7 +12,7 @@ import { Initials } from "./ui";
 import { cn } from "@/lib/cn";
 
 const tabs = [
-  { label: "Home", href: "/v3", icon: "home" },
+  { label: "Home", href: "/", icon: "home" },
   { label: "My Flight", href: "/v3/flight", icon: "plane" },
   { label: "Explore", href: "/v3/explore", icon: "compass" },
   { label: "Club", href: "/v3/club", icon: "idcard" },
@@ -23,7 +23,7 @@ export function V3Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { state, update, t } = useCommunity();
   const [open, setOpen] = useState(false);
-  const active = (href: string) => (href === "/v3" ? pathname === "/v3" : pathname.startsWith(href));
+  const active = (href: string) => (href === "/" ? false : pathname.startsWith(href)); // « Home » ramène à l'accueil de l'application
   const bare = pathname.startsWith("/v3/wireframes") || pathname.startsWith("/v3/screens");
 
   if (bare) return <>{children}</>; // documents de conception : plein cadre, sans chrome d'application

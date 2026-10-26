@@ -20,6 +20,8 @@ Branche : `design/v3-product-ux` — **conception uniquement** : aucun backend, 
 | 11 | Contrat serveur (préparation) | `10_BACKEND_CONTRACT.md` |
 
 ## Voir le prototype
+**Depuis l'application** : onglet **Club** (carte membre, « Rejoindre la communauté », My Space, Members, Messages), onglet **My Flight**, et **Explore › Skyline Radio**. Les adresses directes `/v3/…` restent valables.
+
 Sur l'aperçu Vercel de la branche (ou `npm run build && npm start` en local) : **`/v3`**.
 - Bandeau « Prototype V3 · données fictives · aucun envoi réel » en permanence.
 - Pastille de phase (en haut à droite) : **Avant / Pendant Ibiza / Après** — HOME, MY FLIGHT et CLUB s'adaptent.

@@ -185,6 +185,25 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
     await ctx.close();
   }
 
+  /* 9. Accès depuis l'application (onglets de production) */
+  {
+    const { ctx, p } = await mk(); const vis = (t) => p.getByText(t).locator("visible=true");
+    await p.goto(B + "/"); await p.waitForTimeout(1200);
+    await p.locator("nav[aria-label='Navigation principale']").getByRole("link", { name: "Club" }).click(); await p.waitForURL("**/v3/club"); await p.waitForTimeout(900);
+    ok("APPLICATION : l'onglet Club mène au nouveau Club", (await p.getByRole("link", { name: /Rejoindre la communauté/ }).count()) === 1);
+    await p.getByRole("link", { name: /Rejoindre la communauté/ }).click(); await p.waitForURL("**/v3/club/community"); await p.waitForTimeout(700);
+    ok("APPLICATION : Club → Rejoindre la communauté", (await vis("Rejoindre la communauté").count()) >= 1);
+    await p.locator("nav[aria-label='Navigation du prototype']").getByRole("link", { name: "Home" }).click(); await p.waitForURL(B + "/"); await p.waitForTimeout(800);
+    ok("APPLICATION : l'onglet Home ramène à l'accueil", (await p.locator("nav[aria-label='Navigation principale']").count()) === 1);
+    await p.locator("nav[aria-label='Navigation principale']").getByRole("link", { name: "My Flight" }).click(); await p.waitForURL("**/v3/flight"); await p.waitForTimeout(700);
+    ok("APPLICATION : l'onglet My Flight mène au nouveau My Flight", (await vis(/pas un titre de transport/).count()) === 1);
+    await p.goto(B + "/explore"); await p.waitForTimeout(900);
+    await p.getByRole("link", { name: /Skyline Radio/ }).click(); await p.waitForURL("**/v3/explore/radio"); await p.waitForTimeout(700);
+    ok("APPLICATION : Explore → Skyline Radio", (await vis("Playlists officielles").count()) === 1);
+    const r1 = await ctx.request.get(B + "/club", { maxRedirects: 0 }); ok("ANCIENNE ROUTE /club redirigée", r1.status() === 307 || r1.status() === 308);
+    await ctx.close();
+  }
+
   console.log("ERREURS CONSOLE:", errs.length ? [...new Set(errs)] : "aucune"); console.log(fails ? `${fails} ÉCHEC(S)` : "TOUT PASSE");
   await b.close(); process.exit(fails ? 1 : 0);
 })();

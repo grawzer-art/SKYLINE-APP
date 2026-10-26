@@ -151,18 +151,3 @@ export const profileLinks = {
   help: "Contact et assistance : disponibles avec la phase de réservation. Aucune adresse réelle n'est affichée dans cette démo.",
   about: "SKYLINE est une expérience de musique électronique et de voyage vers Ibiza. THE JOURNEY NEVER ENDS.",
 };
-
-/** Écrans temporaires (V2 : seul HOME est conçu). `needs` = contenus qui devront être fournis. */
-export const placeholders: Record<Exclude<NavId, "home" | "explore">, {
-  title: string; subtitle: string; icon: string; image: string; upcoming: string[]; note?: string;
-}> = {
-  flight: {
-    title: "MY FLIGHT", subtitle: "Votre accès SKYLINE.", icon: "plane", image: images.aisle,
-    upcoming: ["Pass digital SKYLINE", "Réservation confirmée", "Détails de départ vérifiés", "Documents essentiels"],
-    note: "Le pass SKYLINE n'est pas un titre de transport : il ne remplace pas la carte d'embarquement de la compagnie aérienne.",
-  },
-  club: {
-    title: "SKYLINE CLUB", subtitle: "THE JOURNEY NEVER ENDS.", icon: "club", image: images.champagne,
-    upcoming: ["Carte de membre", "Historique de participation", "Archives photo et vidéo officielles", "Contenus exclusifs"],
-  },
-};

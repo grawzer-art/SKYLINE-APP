@@ -4,9 +4,11 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
   async redirects() {
-    // V1 → V2 : anciennes routes
+    // Les onglets MY FLIGHT et CLUB mènent aux écrans V3 ; anciennes routes V1/V2 conservées en redirection.
     return [
-      { source: "/pass", destination: "/flight", permanent: false },
+      { source: "/flight", destination: "/v3/flight", permanent: false },
+      { source: "/club", destination: "/v3/club", permanent: false },
+      { source: "/pass", destination: "/v3/flight", permanent: false },
       { source: "/more", destination: "/", permanent: false },
     ];
   },
