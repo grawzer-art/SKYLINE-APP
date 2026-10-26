@@ -91,6 +91,8 @@ body {
   line-height: 0.98;
 }
 .font-mono { font-variant-numeric: tabular-nums; }
+/* Accroches : Helvetica Now Light espacée (substitut : Helvetica Neue Light / Arial) */
+.font-tagline { font-weight: 300; text-transform: uppercase; letter-spacing: 0.34em; }
 
 /* Focus clavier visible, uniquement quand pertinent */
 :focus { outline: none; }

@@ -67,5 +67,6 @@ Refonte visuelle de PRE-BOARDING d'après la planche validée. Rapport, comparat
 Typographies : titres en **Archivo** (licence OFL, substitut de Helvetica Now Extended), chiffres en **JetBrains Mono** ; voir `public/fonts/README.md` pour brancher les fichiers officiels.
 
 ## V2 — Private Members Experience (branche `v2-private-members`)
-HOME redessinée (hero éditorial, ambiance par phase), navigation à 4 onglets (HOME / MY FLIGHT / EXPLORE / CLUB), profil à la place de MORE, checklist supprimée.
-Rapport, captures et assets requis : `docs/skyline-v2/V2_REPORT.md`. Aperçu des ambiances : `/?phase=before|during|after`.
+HOME redessinée, navigation à 4 onglets (HOME / MY FLIGHT / EXPLORE / CLUB), profil à la place de MORE, checklist supprimée, **SKYLINE SIGNAL** (révélations privées).
+Logos : emplacements prêts (`brand.wordmarkSrc`, `brand.emblemSrc` dans `src/data/demo.ts`) — aucun logo n'est recréé. Photos : emplacements « Photo à fournir ».
+Rapport, captures et assets requis : `docs/skyline-v2/V2_REPORT.md`. Ambiances : `/?phase=before|during|after`.

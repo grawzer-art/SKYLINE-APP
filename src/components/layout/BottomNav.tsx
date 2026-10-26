@@ -4,10 +4,12 @@ import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/Icon";
 import { navItems } from "@/components/layout/nav-items";
 import { cn } from "@/lib/cn";
+import { useSignals } from "@/lib/useSignals";
 
 /** Quatre onglets, trait fin : l'état actif est porté par la couleur et un filet. */
 export function BottomNav() {
   const pathname = usePathname();
+  const { unseen } = useSignals();
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
   return (
@@ -20,8 +22,11 @@ export function BottomNav() {
             <li key={item.id} className="relative">
               <Link href={item.href} aria-current={active ? "page" : undefined}
                 className={cn("flex h-full min-h-11 flex-col items-center justify-center gap-1.5 transition-colors", active ? "text-cloud" : "text-silver/60 hover:text-cloud")}>
-                <Icon name={item.icon} size={20} className={cn(item.id === "flight" && "-rotate-45")} />
-                <span className="font-mono text-[0.58rem] uppercase tracking-[0.18em]">{item.label}</span>
+                <span className="relative">
+                  <Icon name={item.icon} size={20} className={cn(item.id === "flight" && "-rotate-45")} />
+                  {item.id === "explore" && unseen.length > 0 && <span aria-hidden className="absolute -right-1.5 -top-1 size-1.5 rounded-full bg-sunset" />}
+                </span>
+                <span className="font-mono text-[0.58rem] uppercase tracking-[0.18em]">{item.label}{item.id === "explore" && unseen.length > 0 && <span className="sr-only"> — nouvelle révélation</span>}</span>
               </Link>
               {active && <span aria-hidden className="absolute inset-x-[30%] top-0 h-px bg-sky" />}
             </li>

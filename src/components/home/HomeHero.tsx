@@ -57,7 +57,7 @@ export function HomeHero() {
 
   return (
     <section aria-labelledby="home-title"
-      className="relative isolate flex min-h-[100svh] flex-col justify-between overflow-hidden pb-[calc(var(--nav-h)+var(--safe-bottom)+1.5rem)] pt-[calc(var(--safe-top)+4.5rem)]">
+      className="relative isolate flex min-h-[calc(100svh-var(--nav-h)-var(--safe-bottom)-5.25rem)] flex-col justify-between overflow-hidden pb-6 pt-[calc(var(--safe-top)+4.5rem)]">
       {/* Photographie : révélation lente à l'arrivée ; changement d'ambiance par phase */}
       <motion.div key={phase} className="absolute inset-0 -z-10" initial={reduce ? false : { opacity: 0, scale: 1.08 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.6, ease }}>
         <Photo src={cfg.image} priority provisional={PLACEHOLDER_PHOTOS} alt="" tagClassName="top-[calc(var(--safe-top)+4rem)]" objectPosition={cfg.objectPos} />
@@ -73,13 +73,13 @@ export function HomeHero() {
       </motion.div>
 
       {/* Légende verticale — détail éditorial / aviation */}
-      <p aria-hidden className="pointer-events-none absolute right-3 top-[26%] font-mono text-[0.55rem] uppercase tracking-[0.4em] text-cloud/45 [writing-mode:vertical-rl]">
+      <p aria-hidden className="pointer-events-none absolute right-3 top-[26%] font-tagline text-[0.55rem] text-cloud/55 [writing-mode:vertical-rl]">
         From France to Ibiza — 2027
       </p>
 
       <div className="px-5">
         <motion.p {...rise(0.3)} className={cn("font-mono text-[0.66rem] uppercase tracking-[0.22em]", phase === "before" ? "text-sky" : cfg.accent)}>{cfg.eyebrow}</motion.p>
-        <motion.h1 id="home-title" {...rise(0.42)} className="font-display mt-4 text-[clamp(2.1rem,10.6vw,3.3rem)] text-cloud">
+        <motion.h1 id="home-title" {...rise(0.42)} className="font-display mt-4 text-[clamp(2rem,10vw,3.1rem)] text-cloud">
           {cfg.lines.map((l, i) => <span key={l} className={cn("block", i === cfg.accentLine && cfg.accent)}>{l}</span>)}
         </motion.h1>
 

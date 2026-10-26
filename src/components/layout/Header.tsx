@@ -41,10 +41,10 @@ export function Header() {
               className="relative grid size-11 place-items-center rounded-full transition active:scale-95"
             >
               <Bell size={21} strokeWidth={1.5} aria-hidden />
-              {!seen && <span className="absolute right-[11px] top-[11px] size-2 rounded-full bg-sunset ring-2 ring-jet" />}
+              {!seen && <span className="absolute right-[11px] top-[11px] size-2 rounded-full bg-sky ring-2 ring-jet" />}
             </button>
             <button type="button" onClick={() => setProfile(true)} aria-label="Mon profil" aria-haspopup="dialog" className="grid size-11 place-items-center rounded-full transition active:scale-95">
-              <Avatar name={user.fullName} hue={215} size={30} />
+              <Avatar name={user.fullName} size={30} />
             </button>
           </div>
         </div>

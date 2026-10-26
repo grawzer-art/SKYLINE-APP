@@ -3,16 +3,18 @@ import { brand } from "@/data/demo";
 import { cn } from "@/lib/cn";
 
 /**
- * Wordmark SKYLINE (brand book : très gras, large, sans point) — substitut typographique tant que le fichier officiel n'est pas fourni
- * (renseigner `brand.wordmarkSrc` dans src/data/demo.ts). Jamais de pictogramme d'avion.
+ * Wordmark SKYLINE OFFICIEL uniquement. Aucune recréation typographique : tant que le fichier fourni
+ * (SVG/PNG, variante blanche sur fond sombre) n'est pas renseigné dans `brand.wordmarkSrc`,
+ * un emplacement clairement identifié s'affiche à sa place.
  */
 export function Wordmark({ className }: { className?: string }) {
   if (brand.wordmarkSrc) {
-    return <Image src={brand.wordmarkSrc} alt="SKYLINE" width={120} height={24} className={cn("h-5 w-auto", className)} priority />;
+    return <Image src={brand.wordmarkSrc} alt="SKYLINE" width={160} height={32} priority className={cn("h-6 w-auto", className)} />;
   }
   return (
-    <span className={cn("font-display text-[1.4rem] font-black leading-none tracking-[-0.02em]", className)} aria-label="SKYLINE">
-      SKYLINE
+    <span role="img" aria-label="SKYLINE (emplacement du wordmark officiel)"
+      className={cn("inline-flex h-7 items-center border border-dashed border-cloud/35 px-2.5 font-mono text-[0.54rem] uppercase tracking-[0.16em] text-cloud/60", className)}>
+      Wordmark officiel · à fournir
     </span>
   );
 }

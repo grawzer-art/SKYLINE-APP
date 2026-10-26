@@ -14,8 +14,8 @@ const FOCUSABLE = 'a[href],button:not([disabled]),input,[tabindex]:not([tabindex
  * - le bouton retour du navigateur/iPhone ferme le panneau (entrée d'historique dédiée) ;
  * - focus piégé dans le panneau, restauré à la fermeture ; scroll du fond verrouillé.
  */
-export function Sheet({ open, onClose, title, eyebrow, children }: {
-  open: boolean; onClose: () => void; title: string; eyebrow?: string; children: ReactNode;
+export function Sheet({ open, onClose, title, eyebrow, children, variant = "sheet" }: {
+  open: boolean; onClose: () => void; title: string; eyebrow?: string; children: ReactNode; variant?: "sheet" | "immersive";
 }) {
   const reduce = useReducedMotion();
   const hydrated = useHydrated();
@@ -64,6 +64,29 @@ export function Sheet({ open, onClose, title, eyebrow, children }: {
 
   const close = useCallback(() => onClose(), [onClose]);
   if (!hydrated) return null;
+
+  if (variant === "immersive") {
+    // Ouverture immersive : révélation circulaire depuis le bas (fondu simple si reduced-motion).
+    return createPortal(
+      <AnimatePresence>
+        {open && (
+          <motion.div ref={panel} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}
+            className="fixed inset-0 z-[100] mx-auto flex w-full max-w-[480px] flex-col overflow-hidden bg-jet"
+            initial={reduce ? { opacity: 0 } : { clipPath: "circle(0% at 50% 92%)" }}
+            animate={reduce ? { opacity: 1 } : { clipPath: "circle(150% at 50% 92%)" }}
+            exit={{ opacity: 0, transition: { duration: 0.25 } }}
+            transition={reduce ? transitions.quick : { duration: 0.85, ease: [0.22, 1, 0.36, 1] }}>
+            <button type="button" onClick={close} aria-label="Fermer"
+              className="absolute right-4 top-[max(0.75rem,var(--safe-top))] z-10 grid size-11 place-items-center rounded-full border border-cloud/20 bg-jet/50 backdrop-blur transition active:scale-95">
+              <X size={20} strokeWidth={1.5} aria-hidden />
+            </button>
+            <div className="flex-1 overflow-y-auto overscroll-contain">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>,
+      document.body,
+    );
+  }
 
   return createPortal(
     <AnimatePresence>

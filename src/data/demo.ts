@@ -9,8 +9,11 @@ export type NewsCategory = "artists" | "travel" | "program";
 /** true tant que les photos officielles ne sont pas fournies : affiche « visuel provisoire ». */
 export const PLACEHOLDER_PHOTOS = true;
 
-/** Wordmark officiel : renseigner le chemin du SVG fourni (ex. "/brand/skyline-wordmark.svg"). Sinon substitut typographique. */
-export const brand = { wordmarkSrc: undefined as string | undefined };
+export const brand = {
+  /** Fichiers officiels à fournir (SVG/PNG). Tant qu'ils sont absents, un emplacement clairement identifié s'affiche — jamais de logo recréé. */
+  wordmarkSrc: undefined as string | undefined, // ex. "/brand/skyline-wordmark-white.svg"
+  emblemSrc: undefined as string | undefined,   // ex. "/brand/skyline-emblem-white.svg"
+};
 
 export const DEMO_NOTICE = "Données de démonstration — contenus fictifs";
 
@@ -49,7 +52,7 @@ export const experience = {
   title: "LE DJ SET DANS L'AVION",
   teaser: "Un DJ set live en plein vol, avant deux jours de musique à Ibiza.",
   cta: "Découvrir le concept",
-  image: images.experience,
+  image: undefined as string | undefined, // emplacement : photo « DJ set dans l'avion » (4:5) à fournir
   concept: {
     intro:
       "SKYLINE transforme le trajet en première nuit de fête : un vol dédié, une cabine pensée comme un club et un DJ set live au-dessus des nuages.",
@@ -87,21 +90,18 @@ export const news: NewsItem[] = [
     title: "Nouvel artiste bientôt dévoilé",
     excerpt: "Restez connectés…",
     body: ["Une première annonce de line-up est en préparation.", "Contenu de démonstration : aucun artiste n'est confirmé."],
-    image: images.night,
   },
   {
     id: "u2", category: "travel", tag: "VOYAGE", date: "10 oct.",
     title: "Bagages : ce qu'il faut savoir",
     excerpt: "Cabine et accessoire personnel.",
     body: ["Exemple de consigne de voyage : un bagage cabine et un accessoire personnel.", "Les règles réelles seront publiées avec la phase de réservation."],
-    image: images.day,
   },
   {
     id: "u3", category: "artists", tag: "ARTISTES", date: "6 oct.",
     title: "Line-up : les prochaines annonces",
     excerpt: "Les noms seront dévoilés progressivement.",
     body: ["Le calendrier des annonces sera communiqué dans l'app.", "Contenu de démonstration."],
-    image: images.sunset,
   },
   {
     id: "u4", category: "travel", tag: "VOYAGE", date: "2 oct.",
@@ -130,9 +130,9 @@ export type NavId = "home" | "flight" | "explore" | "club";
 
 /** Informations pratiques, conservées de la V1 sous forme discrète (profil). Démo — pas un conseil officiel. */
 export const practicalInfo = [
-  { id: "i1", title: "Pièce d'identité", text: "Pense à vérifier sa validité avant le départ. Les exigences officielles dépendent de ton itinéraire." },
-  { id: "i2", title: "Bagages", text: "Exemple de consigne : un bagage cabine et un accessoire personnel. Règles réelles à confirmer." },
-  { id: "i3", title: "Départ", text: "France → Ibiza. Aéroport et horaire à annoncer : aucune information vérifiée dans cette démo." },
+  { id: "i1", title: "Documents de voyage", text: "Une pièce d'identité en cours de validité est requise pour voyager. Les exigences exactes dépendent de l'itinéraire et seront confirmées." },
+  { id: "i2", title: "Départ", text: "France → Ibiza. L'aéroport et l'horaire seront communiqués par SKYLINE une fois confirmés." },
+  { id: "i3", title: "Pass SKYLINE", text: "Le pass événementiel SKYLINE n'est pas un titre de transport et ne remplace pas la carte d'embarquement de la compagnie aérienne." },
 ];
 
 export const profileLinks = {
@@ -154,3 +154,34 @@ export const placeholders: Record<Exclude<NavId, "home" | "explore">, {
     upcoming: ["Carte de membre", "Historique de participation", "Archives photo et vidéo officielles", "Contenus exclusifs"],
   },
 };
+
+/** SKYLINE SIGNAL — révélations privées. Contenus de DÉMONSTRATION : aucun artiste, lieu ou mix n'est réel. */
+export type SignalKind = "artist" | "venue" | "mix" | "video" | "partner";
+export type Signal = {
+  id: string; kind: SignalKind; kindLabel: string; title: string; teaser: string; body: string[]; date: string;
+  /** Orange = révélations musicales ; bleu ciel = le reste. */
+  tone: "sunset" | "sky"; mediaSlot: string;
+};
+export const signals: Signal[] = [
+  {
+    id: "s1", kind: "artist", kindLabel: "Artiste", tone: "sunset", date: "24 oct.",
+    title: "Un premier nom rejoint la line-up",
+    teaser: "Un contenu privé vous attend.",
+    body: ["Ici s'afficherait l'annonce officielle d'un artiste, réservée aux membres avant sa diffusion publique.", "Contenu de démonstration : aucun artiste n'est confirmé."],
+    mediaSlot: "Portrait officiel de l'artiste · 4:5",
+  },
+  {
+    id: "s2", kind: "venue", kindLabel: "Lieu", tone: "sky", date: "17 oct.",
+    title: "Un lieu à Ibiza se dévoile",
+    teaser: "Première révélation de la programmation.",
+    body: ["Ici s'afficherait la révélation d'un lieu de l'édition.", "Contenu de démonstration : aucun lieu n'est confirmé."],
+    mediaSlot: "Photo officielle du lieu · 4:5",
+  },
+  {
+    id: "s3", kind: "mix", kindLabel: "Mix exclusif", tone: "sunset", date: "9 oct.",
+    title: "Un mix à écouter avant le départ",
+    teaser: "Disponible uniquement pour les membres.",
+    body: ["Ici s'afficherait un mix exclusif autorisé par l'artiste et le diffuseur.", "Contenu de démonstration : aucun média n'est intégré."],
+    mediaSlot: "Visuel officiel du mix · 1:1",
+  },
+];

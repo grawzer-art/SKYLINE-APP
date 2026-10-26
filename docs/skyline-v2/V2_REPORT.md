@@ -1,35 +1,31 @@
-# SKYLINE APP V2 — HOME · rapport de première implémentation
+# SKYLINE APP V2 — HOME · alignement brand book + SKYLINE SIGNAL
 
-Branche : `v2-private-members` (la production n'est pas touchée). Captures : `captures/` (375, 390, 430 px ; phases avant / pendant / après).
+Branche : `v2-private-members` (production non touchée). Captures : `captures/` (375, 390, 430 px ; révélation SIGNAL ; Explore).
 
-## Décisions de design
-- **HOME = une seule composition** : photo plein cadre, étiquette membre, légende verticale « From France to Ibiza », titre signature en 4 lignes (« 10 000 » en bleu ciel), filet, countdown discret, accès MY FLIGHT. Puis un seul contenu prioritaire (SKYLINE EXPERIENCE) en composition asymétrique. Rien d'autre.
-- **Navigation à 4 onglets** : HOME · MY FLIGHT · EXPLORE · CLUB. MORE supprimé.
-- **Profil** (avatar) : identité, informations pratiques (aide-mémoire discret, repliable), aide, à propos, accès au crew. Notifications : icône cloche conservée.
-- **Ambiance par phase** (avant / pendant / après) : photo, accent, message, countdown (jusqu'au départ, puis jusqu'à la fin, puis absent). Pour la revue créative : `/?phase=before|during|after` force une phase (démo uniquement).
-- **Supprimé** : checklist et son état local (purgé sur les appareils), jauge de progression, cartes de raccourcis, tuiles rondes, onglet MORE, couronne VIP. Anciennes routes : `/pass` → `/flight`, `/more` → `/`.
-- **Conservé** : panneau « concept », annonces filtrables (déplacées dans EXPLORE, écran temporaire), crew (via le profil), notifications, sheets accessibles, retour système.
+## Respect du brand book
+- **Wordmark** : plus aucune recréation typographique. Un **emplacement identifié** (« Wordmark officiel · à fournir ») occupe le header ; `brand.wordmarkSrc` / `brand.emblemSrc` (src/data/demo.ts) brancheront les fichiers officiels. Pas de ®, pas d'avion décoratif, emblème non reconstitué.
+- **Couleurs** : palette seule. Avatars monochromes (plus de teintes), pastille de notification en bleu ciel ; l'orange est réservé aux révélations musicales (point SIGNAL).
+- **Typographies** : titres Archivo (substitut OFL de Helvetica Now Extended), texte Helvetica Neue/Arial, chiffres JetBrains Mono, accroches **Light espacé** (`.font-tagline`).
+- **Photographie** : plus aucune fausse illustration d'événement. Sans fichier, `Photo` affiche un **emplacement « Photo à fournir »** décrivant l'asset exact. Seuls les ciels du hero (abstraits, étiquetés « Visuel provisoire ») servent de fond de travail.
+- **Ton** : conseils bagages/vêtements supprimés ; informations légales et pratiques factuelles dans le profil.
+
+## HOME
+Header (wordmark) · statut membre · photographie dominante · accroche « LA FÊTE COMMENCE À 10 000 MÈTRES. » · countdown discret · accès MY FLIGHT · **une seule annonce : SKYLINE SIGNAL** · navigation 4 onglets. Tout tient dans la première vue (375/390/430 px). Ambiances avant / pendant / après : `/?phase=before|during|after`.
+
+## SKYLINE SIGNAL
+Indicateur discret (point orange) sur la bande HOME et sur l'onglet EXPLORE tant que des révélations restent à ouvrir → ouverture plein écran (révélation circulaire, titres en fondu ; simple fondu si reduced-motion) → contenu **toujours consultable** (« Revoir » sur HOME, archive dans EXPLORE). Aucun point, score ou récompense. État mémorisé localement (démo). Contenus **fictifs** : artiste, lieu et mix de démonstration.
 
 ## Tests (Chromium/Playwright — pas de Safari iOS réel)
-Build, lint, 20 vérifications d'interaction OK ; 0 débordement horizontal à 320 / 375 / 390 / 430 / 1280 px ; 0 erreur console ; reduced-motion respecté.
+Build, lint ; ~28 vérifications d'interaction OK (SIGNAL, retour système, persistance, profil, redirections, nav, filtres, reduced-motion) ; 0 débordement à 320/375/390/430/1280 px ; 0 erreur console.
 
-## Écarts restants vis-à-vis des planches approuvées
+## Écarts restants / assets à fournir
 | Sujet | État |
 |---|---|
-| Photographie du hero (aile / mer / lumière réelles) | **Bloqué par asset** — ciel provisoire généré, étiqueté « Visuel provisoire » |
-| Photo « DJ set dans l'avion » | **Bloqué par asset** — ambiance lumineuse abstraite, aucune fausse scène |
-| Wordmark officiel + emblème rond | **Bloqué par asset** — substitut typographique sans point |
-| Helvetica Now (Extended / Regular / Medium) | **Bloqué par licence/fichiers** — substitut Archivo (OFL) |
-| Photos d'ambiance « pendant » et « après » | **Bloqué par asset** — placeholders (coucher de soleil, nuit) |
-| MY FLIGHT, EXPLORE éditorial, CLUB (carte membre, archives) | Non conçus (hors mission : attendre la validation de HOME) |
-| Safari iOS réel, performances sur appareil | Non testé ici |
-
-## Assets exacts à fournir
-1. Wordmark SKYLINE (SVG, noir + blanc) et emblème rond si utilisé.
-2. Helvetica Now Extended Bold, Regular, Medium (.woff2 licenciés).
-3. Hero « avant » : photo verticale, aile d'avion / nuages / lumière, ≥ 1170×2532, zone calme dans le tiers bas.
-4. Hero « pendant » : photo verticale Ibiza lumineuse, mêmes dimensions.
-5. Hero « après » : photo verticale intime/club, mêmes dimensions.
-6. Visuel « DJ set dans l'avion » : photo 4:5, ≥ 1600 px de large (ou courte vidéo).
-7. Photographies d'artistes officielles et confirmées, uniquement le moment venu.
-Branchement : `src/data/demo.ts` (`images`, `brand.wordmarkSrc`), puis `PLACEHOLDER_PHOTOS = false`.
+| Wordmark officiel + emblème circulaire (SVG/PNG ; blanc sur fond sombre, noir, argenté) | **Bloqué par asset** — emplacement visible |
+| Helvetica Now Extended / Regular / Medium / Light (.woff2 licenciés) | **Bloqué par licence** — substituts |
+| Hero « avant » : photo verticale aérienne ≥ 1170×2532, zone calme dans le tiers bas | **Bloqué par asset** |
+| Hero « pendant » (Ibiza, lumière naturelle) et « après » (intime) : mêmes dimensions | **Bloqué par asset** |
+| Médias des Signals (portrait artiste 4:5, lieu 4:5, visuel mix 1:1, vidéo officielle) | **Bloqué par asset / droits** |
+| Photos réelles pour EXPLORE, CLUB (archives, aftermovies) | Hors mission |
+| MY FLIGHT, EXPLORE éditorial, CLUB (carte membre noir/argent/blanc) | Non conçus — attendre la validation de HOME |
+| Safari iOS réel / performances appareil | Non testé ici |

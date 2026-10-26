@@ -34,18 +34,18 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
   return (
     <Sheet open={open} onClose={onClose} eyebrow="Profil · Démo" title={user.fullName}>
       <div className="flex items-center gap-4 pb-5">
-        <Avatar name={user.fullName} hue={215} size={56} />
+        <Avatar name={user.fullName} size={56} />
         <div>
           <p className="font-medium">{user.memberLine}</p>
           <p className="text-sm text-dim">Profil de démonstration</p>
         </div>
       </div>
 
-      <Row title="Informations pratiques">
+      <Row title="Informations légales et pratiques">
         <ul className="space-y-3">
           {practicalInfo.map((i) => <li key={i.id}><p className="text-cloud">{i.title}</p><p>{i.text}</p></li>)}
         </ul>
-        <p className="mt-3 text-xs">Aide-mémoire fictif : ne vaut pas validation de vos documents de voyage.</p>
+        <p className="mt-3 text-xs">Informations de démonstration.</p>
       </Row>
       <Row title="Aide & contact"><p>{profileLinks.help}</p></Row>
       <Row title="À propos de SKYLINE"><p>{profileLinks.about}</p></Row>

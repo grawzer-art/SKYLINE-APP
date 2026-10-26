@@ -1,15 +1,15 @@
 import { HomeHero } from "@/components/home/HomeHero";
-import { PriorityFeature } from "@/components/home/PriorityFeature";
+import { SignalBand } from "@/components/signal/SignalBand";
 import { DemoFooter } from "@/components/layout/DemoFooter";
 import { LegacyCleanup } from "@/components/screens/LegacyCleanup";
 
-/** HOME — THE EXPERIENCE : un hero éditorial, un seul contenu prioritaire. */
+/** HOME — THE EXPERIENCE : une photographie, une accroche, une seule annonce exclusive (SKYLINE SIGNAL). */
 export default function HomePage() {
   return (
     <>
       <LegacyCleanup />
       <HomeHero />
-      <PriorityFeature />
+      <SignalBand />
       <DemoFooter />
     </>
   );

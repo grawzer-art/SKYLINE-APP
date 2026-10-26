@@ -20,7 +20,7 @@ export function CrewScreen() {
           <li key={m.id}>
             <button type="button" onClick={() => setSelected(m)} aria-haspopup="dialog"
               className="flex w-full items-center gap-4 rounded-2xl border border-line bg-surface-1 p-4 text-left transition hover:bg-surface-2 active:scale-[0.99]">
-              <Avatar name={m.name} hue={m.hue} size={52} />
+              <Avatar name={m.name} size={52} />
               <span className="min-w-0 flex-1">
                 <span className="block font-medium">{m.name}</span>
                 <span className="block text-sm text-dim">{m.role} · {m.city}</span>
@@ -38,7 +38,7 @@ export function CrewScreen() {
         {selected && (
           <div>
             <div className="flex items-center gap-4">
-              <Avatar name={selected.name} hue={selected.hue} size={72} />
+              <Avatar name={selected.name} size={72} />
               <div>
                 <p className="font-medium">{selected.role}</p>
                 <p className="text-sm text-dim">{selected.city}</p>
