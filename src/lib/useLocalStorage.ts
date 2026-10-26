@@ -29,5 +29,7 @@ export function useLocalStorage<T>(key: string, fallback: T) {
     try { window.localStorage.setItem(key, JSON.stringify(next)); } catch { cache.set(key, { raw: JSON.stringify(next), value: next }); }
     window.dispatchEvent(new Event(EVENT));
   }, [key]);
-  return [value, set] as const;
+  /** Dernière valeur RÉELLEMENT stockée (jamais un instantané périmé) : à utiliser pour toute modification « lecture → écriture ». */
+  const latest = useCallback(() => read(key, fallback), [key, fallback]);
+  return [value, set, latest] as const;
 }

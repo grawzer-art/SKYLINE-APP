@@ -6,7 +6,8 @@ import { Sheet } from "@/components/ui/Sheet";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { Icon } from "@/components/ui/Icon";
 import { phaseLabels, type Phase } from "@/data/v3";
-import { useProto } from "@/lib/useProto";
+import { useCommunity } from "@/lib/useCommunity";
+import { locales } from "@/i18n";
 import { Initials } from "./ui";
 import { cn } from "@/lib/cn";
 
@@ -20,7 +21,7 @@ const tabs = [
 /** Chrome du prototype : bandeau d'état, en-tête, sélecteur de phase, navigation à 4 onglets. */
 export function V3Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { state, update } = useProto();
+  const { state, update, t } = useCommunity();
   const [open, setOpen] = useState(false);
   const active = (href: string) => (href === "/v3" ? pathname === "/v3" : pathname.startsWith(href));
   const bare = pathname.startsWith("/v3/wireframes") || pathname.startsWith("/v3/screens");
@@ -43,7 +44,7 @@ export function V3Shell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <div className="min-h-dvh">{children}</div>
+      <div className="min-h-dvh pb-[calc(var(--nav-h)+var(--safe-bottom)+2.5rem)]">{children}</div>
 
       <nav aria-label="Navigation du prototype" className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[480px] border-t border-cloud/10 bg-jet/85 pb-[var(--safe-bottom)] backdrop-blur-2xl">
         <ul className="grid h-[var(--nav-h)] grid-cols-4">
@@ -68,6 +69,28 @@ export function V3Shell({ children }: { children: React.ReactNode }) {
               className={cn("min-h-12 rounded-[4px] border px-2 text-[0.78rem] transition", state.phase === p ? "border-sky bg-sky text-jet" : "border-line bg-surface-2")}>
               {phaseLabels[p]}
             </button>
+          ))}
+        </div>
+        <h3 className="mt-6 font-mono text-[0.6rem] uppercase tracking-[0.2em] text-cloud/60">{t("sim.title")}</h3>
+        <p className="mt-2 text-[0.78rem] text-dim">{t("sim.reservation")}</p>
+        <div role="radiogroup" aria-label={t("sim.reservation")} className="mt-2 grid grid-cols-2 gap-2">
+          {(["confirmed", "pending"] as const).map((v) => (
+            <button key={v} type="button" role="radio" aria-checked={state.sim.reservation === v} onClick={() => update((s) => ({ ...s, sim: { ...s.sim, reservation: v } }))}
+              className={cn("min-h-11 rounded-[4px] border px-2 text-[0.78rem] transition", state.sim.reservation === v ? "border-sky bg-sky text-jet" : "border-line bg-surface-2")}>{t(`sim.reservation.${v}` as never)}</button>
+          ))}
+        </div>
+        <p className="mt-4 text-[0.78rem] text-dim">{t("sim.media")}</p>
+        <div role="radiogroup" aria-label={t("sim.media")} className="mt-2 grid grid-cols-2 gap-2">
+          {([false, true] as const).map((v) => (
+            <button key={String(v)} type="button" role="radio" aria-checked={state.sim.tone === v} onClick={() => update((s) => ({ ...s, sim: { ...s.sim, tone: v } }))}
+              className={cn("min-h-11 rounded-[4px] border px-2 text-[0.78rem] transition", state.sim.tone === v ? "border-sky bg-sky text-jet" : "border-line bg-surface-2")}>{v ? t("sim.media.tone") : t("sim.media.none")}</button>
+          ))}
+        </div>
+        <p className="mt-4 text-[0.78rem] text-dim">{t("profile.language")}</p>
+        <div role="radiogroup" aria-label={t("profile.language")} className="mt-2 grid grid-cols-2 gap-2">
+          {locales.map((l) => (
+            <button key={l.id} type="button" role="radio" aria-checked={state.locale === l.id} onClick={() => update((s) => ({ ...s, locale: l.id }))}
+              className={cn("min-h-11 rounded-[4px] border px-2 text-[0.78rem] transition", state.locale === l.id ? "border-sky bg-sky text-jet" : "border-line bg-surface-2")}>{l.label}</button>
           ))}
         </div>
         <ul className="mt-6 divide-y divide-line border-y border-line font-mono text-[0.66rem] uppercase tracking-[0.14em]">

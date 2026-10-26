@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:unit": "node --experimental-strip-types --no-warnings tests/community.test.mts && node --experimental-strip-types --no-warnings tests/i18n.test.mts",
+    "test:e2e": "node tests/e2e-v3.cjs"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",

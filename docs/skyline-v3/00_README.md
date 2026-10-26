@@ -1,5 +1,7 @@
 # SKYLINE APP V3 — Product & UX Foundation
 
+> **Mise à jour — décisions produit validées** (`08_DECISIONS.md`) : messagerie accessible avant le voyage sous conditions, 18+, profils privés par défaut, demandes de contact, modération SKYLINE, hébergement UE (devis avant tout service payant), français + architecture anglais. Les interfaces complètes **MY SPACE, MEMBERS, MESSAGES et SKYLINE RADIO** sont prototypées (`09_COMMUNITY_UI_SPEC.md`) et le contrat serveur est préparé (`10_BACKEND_CONTRACT.md`). Toujours **aucune donnée réelle et aucun service connecté**.
+
 Branche : `design/v3-product-ux` — **conception uniquement** : aucun backend, aucun compte, aucun message, aucune réservation réelle. La production (`main`) est inchangée et le prototype n'y est pas fusionné.
 
 ## Contenu de la livraison
@@ -13,6 +15,9 @@ Branche : `design/v3-product-ux` — **conception uniquement** : aucun backend, 
 | 6 | Composants existants à réutiliser | `05_COMPONENTS.md` |
 | 7 | Plan de développement et dépendances | `06_ROADMAP.md` |
 | 8 | Sécurité, confidentialité, modération | `07_SECURITY_PRIVACY_MODERATION.md` |
+| 9 | Décisions validées | `08_DECISIONS.md` |
+| 10 | Spécification des interfaces communautaires | `09_COMMUNITY_UI_SPEC.md` · captures `community/` |
+| 11 | Contrat serveur (préparation) | `10_BACKEND_CONTRACT.md` |
 
 ## Voir le prototype
 Sur l'aperçu Vercel de la branche (ou `npm run build && npm start` en local) : **`/v3`**.
@@ -31,21 +36,12 @@ Changement de phase · annuaire (recherche, ville, affinités, réciprocité, pr
 4. **Communauté sobre** : pas de publications publiques, likes, classements, badges ni gamification. Visibilité et notifications **opt-in**.
 5. **Brand book** : palette officielle, wordmark et emblème fournis (jamais recréés), photographies authentiques, aucune fausse photo d'événement.
 
-## Décisions à valider (questions ouvertes)
-1. **Visibilité par défaut** : désactivée (recommandé) — d'accord ?
-2. **Âge minimum** : 18+ ? Vérification par attestation ou pièce justificative ?
-3. **Ouverture de la messagerie** : seulement après l'événement, ou dès l'inscription ? (le risque est plus faible après, le bénéfice plus fort avant)
-4. **Qui modère** (équipe SKYLINE, prestataire) et qui est joignable **pendant** Ibiza (urgences, sécurité) ?
-5. **Conservation des messages** : 12 mois proposés.
-6. **Accès au Club** : réservé aux participants confirmés ? liste d'attente ?
-7. **Hébergement / prestataire de base de données** (coût et région UE) — validation requise avant tout engagement.
-8. **Radio** : fichiers hébergés par SKYLINE ou intégrations de plateformes (conditions d'usage) ? Qui détient les droits ?
-9. **Source des informations de vol** : saisie manuelle par l'équipe (recommandé) ; pas d'intégration compagnie en V3.
-10. **Langues** : français seul, ou anglais dès le départ ?
-11. **Photos de la première édition** : accord des personnes et crédit photographe (le dépôt GitHub est public — à passer en privé).
+## Décisions
+Les 11 questions initiales ont reçu une réponse : voir `08_DECISIONS.md`. Restent ouverts : vérification juridique du 18+, durée de conservation définitive (RGPD), équipe et astreinte de modération, hébergement UE (devis), droits de chaque média.
 
 ## Limites de cette livraison
-- Prototype **non testé sur Safari iOS réel** (tests automatisés Chromium : 14 écrans × 3 largeurs 375/390/430 px sans débordement ni erreur console ; parcours de recette dans `tests-prototype.cjs`).
+- Prototype **non testé sur Safari iOS réel** (tests : `npm run test:unit` — 52 tests de règles ; `npm run test:e2e` — 76 vérifications Chromium, 17 écrans × 3 largeurs 375/390/430 px sans débordement ni erreur console).
+- Les **filtres de messages sont indicatifs** (contournables) : ils réduisent le bruit mais ne remplacent ni signalements ni modération humaine.
 - Wireframes en basse fidélité : la direction graphique finale de chaque nouvel écran reste à valider.
 - Le logo est un PNG dérivé du fichier fourni ; Helvetica Now n'est pas fournie.
 - Les profils et conversations du prototype sont **fictifs** (initiales, aucune photo de personne).

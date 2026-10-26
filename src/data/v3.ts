@@ -24,7 +24,7 @@ export const members: Member[] = [
   { id: "h2", pseudo: "Profil privé", city: "—", genres: [], bio: "", visible: false },
 ];
 
-export type ChatMsg = { from: "me" | "them"; text: string; t: string };
+export type ChatMsg = { from: "me" | "them"; text: string; t: string; /** horodatage numérique (limite de débit) */ ts?: number };
 /** Conversations existantes (contacts déjà acceptés). */
 export const seedMessages: Record<string, ChatMsg[]> = {
   m1: [
@@ -35,19 +35,24 @@ export const seedMessages: Record<string, ChatMsg[]> = {
 };
 /** Demandes de contact reçues. */
 export const seedIncoming: Record<string, "pending"> = { m3: "pending" };
+/** Mot d'introduction des demandes reçues (fictif). */
+export const seedIntro: Record<string, string> = { m3: "Salut ! On a l'air d'aimer la même musique." };
 
+export type RadioItem = { id: string; slot: string };
+/** SKYLINE RADIO — tout est placeholder jusqu'à réception de contenus AUTORISÉS (voir registre des droits). */
 export const radio = {
+  featured: { id: "sel1", slot: "Visuel officiel · 4:5" },
   selections: [
-    { id: "r1", title: "Sélection officielle · Avant le départ", by: "SKYLINE", slot: "Visuel officiel · 1:1" },
-    { id: "r2", title: "Sélection officielle · Coucher de soleil", by: "SKYLINE", slot: "Visuel officiel · 1:1" },
+    { id: "sel1", slot: "Visuel officiel · 1:1", tracks: 4 },
+    { id: "sel2", slot: "Visuel officiel · 1:1", tracks: 4 },
   ],
   djs: [
-    { id: "d1", name: "DJ à confirmer", note: "Profil officiel à venir", slot: "Portrait officiel · 4:5" },
-    { id: "d2", name: "DJ à confirmer", note: "Profil officiel à venir", slot: "Portrait officiel · 4:5" },
+    { id: "dj1", slot: "Portrait officiel · 4:5", mixes: ["mix1"] },
+    { id: "dj2", slot: "Portrait officiel · 4:5", mixes: ["mix2"] },
   ],
   mixes: [
-    { id: "x1", title: "Mix exclusif à confirmer", by: "DJ à confirmer", slot: "Pochette officielle · 1:1" },
-    { id: "x2", title: "Mix exclusif à confirmer", by: "DJ à confirmer", slot: "Pochette officielle · 1:1" },
+    { id: "mix1", slot: "Pochette officielle · 1:1", dj: "dj1" },
+    { id: "mix2", slot: "Pochette officielle · 1:1", dj: "dj2" },
   ],
 };
 

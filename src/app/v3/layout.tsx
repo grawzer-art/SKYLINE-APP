@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PlayerProvider } from "@/components/v3/PlayerProvider";
 import { V3Shell } from "@/components/v3/V3Shell";
 
 export const metadata: Metadata = {
@@ -7,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function V3Layout({ children }: { children: React.ReactNode }) {
-  return <V3Shell>{children}</V3Shell>;
+  return <PlayerProvider><V3Shell>{children}</V3Shell></PlayerProvider>;
 }

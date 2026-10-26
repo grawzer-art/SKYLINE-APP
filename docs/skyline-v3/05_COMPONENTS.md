@@ -37,3 +37,16 @@ Inventaire du code actuel (`main`, SKYLINE SIGNAL inclus) et ce qu'il devient en
 - Le composant `Sheet` utilise l'historique : deux panneaux ouverts/fermés en séquence peuvent se contrarier (corrigé par `closeThenGo` et par des panneaux à contenu variable).
 - Logos livrés en PNG dérivés : remplacer par les SVG officiels.
 - Polices : Helvetica Now non fournie (substituts).
+
+## Ajouts de la phase « interfaces communautaires »
+| Élément | Fichier | Rôle |
+|---|---|---|
+| Règles métier pures + tests | `src/domain/community.ts`, `tests/community.test.mts` | Éligibilité, validation, quotas, débit, annuaire (réutilisable côté serveur) |
+| i18n FR/EN typée | `src/i18n/*`, `tests/i18n.test.mts` | Traductions, pluriels, repli |
+| Actions « contrat » | `src/lib/useCommunity.ts` | Interface unique entre écrans et (futur) serveur |
+| Horloge sûre au pré-rendu | `src/lib/useClock.ts` | Quotas sans `Date.now()` au rendu |
+| Lecture → écriture sûre | `useLocalStorage` (`latest`) | Évite d'écraser un état stocké avec un instantané périmé (bug corrigé) |
+| Accès conditionnel | `components/v3/community.tsx`, `V3Community.tsx` | Gate + activation |
+| Signalement partagé | `components/v3/ReportForm.tsx` | Fiche, conversation, message |
+| Lecteur global | `components/v3/PlayerProvider.tsx`, `radio.tsx` | Un lecteur, lecture volontaire |
+| Signal de test | `src/lib/testTone.ts` | Tonalité de validation du lecteur (jamais un mix) |

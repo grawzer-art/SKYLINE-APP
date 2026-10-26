@@ -38,12 +38,20 @@ Rendre l'app **vivante sans communauté** : MY FLIGHT, LIVE, SIGNAL.
 - **HQ Modération** (file, sanctions, appels) — *livré avec cette étape*.
 *Dépend de :* P2. *Critère de sortie :* tests d'abus (spam de demandes, énumération de profils) passés.
 
-## P4 — Messagerie *(L, la plus sensible)*
-- Conversations 1:1 **texte seul**, temps réel, limites de débit, filtres automatiques (liens, numéros), conservation 12 mois.
-- Signalement avec contexte joint ; blocage immédiat et réciproque.
-- Notifications (opt-in).
-*Dépend de :* P3 **et** modération opérationnelle **et** validation juridique (analyse d'impact). **Interdit d'ouvrir sans ces trois conditions.**
-*Critères :* test d'intrusion, test de charge, procédure d'incident, équipe de modération formée et joignable pendant la période d'ouverture.
+## P4 — Messagerie *(L, la plus sensible)* — **révisé après décision : accessible avant le voyage**
+La messagerie ouvre **dès l'activation communautaire d'un participant** (réservation confirmée + compte activé + 18+ + charte + consentement), donc potentiellement plusieurs mois avant l'événement. Conséquence : tout le dispositif de sécurité doit exister **avant l'ouverture à la première personne**, pas avant l'événement.
+- Conversations 1:1 **texte seul**, temps réel, limites de débit, filtres (liens, e-mails, identifiants, numéros), conservation paramétrable (hypothèse 12 mois).
+- Demandes de contact avec mot d'introduction, quotas, refus silencieux ; blocage immédiat ; signalement d'un message précis, contexte joint.
+- Notifications (opt-in), fenêtre « silencieux ».
+*Dépend de :* P3 **et** modération opérationnelle **et** validation juridique (RGPD / 18+) **et** test d'intrusion.
+*Critères :* procédure d'incident, équipe de modération formée et joignable, tests d'abus, mise en service progressive (voir ci-dessous).
+
+### Mise en service progressive de la communauté (réduit le risque sans retirer la fonction)
+1. **Cercle test** (équipe + quelques participants volontaires) : messagerie ouverte, modération surveillée de près.
+2. **Première vague** (par lots de participants vérifiés) : métriques d'abus, ajustement des quotas et filtres.
+3. **Ouverture générale** aux participants éligibles.
+4. **Renforcement pendant Ibiza** : astreinte de modération, délais de traitement raccourcis.
+Chaque étape a un critère de passage (taux de signalements, délais de traitement, incidents) et un **interrupteur d'urgence** (suspension de la messagerie sans toucher au reste de l'app).
 
 ## P5 — Radio & Souvenirs *(M, parallélisable dès P1)*
 - SKYLINE RADIO : sélections, DJ, mixes ; **registre des droits** obligatoire avant publication ; lecteur existant.
@@ -65,6 +73,8 @@ Rendre l'app **vivante sans communauté** : MY FLIGHT, LIVE, SIGNAL.
 | File de modération (HQ) | P3 → P4 |
 | Registre des droits médias | P5 |
 | Temps réel (messagerie) | P4 |
+| Interrupteur d'urgence (messagerie / annuaire) | P3 → P4 |
+| Mise en service par lots | P4 |
 | Service worker / hors ligne | P6 |
 
 ## Estimation de risque

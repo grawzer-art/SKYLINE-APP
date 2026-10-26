@@ -38,6 +38,21 @@ Contraintes à respecter **avant** toute connexion de vrais comptes, messages ou
 ## 4 bis. Interdits de produit (non négociables)
 Publications publiques, likes, classements, badges, scores, séries/quotas d'usage, notifications de relance, statut « en ligne », accusés de lecture, géolocalisation, recommandations par algorithme opaque, vente ou partage de données à des tiers.
 
+## 4 ter. Messagerie avant le voyage : risques propres et réponses
+Décision : la messagerie ouvre avant l'événement. Des personnes qui ne se connaissent pas peuvent donc échanger pendant des mois. Réponses retenues (sans retirer la fonction) :
+| Risque | Réponse |
+|---|---|
+| Sollicitation / harcèlement | Demande → acceptation ; quotas (10/jour, 30 en attente) ; refus silencieux ; blocage réciproque immédiat |
+| Sortie de la plateforme (réseaux, téléphone) | Messages en texte seul ; liens, e-mails, identifiants et numéros refusés (filtre **indicatif**, voir limites) ; conseil de sécurité à la première conversation |
+| Usurpation / faux profils | Compte rattaché à une réservation confirmée ; pseudo contrôlé ; photo modérée ; signalement « faux profil » |
+| Mineurs | 18+ attesté, vérifié selon les conditions de l'événement (à valider juridiquement) |
+| Fuite de profils | Profils privés par défaut ; filtrage serveur ; pas d'énumération ; pas d'export de liste |
+| Rafales / spam | Limite de débit (5 messages / 10 s) |
+| Abus non détectés | Signalement d'un message précis, contexte joint, modération humaine, sanctions graduées, appels |
+| Incident grave | Interrupteur d'urgence + procédure d'escalade + astreinte (renforcée pendant le séjour) |
+
+**Limites assumées des filtres :** un filtre par motifs est **contournable** (écriture détournée, espaces, abréviations). Il réduit le bruit mais ne remplace ni les signalements ni la modération humaine ; il doit être complété côté serveur (et éventuellement par des outils de détection plus avancés, soumis à validation et à analyse d'impact).
+
 ## 5. Modération
 ### Signalement
 Motifs : comportement inapproprié, faux profil / usurpation, spam ou sollicitation, autre. Depuis la fiche membre et la conversation. Les **derniers messages** de la conversation sont joints au signalement (seul contenu lu par la modération). Accusé de réception neutre au signaleur ; **le signalé n'est pas informé**.
@@ -76,7 +91,7 @@ Base légale (contrat / consentement selon le traitement), registre des traiteme
 |---|---|
 | Comptes réels | P0 juridique validé, authentification testée |
 | Annuaire | Filtrage serveur testé (énumération), file de modération prête |
-| **Messagerie** | **Modération opérationnelle + analyse d'impact validée + test d'intrusion + équipe joignable** |
+| **Messagerie (dès la 1re activation)** | **Modération opérationnelle + analyse d'impact validée + validation du 18+ + test d'intrusion + équipe joignable + interrupteur d'urgence** |
 | Médias | Registre des droits renseigné |
 | Informations de voyage | Validation à deux + horodatage |
 
