@@ -95,10 +95,10 @@ export const fr = {
   "radio.test": "Signal de test (prototype)", "radio.back.radio": "Skyline Radio",
   // Profil / simulation
   "profile.language": "Langue", "sim.title": "Simulation (prototype)", "sim.reservation": "Réservation", "sim.reservation.confirmed": "Confirmée", "sim.reservation.pending": "En attente",
-  "sim.media": "Média autorisé", "sim.media.none": "Aucun", "sim.media.tone": "Signal de test",
+  "sim.trip": "Données de voyage", "sim.trip.none": "Aucune", "sim.trip.demo": "Aperçu fictif", "sim.media": "Média autorisé", "sim.media.none": "Aucun", "sim.media.tone": "Signal de test",
   // Visuel V3.1
   "club.eyebrow": "The membership", "club.title": "Club", "club.tagline": "From France to Ibiza", "club.signature": "The journey never ends.",
-  "club.card.member": "Member", "club.card.since": "Membre depuis", "club.card.number": "N°", "club.card.pending": "[Attribué]", "club.card.since.value": "Ibiza 2027",
+  "club.card.member": "Member", "club.card.tilt": "Activer le reflet au mouvement", "club.card.tilt.on": "Reflet au mouvement actif", "club.card.since": "Membre depuis", "club.card.number": "N°", "club.card.pending": "[Attribué]", "club.card.since.value": "Ibiza 2027",
   "club.tile.space": "Votre monde, votre histoire", "club.tile.members": "Rencontrer la communauté", "club.tile.messages": "Conversations et demandes", "club.tile.souvenirs": "Archives officielles",
   "club.tile.locked": "Disponible après activation de la communauté",
   "club.join": "Rejoindre la communauté", "club.join.text": "Faites connaissance avant Ibiza, gardez vos contacts après.", "club.join.cta": "Voir les conditions", "club.active": "Communauté activée",

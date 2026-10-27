@@ -81,3 +81,27 @@ export const sitemap: ScreenNode[] = [
   { label: "PROFIL & PARAMÈTRES (via l'avatar)", href: "/v3/profile", note: "Confidentialité · blocages · notifications · données" },
   { label: "SKYLINE HQ (organisateurs, environnement séparé)", href: "/v3/wireframes#hq", note: "Wireframe" },
 ];
+
+/**
+ * Informations de voyage publiées par l'équipe SKYLINE. Aucune n'est inventée : en production, tout vient du serveur
+ * (et seulement lorsque c'est confirmé). `demoTrip` n'est qu'un aperçu fictif de la mise en page, affiché à la demande
+ * depuis la simulation du prototype et toujours signalé « Démo ».
+ */
+export type Trip = {
+  departure: { airport: string; when: string; meeting?: string } | null;
+  stay: { lodging?: string; transfers: { id: string; time: string; label: string; place: string }[]; program: { id: string; time: string; label: string; place: string }[] } | null;
+  updates: { id: string; time: string; title: string; text: string }[];
+};
+export const noTrip: Trip = { departure: null, stay: null, updates: [] };
+export const demoTrip: Trip = {
+  departure: { airport: "Aéroport de démonstration", when: "Jour J · 00:00", meeting: "Point de rendez-vous fictif · Terminal X" },
+  stay: {
+    lodging: "Hébergement fictif",
+    transfers: [{ id: "t1", time: "00:00", label: "Transfert fictif", place: "Lieu fictif" }],
+    program: [
+      { id: "p1", time: "00:00", label: "Activité fictive 1", place: "Lieu fictif" },
+      { id: "p2", time: "00:00", label: "Activité fictive 2", place: "Lieu fictif" },
+    ],
+  },
+  updates: [{ id: "u1", time: "00:00", title: "Annonce fictive", text: "Exemple d'annonce officielle : horaire, lieu ou modification." }],
+};

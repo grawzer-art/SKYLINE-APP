@@ -3,6 +3,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import { Backdrop, MembershipCard, NavTile } from "./visual";
+import { TiltToggle, useMetal } from "./metal";
 import { images } from "@/data/demo";
 import { visuals } from "@/data/visuals";
 import { ease } from "@/design/motion";
@@ -13,6 +14,7 @@ export function V3Club() {
   const c = useCommunity();
   const { t, state } = c;
   const reduce = useReducedMotion();
+  const metal = useMetal();
   const nReq = c.pendingRequests.length;
   const msgBadge = c.eligible && nReq + c.unreadTotal > 0 ? t("common.new") : undefined;
   const rise = (d: number) => ({ initial: reduce ? false : { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.8, ease, delay: d } } as const);
@@ -25,7 +27,7 @@ export function V3Club() {
         <motion.p {...rise(0.05)} className="font-mono text-[0.62rem] uppercase tracking-[0.24em] text-sky">{t("club.eyebrow")}</motion.p>
         <motion.h1 id="club-title" {...rise(0.12)} className="font-display mt-2 text-[clamp(2.4rem,13vw,3.6rem)] leading-[0.9]">{t("club.title")}</motion.h1>
         <motion.p {...rise(0.2)} className="font-tagline mt-3 text-[0.68rem] text-cloud/85">{t("club.tagline")}</motion.p>
-        <div className="mt-9"><MembershipCard name={state.me.pseudo} since={t("club.card.since.value")} number={t("club.card.pending")} member={t("club.card.member")} sinceLabel={t("club.card.since")} numberLabel={t("club.card.number")} demo /></div>
+        <div className="mt-9"><MembershipCard name={state.me.pseudo} since={t("club.card.since.value")} number={t("club.card.pending")} member={t("club.card.member")} sinceLabel={t("club.card.since")} numberLabel={t("club.card.number")} demo metal={metal} /><TiltToggle metal={metal} label={t("club.card.tilt")} labelOn={t("club.card.tilt.on")} /></div>
       </section>
 
       <section className="px-5 pt-7">

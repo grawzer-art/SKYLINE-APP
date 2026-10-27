@@ -88,6 +88,13 @@ export function V3Shell({ children }: { children: React.ReactNode }) {
               className={cn("min-h-11 rounded-[4px] border px-2 text-[0.78rem] transition", state.sim.tone === v ? "border-sky bg-sky text-jet" : "border-line bg-surface-2")}>{v ? t("sim.media.tone") : t("sim.media.none")}</button>
           ))}
         </div>
+        <p className="mt-4 text-[0.78rem] text-dim">{t("sim.trip")}</p>
+        <div role="radiogroup" aria-label={t("sim.trip")} className="mt-2 grid grid-cols-2 gap-2">
+          {([false, true] as const).map((v) => (
+            <button key={String(v)} type="button" role="radio" aria-checked={state.sim.trip === v} onClick={() => update((s) => ({ ...s, sim: { ...s.sim, trip: v } }))}
+              className={cn("min-h-11 rounded-[4px] border px-2 text-[0.78rem] transition", state.sim.trip === v ? "border-sky bg-sky text-jet" : "border-line bg-surface-2")}>{v ? t("sim.trip.demo") : t("sim.trip.none")}</button>
+          ))}
+        </div>
         <p className="mt-4 text-[0.78rem] text-dim">{t("profile.language")}</p>
         <div role="radiogroup" aria-label={t("profile.language")} className="mt-2 grid grid-cols-2 gap-2">
           {locales.map((l) => (

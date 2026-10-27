@@ -14,7 +14,7 @@ export type Proto = {
   phase: Phase;
   locale: Locale;
   /** Simulation de ce que fournirait le serveur (équipe SKYLINE) : réservation et média autorisé. */
-  sim: { reservation: "confirmed" | "pending"; tone: boolean };
+  sim: { reservation: "confirmed" | "pending"; tone: boolean; trip: boolean };
   community: { adult: boolean; charter: boolean; consent: boolean };
   me: { pseudo: string; city: string; bio: string; genres: string[]; visible: boolean };
   settings: { contact: "members" | "nobody"; notifMessages: boolean; notifSignal: boolean };
@@ -33,7 +33,7 @@ export type Proto = {
 export const defaultProto: Proto = {
   phase: "before",
   locale: "fr",
-  sim: { reservation: "confirmed", tone: false },
+  sim: { reservation: "confirmed", tone: false, trip: false },
   community: { adult: false, charter: false, consent: false },
   me: { pseudo: "Alex", city: "Paris", bio: "", genres: ["House"], visible: false },
   settings: { contact: "members", notifMessages: true, notifSignal: true },

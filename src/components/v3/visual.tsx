@@ -1,12 +1,10 @@
 "use client";
 import Link from "next/link";
-import { useRef } from "react";
-import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import { Emblem } from "@/components/ui/Emblem";
 import { Photo } from "@/components/ui/Photo";
 import { DemoTag } from "./ui";
-import { ease } from "@/design/motion";
+import { MetalSurface, type useMetal } from "./metal";
 import { cn } from "@/lib/cn";
 
 /** Fond photographique plein cadre avec dégradés de lisibilité locaux (haut pour l'en-tête, bas pour le texte). */
@@ -52,35 +50,33 @@ export function NavTile({ href, title, sub, visual, badge, locked }: { href: str
 }
 
 /**
- * Carte membre : objet noir / argent à l'emblème officiel. Légère inclinaison au toucher (désactivée si animations réduites).
- * Le numéro et la date sont des emplacements tant que l'équipe ne les attribue pas.
+ * Carte membre SKYLINE CLUB : objet collector noir et argent, emblème officiel gravé en filigrane, nom en relief.
+ * Distincte du pass MY FLIGHT (accès personnel à l'événement). Numéro et date : emplacements tant que l'équipe ne les attribue pas.
  */
-export function MembershipCard({ name, since, number, member, sinceLabel, numberLabel, demo }: { name: string; since: string; number: string; member: string; sinceLabel: string; numberLabel: string; demo?: boolean }) {
-  const reduce = useReducedMotion();
-  const ref = useRef<HTMLDivElement>(null);
-  const tilt = (e: React.PointerEvent) => {
-    if (reduce || !ref.current) return;
-    const r = ref.current.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width - 0.5; const y = (e.clientY - r.top) / r.height - 0.5;
-    ref.current.style.transform = `perspective(900px) rotateX(${(-y * 7).toFixed(2)}deg) rotateY(${(x * 9).toFixed(2)}deg)`;
-    ref.current.style.setProperty("--sx", `${(0.5 + x) * 100}%`); ref.current.style.setProperty("--sy", `${(0.5 + y) * 100}%`);
-  };
-  const rest = () => { if (ref.current) ref.current.style.transform = "perspective(900px) rotateX(0) rotateY(0)"; };
+export function MembershipCard({ name, since, number, member, sinceLabel, numberLabel, demo, metal }: { name: string; since: string; number: string; member: string; sinceLabel: string; numberLabel: string; demo?: boolean; metal: ReturnType<typeof useMetal> }) {
   return (
-    <motion.div initial={reduce ? false : { opacity: 0, y: 24, rotateX: 8 }} animate={{ opacity: 1, y: 0, rotateX: 0 }} transition={{ duration: 0.9, ease, delay: 0.15 }}>
-      <div ref={ref} onPointerMove={tilt} onPointerLeave={rest} onPointerUp={rest} role="img" aria-label={`${member} SKYLINE — ${name}`}
-        className="relative aspect-[1.586/1] w-full touch-pan-y overflow-hidden rounded-[10px] border border-silver/45 shadow-[0_28px_60px_-18px_rgba(0,0,0,0.85)] transition-transform duration-200 ease-out"
-        style={{ background: "linear-gradient(135deg,#171b22 0%,#0b0e12 46%,#1c2128 100%)" }}>
-        <span aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.16]" style={{ background: "radial-gradient(circle at var(--sx,25%) var(--sy,15%), #f5f5f3 0%, transparent 55%)" }} />
-        <span aria-hidden className="pointer-events-none absolute inset-[7px] rounded-[6px] border border-silver/15" />
-        {demo && <span className="absolute right-4 top-4"><DemoTag /></span>}
-        <span className="absolute left-1/2 top-[13%] -translate-x-1/2"><Emblem size={92} /></span>
-        <span className="absolute inset-x-5 bottom-4 flex items-end justify-between">
-          <span><span className="font-mono block text-[0.5rem] uppercase tracking-[0.26em] text-silver">{member}</span><span className="font-display mt-1 block text-[1.15rem] leading-none">{name}</span><span className="font-mono mt-1.5 block text-[0.5rem] uppercase tracking-[0.2em] text-cloud/60">{sinceLabel} {since}</span></span>
-          <span className="text-right font-mono text-[0.5rem] uppercase tracking-[0.18em] text-cloud/60">{numberLabel}<br /><span className="text-cloud/85">{number}</span></span>
-        </span>
+    <MetalSurface metal={metal} label={`${member} SKYLINE — ${name}`} className="aspect-[1.586/1]">
+      <span aria-hidden className="pointer-events-none absolute -bottom-20 -right-16 opacity-[0.055] [filter:drop-shadow(0_1px_0_rgba(255,255,255,0.4))_drop-shadow(0_-1px_0_rgba(0,0,0,0.9))]"><Emblem size={240} /></span>
+      <div className="relative flex h-full flex-col justify-between p-[1.15rem]">
+        <div className="flex items-start justify-between">
+          <Emblem size={52} className="[filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.8))]" />
+          <div className="text-right font-mono uppercase">
+            <p className="text-[0.55rem] tracking-[0.3em] text-silver">Skyline Club</p>
+            <p className="mt-1 text-[0.5rem] tracking-[0.24em] text-cloud/50">Ibiza 2027</p>
+            {demo && <p className="mt-2"><DemoTag /></p>}
+          </div>
+        </div>
+        <div>
+          <p className="font-mono text-[0.5rem] uppercase tracking-[0.34em] text-silver/80">{member}</p>
+          <p className="metal-text font-display mt-1.5 truncate text-[clamp(1.7rem,8.6vw,2.25rem)] uppercase leading-[1.02]">{name}</p>
+          <div aria-hidden className="mt-3 h-px bg-gradient-to-r from-silver/55 via-silver/15 to-transparent" />
+          <div className="mt-2.5 flex items-end justify-between font-mono text-[0.5rem] uppercase tracking-[0.2em] text-cloud/55">
+            <p>{sinceLabel}<span className="mt-1 block text-[0.62rem] tracking-[0.16em] text-cloud/85">{since}</span></p>
+            <p className="text-right">{numberLabel}<span className="mt-1 block text-[0.62rem] tracking-[0.16em] text-cloud/85">{number}</span></p>
+          </div>
+        </div>
       </div>
-    </motion.div>
+    </MetalSurface>
   );
 }
 
