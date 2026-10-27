@@ -11,7 +11,7 @@
   --surface-1: #0f1217;
   --surface-2: #161a21;
   --line: rgb(245 245 243 / 0.1);
-  --text-dim: rgb(245 245 243 / 0.66); /* texte secondaire, contraste > 7:1 sur Jet Black */
+  --text-dim: rgb(245 245 243 / 0.74); /* texte secondaire, contraste > 7:1 sur Jet Black */
 
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);

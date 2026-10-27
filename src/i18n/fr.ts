@@ -16,7 +16,7 @@ export const fr = {
   "gate.ok": "Rempli", "gate.todo": "À valider", "gate.waiting": "En attente",
   "gate.adult.label": "J'atteste avoir 18 ans ou plus.", "gate.charter.label": "J'accepte la charte de la communauté.", "gate.charter.read": "Lire la charte",
   "gate.consent.label": "Je souhaite utiliser les fonctions communautaires (profil, annuaire, messages).",
-  "gate.cta": "Activer la communauté", "gate.cta.waiting": "En attente de la confirmation de votre réservation",
+  "gate.p1.t": "Privé par défaut", "gate.p1.d": "Votre profil n'apparaît dans l'annuaire que si vous le décidez.", "gate.p2.t": "Vous choisissez qui vous écrit", "gate.p2.d": "Les membres ou personne, modifiable à tout moment dans My Space.", "gate.p3.t": "Vous partez quand vous voulez", "gate.p3.d": "Quitter la communauté se fait en un geste, depuis cette page.", "gate.prefs": "Gérer mes préférences", "gate.conditions": "Voir les conditions", "gate.cta": "Activer la communauté", "gate.cta.waiting": "En attente de la confirmation de votre réservation",
   "gate.done.title": "Communauté activée", "gate.done.text": "Votre profil reste privé tant que vous ne le rendez pas visible.", "gate.done.space": "Ouvrir My Space",
   "gate.leave": "Quitter la communauté", "gate.leave.title": "Quitter la communauté ?",
   "gate.leave.text": "Votre profil est masqué, vos conversations sont mises en pause et plus personne ne peut vous contacter. Vous pouvez revenir à tout moment ; vos données restent jusqu'à ce que vous demandiez leur suppression.",

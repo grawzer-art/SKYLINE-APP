@@ -7,11 +7,11 @@ export const metadata: Metadata = { title: "SKYLINE V3 — Wireframes", robots: 
 export default function Page() {
   return (
     <div className="px-5 pb-16 pt-10">
-      <Link href="/v3/screens" className="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-sky">← Plan des écrans</Link>
-      <p className="mt-6 font-mono text-[0.6rem] uppercase tracking-[0.22em] text-sunset">Prototype V3 · conception</p>
+      <Link href="/v3/screens" className="font-mono text-[0.72rem] uppercase tracking-[0.18em] text-sky">← Plan des écrans</Link>
+      <p className="mt-6 font-mono text-[0.72rem] uppercase tracking-[0.22em] text-sunset">Prototype V3 · conception</p>
       <h1 className="font-display mt-2 text-[clamp(1.7rem,8.4vw,2.5rem)]">Wireframes</h1>
       <p className="mt-3 text-[0.9rem] leading-relaxed text-cloud/75">Basse fidélité, mobile-first (iPhone 375–430 px). Les repères orange renvoient aux notes sous chaque écran. Le rendu final reprend le brand book ; les écrans cliquables sont dans le prototype.</p>
-      <nav aria-label="Sommaire" className="mt-5 flex flex-wrap gap-2 font-mono text-[0.58rem] uppercase tracking-[0.14em]">
+      <nav aria-label="Sommaire" className="mt-5 flex flex-wrap gap-2 font-mono text-[0.7rem] uppercase tracking-[0.14em]">
         {["home", "now", "flight", "explore", "radio", "space", "members", "messages", "club", "hq"].map((a) => <a key={a} href={`#${a}`} className="min-h-9 border border-cloud/25 px-2.5 py-2">{a}</a>)}
       </nav>
 
@@ -72,7 +72,7 @@ export default function Page() {
           <Box h={30} n={2} label="🔍 Pseudo ou ville" />
           <Box h={30} label="Toutes les villes ▾" className="mt-2" />
           <div className="mt-2 flex gap-1.5 overflow-hidden"><Chip on>House</Chip><Chip>Techno</Chip><Chip>Disco</Chip><Chip>Melodic</Chip></div>
-          <p className="mt-3 font-mono text-[0.5rem] uppercase tracking-[0.12em] text-cloud/50">8 membres visibles</p>
+          <p className="mt-3 font-mono text-[0.7rem] uppercase tracking-[0.12em] text-cloud/64">8 membres visibles</p>
           <div className="mt-2 space-y-2.5">{[1, 2, 3, 4].map((i) => <Row key={i}><Avatar n={i === 1 ? 4 : undefined} /><div className="flex-1"><Line w="45%" /><div className="mt-1.5"><Line w="70%" /></div></div>{i === 2 && <Chip>En attente</Chip>}</Row>)}</div>
           <Box h={40} n={1} label="Profil masqué → « Rendre visible »" className="mt-3" dashed />
           <Tabs active={3} />
@@ -97,9 +97,9 @@ export default function Page() {
 
         <section id="hq" className="scroll-mt-6">
           <p className="font-display text-[1rem]">SKYLINE HQ — environnement organisateurs</p>
-          <p className="font-mono text-[0.58rem] uppercase tracking-[0.14em] text-sky">Application séparée · bureau d&apos;abord</p>
+          <p className="font-mono text-[0.7rem] uppercase tracking-[0.14em] text-sky">Application séparée · bureau d&apos;abord</p>
           <div className="mt-3 overflow-x-auto"><div className="grid h-[420px] w-[720px] grid-cols-[150px_1fr] border-2 border-cloud/35">
-            <div className="space-y-2 border-r border-cloud/25 p-3 font-mono text-[0.5rem] uppercase tracking-[0.1em] text-cloud/60"><p className="text-cloud">SKYLINE HQ</p>{["Tableau de bord", "Signals", "Programme & LIVE", "Radio & médias", "Membres", "Modération", "Messages d'équipe", "Rôles & accès", "Journal d'audit"].map((x, i) => <div key={x} className={i === 5 ? "border-l border-sky pl-2 text-sky" : "pl-2"}>{x}</div>)}</div>
+            <div className="space-y-2 border-r border-cloud/25 p-3 font-mono text-[0.7rem] uppercase tracking-[0.1em] text-cloud/72"><p className="text-cloud">SKYLINE HQ</p>{["Tableau de bord", "Signals", "Programme & LIVE", "Radio & médias", "Membres", "Modération", "Messages d'équipe", "Rôles & accès", "Journal d'audit"].map((x, i) => <div key={x} className={i === 5 ? "border-l border-sky pl-2 text-sky" : "pl-2"}>{x}</div>)}</div>
             <div className="space-y-3 p-4"><Row className="justify-between"><Chip on>Modération · 3 signalements</Chip><Chip>Rôle : modérateur</Chip></Row>
               <div className="grid grid-cols-3 gap-2"><Box h={60} label="À traiter" /><Box h={60} label="En cours" /><Box h={60} label="Résolus" /></div>
               <Box h={200} dashed label="File de signalements · motif · contexte limité · actions : avertir / suspendre / clore · journalisé" /></div>

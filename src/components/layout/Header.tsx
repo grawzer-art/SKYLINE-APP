@@ -60,7 +60,7 @@ export function Header() {
             <li key={n.id} className="py-4">
               <div className="flex items-baseline justify-between gap-3">
                 <p className="font-medium">{n.title}</p>
-                <span className="shrink-0 font-mono text-[0.68rem] text-dim">{n.time}</span>
+                <span className="shrink-0 font-mono text-[0.75rem] text-dim">{n.time}</span>
               </div>
               <p className="mt-1 text-sm text-dim">{n.body}</p>
             </li>

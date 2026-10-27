@@ -16,11 +16,11 @@ export function ConditionList() {
     const hint = k === "reservationConfirmed" ? (ok ? t("gate.cond.reservationConfirmed.hint") : t("gate.cond.reservationPending.hint")) : t(`gate.cond.${k}.hint` as never);
     return (
       <li key={k} className="flex items-start gap-4 py-3.5">
-        <span aria-hidden className={cn("mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border", ok ? "border-sky bg-sky text-jet" : waiting ? "border-cloud/40 text-cloud/60" : "border-silver/40 text-silver/60")}>
+        <span aria-hidden className={cn("mt-0.5 grid size-6 shrink-0 place-items-center rounded-full border", ok ? "border-sky bg-sky text-jet" : waiting ? "border-cloud/40 text-cloud/72" : "border-silver/40 text-silver/60")}>
           {ok ? <Check size={14} strokeWidth={2.5} /> : waiting ? <Clock size={13} strokeWidth={1.75} /> : <Circle size={9} strokeWidth={1.75} />}
         </span>
         <span className="min-w-0 flex-1"><span className="block text-[0.95rem]">{t(`gate.cond.${k}` as never)}</span><span className="block text-[0.78rem] text-dim">{hint}</span></span>
-        <span className="shrink-0 font-mono text-[0.52rem] uppercase tracking-[0.14em] text-cloud/55">{ok ? t("gate.ok") : waiting ? t("gate.waiting") : t("gate.todo")}</span>
+        <span className="shrink-0 font-mono text-[0.7rem] uppercase tracking-[0.14em] text-cloud/68">{ok ? t("gate.ok") : waiting ? t("gate.waiting") : t("gate.todo")}</span>
       </li>
     );
   };
@@ -39,7 +39,7 @@ export function CommunityGate({ eyebrow, title, back, children }: { eyebrow: str
     <>
       <ScreenTitle eyebrow={eyebrow} title={title} back={back} />
       <Block>
-        <div role="status" className="border border-silver/40 p-5">
+        <div role="status" className="rounded-[8px] border border-silver/40 p-5">
           <p className="font-display text-[1.1rem]">{t("gate.locked.title")}</p>
           <p className="mt-2 text-[0.9rem] leading-relaxed text-cloud/80">{t("gate.locked.text")}</p>
         </div>

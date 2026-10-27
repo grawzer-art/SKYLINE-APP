@@ -27,7 +27,7 @@ export function UpdatesFeed() {
             className={cn("inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border px-4 text-[0.82rem] font-medium transition active:scale-95",
               filter === f.id ? "border-sky bg-sky text-jet" : "border-line bg-surface-1 text-cloud")}>
             {f.label}
-            <span className={cn("font-mono text-[0.68rem]", filter === f.id ? "text-jet/70" : "text-dim")}>{count(f.id)}</span>
+            <span className={cn("font-mono text-[0.75rem]", filter === f.id ? "text-jet/70" : "text-dim")}>{count(f.id)}</span>
           </button>
         ))}
       </div>
@@ -45,7 +45,7 @@ export function UpdatesFeed() {
                 <Photo src={n.image} sizes="(max-width: 480px) 100vw, 480px" imgClassName="transition duration-700 group-hover:scale-[1.04]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-jet via-jet/60 via-50% to-jet/10" />
                 <div className="relative min-w-0">
-                  <p className="font-mono text-[0.6rem] uppercase tracking-[0.18em] text-sky">{n.tag} <span className="text-dim">· {n.date}</span></p>
+                  <p className="font-mono text-[0.72rem] uppercase tracking-[0.18em] text-sky">{n.tag} <span className="text-dim">· {n.date}</span></p>
                   <h3 className="font-display mt-1.5 text-[1.02rem] leading-[1.05]">{n.title}</h3>
                   <p className="mt-1 truncate text-[0.8rem] text-cloud/75">{n.excerpt}</p>
                 </div>

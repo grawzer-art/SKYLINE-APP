@@ -11,7 +11,7 @@ export function CrewScreen() {
   return (
     <div className="px-5 pt-28">
       <BackButton />
-      <p className="mt-6 font-mono text-[0.7rem] uppercase tracking-[0.24em] text-sky">My Crew · Démo</p>
+      <p className="mt-6 font-mono text-[0.75rem] uppercase tracking-[0.24em] text-sky">My Crew · Démo</p>
       <h1 className="font-display mt-3 text-[clamp(2.4rem,12vw,3.6rem)]">{crew.name}</h1>
       <p className="mt-4 max-w-[34ch] text-dim">{crew.members.length} voyageurs fictifs. Touche un profil pour le consulter.</p>
 

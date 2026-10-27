@@ -53,14 +53,14 @@ export function V3Chat({ id }: { id: string }) {
         <>
           <header className="px-5 pt-[calc(var(--safe-top)+5.5rem)]">
             <div className="flex items-center justify-between">
-              <Link href="/v3/club/messages" className="-ml-1 inline-flex min-h-11 items-center gap-2 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-dim hover:text-cloud"><ArrowLeft size={16} strokeWidth={1.5} aria-hidden />{t("common.messages")}</Link>
+              <Link href="/v3/club/messages" className="-ml-1 inline-flex min-h-11 items-center gap-2 font-mono text-[0.72rem] uppercase tracking-[0.18em] text-dim hover:text-cloud"><ArrowLeft size={16} strokeWidth={1.5} aria-hidden />{t("common.messages")}</Link>
               <button type="button" onClick={() => setPanel("menu")} aria-haspopup="dialog" aria-label={t("chat.menu")} className="grid size-11 place-items-center rounded-full border border-cloud/25 transition active:scale-95"><MoreHorizontal size={18} strokeWidth={1.5} aria-hidden /></button>
             </div>
-            <div className="mt-3 flex items-center gap-4 border-b border-line pb-5"><Face name={m?.pseudo ?? "?"} size={60} tone="sky" /><div><h1 className="font-display text-[1.7rem] leading-none">{m?.pseudo}</h1><p className="mt-1.5 font-mono text-[0.58rem] uppercase tracking-[0.16em] text-dim">{m?.city} · {t("chat.eyebrow")}</p></div></div>
+            <div className="mt-3 flex items-center gap-4 border-b border-line pb-5"><Face name={m?.pseudo ?? "?"} size={60} tone="sky" /><div><h1 className="font-display text-[1.7rem] leading-none">{m?.pseudo}</h1><p className="mt-1.5 font-mono text-[0.7rem] uppercase tracking-[0.16em] text-dim">{m?.city} · {t("chat.eyebrow")}</p></div></div>
           </header>
           {!state.tipDismissed && (
             <div className="mx-5 mt-3 flex items-start gap-3 border border-sky/40 p-4">
-              <div className="flex-1"><p className="font-mono text-[0.58rem] uppercase tracking-[0.18em] text-sky">{t("chat.tip.title")}</p><p className="mt-1.5 text-[0.82rem] leading-relaxed text-cloud/80">{t("chat.tip.text")}</p></div>
+              <div className="flex-1"><p className="font-mono text-[0.7rem] uppercase tracking-[0.18em] text-sky">{t("chat.tip.title")}</p><p className="mt-1 text-[0.88rem] leading-snug text-cloud/80">{t("chat.tip.text")}</p></div>
               <button type="button" onClick={c.dismissTip} aria-label={t("common.close")} className="grid size-11 shrink-0 place-items-center text-silver"><X size={16} strokeWidth={1.5} aria-hidden /></button>
             </div>
           )}
@@ -69,7 +69,7 @@ export function V3Chat({ id }: { id: string }) {
               {msgs.map((x, i) => (
                 <li key={i} className={cn("flex items-start", x.from === "me" ? "justify-end" : "justify-start gap-3")}>
                   {x.from === "them" && <Face name={m?.pseudo ?? "?"} size={30} tone="none" className="mt-1" />}
-                  <p className={cn("max-w-[74%] px-4 py-2.5 text-[0.92rem] leading-snug [overflow-wrap:anywhere]", x.from === "me" ? "rounded-[18px] rounded-br-[4px] bg-cloud text-jet" : "rounded-[18px] rounded-bl-[4px] border border-line bg-surface-1")}>{x.text}<span className={cn("mt-1 block font-mono text-[0.5rem] uppercase tracking-[0.12em]", x.from === "me" ? "text-jet/55" : "text-dim")}>{x.t}</span></p>
+                  <p className={cn("max-w-[74%] px-4 py-2.5 text-[0.92rem] leading-snug [overflow-wrap:anywhere]", x.from === "me" ? "rounded-[18px] rounded-br-[4px] bg-cloud text-jet" : "rounded-[18px] rounded-bl-[4px] border border-line bg-surface-1")}>{x.text}<span className={cn("mt-1 block font-mono text-[0.7rem] uppercase tracking-[0.12em]", x.from === "me" ? "text-jet/55" : "text-dim")}>{x.t}</span></p>
                   {x.from === "them" && <button type="button" onClick={() => setPanel({ report: i })} aria-haspopup="dialog" aria-label={t("chat.msg.report")} className="grid size-11 shrink-0 place-items-center text-silver/60 hover:text-cloud"><Flag size={14} strokeWidth={1.5} aria-hidden /></button>}
                 </li>
               ))}
@@ -85,9 +85,9 @@ export function V3Chat({ id }: { id: string }) {
               <textarea id="msg" value={text} onChange={(e) => { setText(e.target.value); setErr(null); }} rows={1} placeholder={t("chat.placeholder")} disabled={!online}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
                 className="max-h-28 min-h-12 flex-1 resize-none border border-line bg-surface-1 px-4 py-3 text-[1rem] outline-none focus:border-sky disabled:opacity-50" />
-              <Button type="submit" disabled={!text.trim() || !online} className="min-h-12 px-5 text-[0.66rem] disabled:opacity-40">{t("chat.send")}</Button>
+              <Button type="submit" disabled={!text.trim() || !online} className="min-h-12 px-5 text-[0.72rem] disabled:opacity-40">{t("chat.send")}</Button>
             </div>
-            {text.length > LIMITS.messageMax - 80 && <p className={cn("mt-1 text-right font-mono text-[0.58rem] tabular-nums", text.length > LIMITS.messageMax ? "text-sunset" : "text-dim")}>{text.length}/{LIMITS.messageMax}</p>}
+            {text.length > LIMITS.messageMax - 80 && <p className={cn("mt-1 text-right font-mono text-[0.7rem] tabular-nums", text.length > LIMITS.messageMax ? "text-sunset" : "text-dim")}>{text.length}/{LIMITS.messageMax}</p>}
           </form>
 
           <Sheet open={panel !== null} onClose={() => setPanel(null)}

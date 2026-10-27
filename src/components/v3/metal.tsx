@@ -63,7 +63,7 @@ export function TiltToggle({ metal, label, labelOn }: { metal: ReturnType<typeof
   if (!metal.supported) return null;
   return (
     <button type="button" onClick={metal.enableTilt} aria-pressed={metal.tilt}
-      className="mx-auto mt-1 flex min-h-11 items-center gap-2 rounded-full px-4 font-mono text-[0.58rem] uppercase tracking-[0.18em] text-cloud/60 transition active:text-cloud">
+      className="mx-auto mt-1 flex min-h-11 items-center gap-2 rounded-full px-4 font-mono text-[0.7rem] uppercase tracking-[0.18em] text-cloud/72 transition active:text-cloud">
       <span aria-hidden className={cn("size-1.5 rounded-full transition", metal.tilt ? "bg-sky" : "bg-cloud/30")} />{metal.tilt ? labelOn : label}
     </button>
   );

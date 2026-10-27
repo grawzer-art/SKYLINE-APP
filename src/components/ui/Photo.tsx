@@ -22,11 +22,11 @@ export function Photo({
           style={objectPosition ? { objectPosition } : undefined} className={cn("object-cover", imgClassName)} />
       ) : (
         <div aria-hidden className="absolute inset-3 grid place-items-center border border-dashed border-cloud/15">
-          {slotLabel && <span className="px-6 text-center font-mono text-[0.56rem] uppercase leading-relaxed tracking-[0.16em] text-cloud/40">Photo à fournir<br />{slotLabel}</span>}
+          {slotLabel && <span className="px-6 text-center font-mono text-[0.7rem] uppercase leading-relaxed tracking-[0.16em] text-cloud/60">Photo à fournir<br />{slotLabel}</span>}
         </div>
       )}
       {provisional && hasImage && (
-        <span className={cn("pointer-events-none absolute right-3 top-3 border border-cloud/25 bg-jet/45 px-2 py-1 font-mono text-[0.54rem] uppercase tracking-[0.16em] text-cloud/70 backdrop-blur", tagClassName)}>
+        <span className={cn("pointer-events-none absolute right-3 top-3 border border-cloud/25 bg-jet/45 px-2 py-1 font-mono text-[0.7rem] uppercase tracking-[0.16em] text-cloud/70 backdrop-blur", tagClassName)}>
           Visuel provisoire
         </span>
       )}

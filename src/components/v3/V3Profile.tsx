@@ -25,7 +25,7 @@ export function V3Profile() {
     <>
       <ScreenTitle eyebrow="Compte" title="Profil" />
       <Block>
-        <div className="flex items-center gap-4"><Initials name={state.me.pseudo} size={64} /><div><p className="font-display text-[1.15rem]">{state.me.pseudo}</p><Link href="/v3/club/space" className="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-sky">{t("space.title")} →</Link></div></div>
+        <div className="flex items-center gap-4"><Initials name={state.me.pseudo} size={64} /><div><p className="font-display text-[1.15rem]">{state.me.pseudo}</p><Link href="/v3/club/space" className="font-mono text-[0.72rem] uppercase tracking-[0.18em] text-sky">{t("space.title")} →</Link></div></div>
       </Block>
       <Block label={t("profile.language")}>
         <div role="radiogroup" aria-label={t("profile.language")} className="grid grid-cols-2 gap-2">
@@ -42,7 +42,7 @@ export function V3Profile() {
         {state.blocked.length === 0 ? <p className="text-[0.88rem] text-dim">Aucun membre bloqué.</p> : (
           <ul className="divide-y divide-line border-y border-line">
             {state.blocked.map((id) => (
-              <li key={id} className="flex min-h-14 items-center justify-between gap-4"><span>{c.member(id)?.pseudo ?? "Membre"}</span><button type="button" onClick={() => c.unblock(id)} className="min-h-11 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-sky">{t("member.unblock")}</button></li>
+              <li key={id} className="flex min-h-14 items-center justify-between gap-4"><span>{c.member(id)?.pseudo ?? "Membre"}</span><button type="button" onClick={() => c.unblock(id)} className="min-h-11 font-mono text-[0.72rem] uppercase tracking-[0.16em] text-sky">{t("member.unblock")}</button></li>
             ))}
           </ul>
         )}

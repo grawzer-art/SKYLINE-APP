@@ -26,21 +26,21 @@ export function V3Messages() {
     <CommunityGate {...gate}>
       <header className="px-5 pt-[calc(var(--safe-top)+5.5rem)]">
         <div className="flex items-center justify-between">
-          <Link href="/v3/club" className="-ml-1 inline-flex min-h-11 items-center gap-2 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-dim hover:text-cloud"><ArrowLeft size={16} strokeWidth={1.5} aria-hidden />{t("common.club")}</Link>
+          <Link href="/v3/club" className="-ml-1 inline-flex min-h-11 items-center gap-2 font-mono text-[0.72rem] uppercase tracking-[0.18em] text-dim hover:text-cloud"><ArrowLeft size={16} strokeWidth={1.5} aria-hidden />{t("common.club")}</Link>
           <button type="button" onClick={() => { setSearching((s) => !s); setQ(""); }} aria-expanded={searching} aria-label={t("messages.search")} className="grid size-11 place-items-center rounded-full border border-cloud/25 transition active:scale-95">{searching ? <X size={18} strokeWidth={1.5} aria-hidden /> : <Search size={18} strokeWidth={1.5} aria-hidden />}</button>
         </div>
         <h1 className="font-display mt-3 text-[clamp(2rem,10.5vw,3rem)] leading-none">{t("messages.title")}</h1>
         {searching && (
           <div className="mt-4">
             <label htmlFor="msg-search" className="sr-only">{t("messages.search.placeholder")}</label>
-            <input id="msg-search" autoFocus type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("messages.search.placeholder")} className="min-h-12 w-full border border-line bg-surface-1 px-4 text-[1rem] outline-none focus:border-sky" />
+            <input id="msg-search" autoFocus type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("messages.search.placeholder")} className="min-h-12 w-full rounded-[8px] border border-line bg-surface-1 px-4 text-[1rem] outline-none focus:border-sky" />
           </div>
         )}
         <div role="tablist" aria-label={t("messages.title")} className="mt-6 flex gap-8 border-b border-line">
           {tabs.map(([k, l, n]) => (
             <button key={k} role="tab" id={`tab-${k}`} aria-controls={`panel-${k}`} type="button" aria-selected={tab === k} onClick={() => setTab(k)}
-              className={cn("relative -mb-px flex min-h-12 items-center gap-2 border-b-2 pb-0.5 font-mono text-[0.66rem] uppercase tracking-[0.16em] transition", tab === k ? "border-sky text-cloud" : "border-transparent text-cloud/55")}>
-              {l}{n > 0 && <span className={cn("grid min-w-5 place-items-center rounded-full px-1.5 py-0.5 text-[0.55rem]", tab === k ? "bg-sky text-jet" : "bg-cloud/15 text-cloud/80")} aria-label={String(n)}>{n}</span>}
+              className={cn("relative -mb-px flex min-h-12 items-center gap-2 border-b-2 pb-0.5 font-mono text-[0.72rem] uppercase tracking-[0.16em] transition", tab === k ? "border-sky text-cloud" : "border-transparent text-cloud/68")}>
+              {l}{n > 0 && <span className={cn("grid min-w-5 place-items-center rounded-full px-1.5 py-0.5 text-[0.7rem]", tab === k ? "bg-sky text-jet" : "bg-cloud/15 text-cloud/80")} aria-label={String(n)}>{n}</span>}
             </button>
           ))}
         </div>
@@ -61,11 +61,11 @@ export function V3Messages() {
                       <Face name={m?.pseudo ?? "?"} size={54} tone={hot ? "sky" : "silver"} />
                       <span className="min-w-0 flex-1">
                         <span className="flex items-center gap-2"><span className={cn("text-[1.02rem]", hot && "font-medium")}>{m?.pseudo}</span>{muted && <BellOff size={13} strokeWidth={1.5} aria-label={t("messages.muted")} className="text-silver" />}</span>
-                        <span className={cn("mt-0.5 block truncate text-[0.86rem]", hot ? "text-cloud/90" : "text-cloud/55")}>{last ? `${last.from === "me" ? t("messages.you") : ""}${last.text}` : t("messages.new")}</span>
+                        <span className={cn("mt-0.5 block truncate text-[0.86rem]", hot ? "text-cloud/90" : "text-cloud/68")}>{last ? `${last.from === "me" ? t("messages.you") : ""}${last.text}` : t("messages.new")}</span>
                       </span>
                       <span className="flex shrink-0 flex-col items-end gap-2">
-                        {last && <span className="font-mono text-[0.54rem] uppercase tracking-[0.12em] text-dim">{last.t}</span>}
-                        {hot ? <span className="inline-flex items-center gap-1.5 font-mono text-[0.5rem] uppercase tracking-[0.12em] text-sky"><span aria-hidden className="size-2 rounded-full bg-sky" />{t("messages.unread", { count: unread })}</span> : <span aria-hidden className="h-2" />}
+                        {last && <span className="font-mono text-[0.7rem] uppercase tracking-[0.12em] text-dim">{last.t}</span>}
+                        {hot ? <span className="inline-flex items-center gap-1.5 font-mono text-[0.7rem] uppercase tracking-[0.12em] text-sky"><span aria-hidden className="size-2 rounded-full bg-sky" />{t("messages.unread", { count: unread })}</span> : <span aria-hidden className="h-2" />}
                       </span>
                     </Link>
                   </li>
@@ -79,12 +79,12 @@ export function V3Messages() {
               const m = c.member(id);
               return (
                 <li key={id} className="rounded-[6px] border border-cloud/15 p-4">
-                  <div className="flex items-center gap-4"><Face name={m?.pseudo ?? "?"} size={52} tone="silver" /><div><p className="text-[1.02rem]">{m?.pseudo}</p><p className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-dim">{m?.city}</p></div></div>
+                  <div className="flex items-center gap-4"><Face name={m?.pseudo ?? "?"} size={52} tone="silver" /><div><p className="text-[1.02rem]">{m?.pseudo}</p><p className="font-mono text-[0.7rem] uppercase tracking-[0.14em] text-dim">{m?.city}</p></div></div>
                   {state.intros[id] && <p className="mt-3.5 border-l-2 border-sky/60 pl-4 text-[0.92rem] italic leading-snug text-cloud/85">« {state.intros[id]} »</p>}
-                  <Link href={`/v3/club/members/${id}`} className="mt-1.5 inline-flex min-h-11 items-center font-mono text-[0.6rem] uppercase tracking-[0.16em] text-sky">{t("messages.req.view")} →</Link>
+                  <Link href={`/v3/club/members/${id}`} className="mt-1.5 inline-flex min-h-11 items-center font-mono text-[0.72rem] uppercase tracking-[0.16em] text-sky">{t("messages.req.view")} →</Link>
                   <div className="grid grid-cols-2 gap-3">
-                    <Button onClick={() => c.answerRequest(id, true)} className="min-h-11 px-3 text-[0.64rem]">{t("messages.req.accept")}</Button>
-                    <Button variant="ghost" onClick={() => c.answerRequest(id, false)} className="min-h-11 px-3 text-[0.64rem]">{t("messages.req.decline")}</Button>
+                    <Button onClick={() => c.answerRequest(id, true)} className="min-h-11 px-3 text-[0.72rem]">{t("messages.req.accept")}</Button>
+                    <Button variant="ghost" onClick={() => c.answerRequest(id, false)} className="min-h-11 px-3 text-[0.72rem]">{t("messages.req.decline")}</Button>
                   </div>
                 </li>
               );
@@ -93,7 +93,7 @@ export function V3Messages() {
         )}
         {state.settings.contact === "nobody" && <p className="mt-5 border-l border-sky pl-4 text-[0.78rem] text-dim">{t("messages.nobody")}</p>}
       </div>
-      <p className="px-5 pb-4 pt-6 text-[0.7rem] text-dim">{t("messages.footer")}</p>
+      <p className="px-5 pb-4 pt-6 text-[0.75rem] text-dim">{t("messages.footer")}</p>
     </CommunityGate>
   );
 }

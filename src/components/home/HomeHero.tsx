@@ -38,9 +38,9 @@ function QuietCountdown({ target, label }: { target: string; label: string }) {
     ? [[String(s.days), "J"], [pad(s.hours), "H"], [pad(s.minutes), "M"], [pad(s.seconds), "S"]] : [["–", "J"], ["–", "H"], ["–", "M"], ["–", "S"]];
   return (
     <div role="timer" aria-label={s.status === "running" ? `${label} ${s.days} jours, ${s.hours} heures, ${s.minutes} minutes` : label}>
-      <p className="font-mono text-[0.58rem] uppercase tracking-[0.22em] text-cloud/60">{label}</p>
-      <p className="mt-1.5 flex items-baseline gap-2.5 font-mono text-[1.05rem] tabular-nums text-cloud">
-        {parts.map(([v, u]) => <span key={u}>{v}<span className="ml-0.5 text-[0.6rem] text-cloud/55">{u}</span></span>)}
+      <p className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-cloud/72">{label}</p>
+      <p className="mt-1.5 flex items-baseline gap-2.5 font-mono text-[1.2rem] tabular-nums text-cloud">
+        {parts.map(([v, u]) => <span key={u}>{v}<span className="ml-0.5 text-[0.72rem] text-cloud/68">{u}</span></span>)}
       </p>
     </div>
   );
@@ -67,24 +67,24 @@ export function HomeHero() {
 
       {/* Identité membre — discrète, façon étiquette */}
       <motion.div {...rise(0.2)} className="px-5">
-        <p className="font-mono text-[0.6rem] uppercase leading-relaxed tracking-[0.22em] text-cloud/80">
-          {user.fullName}<br /><span className="text-cloud/55">{user.memberLine}</span>
+        <p className="font-display text-[1.05rem] leading-tight">
+          {user.fullName}<br /><span className="font-mono text-[0.75rem] uppercase tracking-[0.2em] text-cloud/75">{user.memberLine}</span>
         </p>
       </motion.div>
 
 
       <div className="px-5 [text-shadow:0_1px_16px_rgb(0_0_0/0.7)]">
-        <motion.p {...rise(0.3)} className={cn("font-mono text-[0.66rem] uppercase tracking-[0.22em]", phase === "before" ? "text-cloud/90" : cfg.accent)}>{cfg.eyebrow}</motion.p>
-        <motion.h1 id="home-title" {...rise(0.42)} className="font-display mt-4 text-[clamp(1.7rem,8.4vw,2.5rem)] text-cloud">
+        <motion.p {...rise(0.3)} className={cn("font-mono text-[0.72rem] uppercase tracking-[0.22em]", phase === "before" ? "text-cloud/90" : cfg.accent)}>{cfg.eyebrow}</motion.p>
+        <motion.h1 id="home-title" {...rise(0.42)} className="font-display mt-4 text-[clamp(2rem,10vw,2.9rem)] leading-[0.95] text-cloud">
           {cfg.lines.map((l, i) => <span key={l} className={cn("block", i === cfg.accentLine && cfg.accent)}>{l}</span>)}
         </motion.h1>
 
         <motion.div {...rise(0.6)} className="mt-6 flex items-end justify-between gap-4 border-t border-cloud/20 pt-3.5">
           {cfg.countdown ? (
             <QuietCountdown target={cfg.countdown === "end" ? event.endISO : event.departureISO} label={cfg.countdownLabel ?? ""} />
-          ) : <p className="font-mono text-[0.58rem] uppercase tracking-[0.22em] text-cloud/60">Édition {event.year}</p>}
+          ) : <p className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-cloud/72">Édition {event.year}</p>}
           <Link href={cfg.cta.href}
-            className="group inline-flex min-h-11 items-center gap-2.5 border-b border-cloud/70 pb-0.5 font-mono text-[0.7rem] uppercase tracking-[0.2em] text-cloud transition hover:border-sky hover:text-sky">
+            className="group inline-flex min-h-12 shrink-0 items-center gap-2 whitespace-nowrap rounded-full bg-cloud px-4 font-mono text-[0.75rem] uppercase tracking-[0.1em] text-jet transition active:scale-[0.97]">
             {cfg.cta.label} <ArrowRight size={15} strokeWidth={1.5} aria-hidden className="transition group-hover:translate-x-1 motion-reduce:transition-none" />
           </Link>
         </motion.div>

@@ -21,7 +21,7 @@ export function AudioPlayer({ src, title, className }: { src?: string; title: st
 
   if (!src || failed) {
     return (
-      <div role="status" className={cn("border border-dashed border-cloud/25 px-4 py-3.5 font-mono text-[0.62rem] uppercase leading-relaxed tracking-[0.16em] text-cloud/65", className)}>
+      <div role="status" className={cn("border border-dashed border-cloud/25 px-4 py-3.5 font-mono text-[0.72rem] uppercase leading-relaxed tracking-[0.16em] text-cloud/75", className)}>
         Extrait audio indisponible pour le moment
       </div>
     );
@@ -47,7 +47,7 @@ export function AudioPlayer({ src, title, className }: { src?: string; title: st
         <input id={id} type="range" min={0} max={duration || 0} step={0.1} value={Math.min(time, duration || 0)} disabled={!duration}
           onChange={(e) => { const a = ref.current; if (a) a.currentTime = Number(e.target.value); }}
           className="h-6 w-full cursor-pointer accent-[#8FB8FF] disabled:cursor-default disabled:opacity-50" />
-        <p className="mt-0.5 flex justify-between font-mono text-[0.62rem] tabular-nums text-cloud/65"><span>{fmt(time)}</span><span>{duration ? fmt(duration) : "—:——"}</span></p>
+        <p className="mt-0.5 flex justify-between font-mono text-[0.72rem] tabular-nums text-cloud/75"><span>{fmt(time)}</span><span>{duration ? fmt(duration) : "—:——"}</span></p>
       </div>
     </div>
   );

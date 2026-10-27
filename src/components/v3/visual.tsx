@@ -39,10 +39,10 @@ export function NavTile({ href, title, sub, visual, badge, locked }: { href: str
       <span className="relative block w-[4.75rem] shrink-0"><Photo src={visual} sizes="76px" imgClassName={cn("transition duration-700 group-hover:scale-110", locked && "opacity-50")} /></span>
       <span className="flex min-w-0 flex-1 flex-col justify-center px-4">
         <span className="font-display block text-[0.98rem] leading-none">{title}</span>
-        <span className="mt-1.5 block truncate text-[0.78rem] text-cloud/65">{sub}</span>
+        <span className="mt-1.5 block truncate text-[0.78rem] text-cloud/75">{sub}</span>
       </span>
       <span className="flex items-center gap-3 pr-4">
-        {badge && <span className="border border-sky/60 px-1.5 py-0.5 font-mono text-[0.5rem] uppercase tracking-[0.14em] text-sky">{badge}</span>}
+        {badge && <span className="rounded-[8px] border border-sky/60 px-1.5 py-0.5 font-mono text-[0.7rem] uppercase tracking-[0.14em] text-sky">{badge}</span>}
         <ArrowRight size={16} strokeWidth={1.5} aria-hidden className="text-silver transition group-hover:translate-x-1 motion-reduce:transition-none" />
       </span>
     </Link>
@@ -61,18 +61,18 @@ export function MembershipCard({ name, since, number, member, sinceLabel, number
         <div className="flex items-start justify-between">
           <Emblem size={52} className="[filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.8))]" />
           <div className="text-right font-mono uppercase">
-            <p className="text-[0.55rem] tracking-[0.3em] text-silver">Skyline Club</p>
-            <p className="mt-1 text-[0.5rem] tracking-[0.24em] text-cloud/50">Ibiza 2027</p>
+            <p className="text-[0.7rem] tracking-[0.3em] text-silver">Skyline Club</p>
+            <p className="mt-1 text-[0.7rem] tracking-[0.24em] text-cloud/64">Ibiza 2027</p>
             {demo && <p className="mt-2"><DemoTag /></p>}
           </div>
         </div>
         <div>
-          <p className="font-mono text-[0.5rem] uppercase tracking-[0.34em] text-silver/80">{member}</p>
+          <p className="font-mono text-[0.7rem] uppercase tracking-[0.34em] text-silver/80">{member}</p>
           <p className="metal-text font-display mt-1.5 truncate text-[clamp(1.7rem,8.6vw,2.25rem)] uppercase leading-[1.02]">{name}</p>
           <div aria-hidden className="mt-3 h-px bg-gradient-to-r from-silver/55 via-silver/15 to-transparent" />
-          <div className="mt-2.5 flex items-end justify-between font-mono text-[0.5rem] uppercase tracking-[0.2em] text-cloud/55">
-            <p>{sinceLabel}<span className="mt-1 block text-[0.62rem] tracking-[0.16em] text-cloud/85">{since}</span></p>
-            <p className="text-right">{numberLabel}<span className="mt-1 block text-[0.62rem] tracking-[0.16em] text-cloud/85">{number}</span></p>
+          <div className="mt-2.5 flex items-end justify-between font-mono text-[0.7rem] uppercase tracking-[0.2em] text-cloud/68">
+            <p>{sinceLabel}<span className="mt-1 block text-[0.72rem] tracking-[0.16em] text-cloud/85">{since}</span></p>
+            <p className="text-right">{numberLabel}<span className="mt-1 block text-[0.72rem] tracking-[0.16em] text-cloud/85">{number}</span></p>
           </div>
         </div>
       </div>
