@@ -122,3 +122,9 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------- Surface métallique (carte membre, pass) ---------- */
+@keyframes metal-sweep { from { transform: translateX(-130%) skewX(-18deg); opacity: 0; } 20% { opacity: 1; } to { transform: translateX(260%) skewX(-18deg); opacity: 0; } }
+.metal-sweep { animation: metal-sweep 2.2s cubic-bezier(0.22, 1, 0.36, 1) 0.9s 1 both; }
+@media (prefers-reduced-motion: reduce) { .metal-sweep { display: none; } }
+.metal-text { background: linear-gradient(180deg, #ffffff 0%, #d6d8db 52%, #8e949b 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.85)) drop-shadow(0 -0.5px 0 rgba(255, 255, 255, 0.12)); }

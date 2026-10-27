@@ -95,7 +95,20 @@ export const fr = {
   "radio.test": "Signal de test (prototype)", "radio.back.radio": "Skyline Radio",
   // Profil / simulation
   "profile.language": "Langue", "sim.title": "Simulation (prototype)", "sim.reservation": "Réservation", "sim.reservation.confirmed": "Confirmée", "sim.reservation.pending": "En attente",
-  "sim.media": "Média autorisé", "sim.media.none": "Aucun", "sim.media.tone": "Signal de test",
+  "sim.trip": "Données de voyage", "sim.trip.none": "Aucune", "sim.trip.demo": "Aperçu fictif", "sim.media": "Média autorisé", "sim.media.none": "Aucun", "sim.media.tone": "Signal de test",
+  // Visuel V3.1
+  "club.eyebrow": "The membership", "club.title": "Club", "club.tagline": "From France to Ibiza", "club.signature": "The journey never ends.",
+  "club.card.member": "Member", "club.card.tilt": "Activer le reflet au mouvement", "club.card.tilt.on": "Reflet au mouvement actif", "club.card.since": "Membre depuis", "club.card.number": "N°", "club.card.pending": "[Attribué]", "club.card.since.value": "Ibiza 2027",
+  "club.tile.space": "Votre monde, votre histoire", "club.tile.members": "Rencontrer la communauté", "club.tile.messages": "Conversations et demandes", "club.tile.souvenirs": "Archives officielles",
+  "club.tile.locked": "Disponible après activation de la communauté",
+  "club.join": "Rejoindre la communauté", "club.join.text": "Faites connaissance avant Ibiza, gardez vos contacts après.", "club.join.cta": "Voir les conditions", "club.active": "Communauté activée",
+  "club.history": "Historique de participation", "club.history.empty": "Votre participation à Ibiza 2027 apparaîtra ici.", "club.history.dates": "[Dates officielles]", "club.next": "À venir", "club.next.text": "Les prochaines éditions et accès anticipés apparaîtront ici lorsqu'ils seront réellement proposés.",
+  "space.edit": "Modifier", "space.edit.title": "Modifier mon profil", "space.done": "Terminé", "space.verified": "Participant vérifié", "space.stat.since": "Membre depuis", "space.stat.home": "Base", "space.stat.edition": "Édition",
+  "space.bio.empty": "Ajoutez une phrase qui vous ressemble.", "space.vibes": "Mes goûts", "space.vibes.empty": "Choisissez jusqu'à 5 ambiances.",
+  "space.visibility.on": "Profil visible des membres", "space.visibility.off": "Profil privé", "space.visibility.on.text": "Voici ce que les autres voient. Vous pouvez le masquer à tout moment.", "space.visibility.off.text": "Personne ne peut vous trouver. Activez la visibilité pour rencontrer la communauté.",
+  "space.contacts.see": "Voir les conversations", "space.privacy": "Confidentialité",
+  "messages.search": "Rechercher", "messages.search.placeholder": "Rechercher une conversation", "messages.search.none": "Aucune conversation ne correspond.",
+  "radio.featured.label": "Sélection à la une", "radio.by": "Par {name}", "radio.time.empty": "—:——", "radio.djs.sub": "Profil à venir", "radio.cover.note": "Visuels d'ambiance : découpes de photographies de la première édition.", "radio.listen.cta": "Écouter",
 } as const;
 
 export type Key = keyof typeof fr;

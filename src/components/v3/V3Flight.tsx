@@ -1,18 +1,21 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { ScreenTitle, Block, DemoTag } from "./ui";
-import { Emblem } from "@/components/ui/Emblem";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "motion/react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { Backdrop } from "./visual";
+import { DemoTag } from "./ui";
+import { FlightPass, type PassStatus } from "./FlightPass";
+import { TiltToggle, useMetal } from "./metal";
 import { Sheet } from "@/components/ui/Sheet";
+import { images } from "@/data/demo";
+import { demoTrip, noTrip, phaseLabels, type Trip } from "@/data/v3";
+import { ease } from "@/design/motion";
 import { useProto } from "@/lib/useProto";
 import { cn } from "@/lib/cn";
 
-const Row = ({ k, v, status }: { k: string; v: string; status?: "pending" | "ok" }) => (
-  <div className="flex items-center justify-between gap-4 border-b border-line py-3 text-[0.9rem]">
-    <dt className="text-dim">{k}</dt>
-    <dd className="flex items-center gap-2 text-right">{v}{status && <span className={cn("border px-1.5 py-0.5 font-mono text-[0.5rem] uppercase tracking-[0.14em]", status === "ok" ? "border-sky/60 text-sky" : "border-cloud/25 text-cloud/55")}>{status === "ok" ? "Confirmé" : "À confirmer"}</span>}</dd>
-  </div>
-);
+type Tab = "flight" | "stay" | "live";
+const tabs: { id: Tab; label: string }[] = [{ id: "flight", label: "Flight details" }, { id: "stay", label: "Your stay" }, { id: "live", label: "Live updates" }];
 
 const docs = [
   { id: "d1", title: "Conditions de participation", text: "Ici s'afficherait le document officiel fourni par SKYLINE." },
@@ -20,65 +23,130 @@ const docs = [
   { id: "d3", title: "Contact de l'équipe", text: "Ici s'afficherait le moyen de contact officiel de l'équipe pendant le séjour." },
 ];
 
+/** Message unique et sobre quand une information n'est pas encore publiée. */
+const Pending = ({ children }: { children: string }) => (
+  <div className="py-9"><span aria-hidden className="block h-px w-8 bg-sky" /><p role="status" className="mt-4 max-w-[28ch] text-[1.2rem] font-light leading-snug text-cloud/90">{children}</p></div>
+);
+const Line = ({ time, label, place }: { time: string; label: string; place: string }) => (
+  <li className="flex gap-4 py-3.5"><span className="w-12 shrink-0 pt-0.5 font-mono text-[0.72rem] text-sky">{time}</span><span className="min-w-0"><span className="block text-[0.98rem] leading-snug">{label}</span><span className="mt-0.5 block text-[0.8rem] text-dim">{place}</span></span></li>
+);
+const Group = ({ title, children }: { title: string; children: React.ReactNode }) => (
+  <section className="pt-6 first:pt-1"><h3 className="font-mono text-[0.58rem] uppercase tracking-[0.22em] text-cloud/55">{title}</h3><div className="mt-1 divide-y divide-line border-b border-line">{children}</div></section>
+);
+
+function Panel({ tab, trip }: { tab: Tab; trip: Trip }) {
+  if (tab === "flight") {
+    const d = trip.departure;
+    if (!d) return <Pending>Les détails de votre voyage apparaîtront ici dès leur confirmation.</Pending>;
+    return (
+      <dl className="divide-y divide-line border-b border-line">
+        {([["Aéroport de départ", d.airport], ["Date et heure", d.when], ...(d.meeting ? [["Rendez-vous", d.meeting]] : [])] as [string, string][]).map(([k, v]) => (
+          <div key={k} className="py-3.5"><dt className="font-mono text-[0.55rem] uppercase tracking-[0.2em] text-cloud/50">{k}</dt><dd className="mt-1.5 text-[1.05rem] leading-snug">{v}</dd></div>
+        ))}
+      </dl>
+    );
+  }
+  if (tab === "stay") {
+    const s = trip.stay;
+    if (!s) return <Pending>Hébergement, transferts et programme apparaîtront ici dès leur publication par l&apos;équipe.</Pending>;
+    return (
+      <>
+        {s.lodging && <Group title="Hébergement"><p className="py-3.5 text-[1.02rem]">{s.lodging}</p></Group>}
+        {s.transfers.length > 0 && <Group title="Transferts"><ul className="divide-y divide-line">{s.transfers.map((x) => <Line key={x.id} {...x} />)}</ul></Group>}
+        {s.program.length > 0 && <Group title="Programme"><ul className="divide-y divide-line">{s.program.map((x) => <Line key={x.id} {...x} />)}</ul></Group>}
+      </>
+    );
+  }
+  if (trip.updates.length === 0) return <Pending>Les annonces officielles de l&apos;organisation apparaîtront ici pendant Ibiza.</Pending>;
+  return (
+    <ul className="divide-y divide-line border-b border-line">
+      {trip.updates.map((u) => (
+        <li key={u.id} className="py-4"><p className="font-mono text-[0.58rem] uppercase tracking-[0.2em] text-sky">{u.time}</p><p className="font-display mt-1.5 text-[1.05rem]">{u.title}</p><p className="mt-1 text-[0.88rem] leading-relaxed text-cloud/75">{u.text}</p></li>
+      ))}
+    </ul>
+  );
+}
+
+/** MY FLIGHT : le voyage du membre. Pass personnel en premier écran, puis trois univers simples, selon la phase. */
 export function V3Flight() {
   const { state } = useProto();
-  const [doc, setDoc] = useState<(typeof docs)[number] | null>(null);
-  const after = state.phase === "after";
+  const reduce = useReducedMotion();
+  const metal = useMetal();
+  const phase = state.phase;
+  const demo = state.sim.trip;
+  const trip = demo ? demoTrip : noTrip;
+  const initial: Tab = phase === "during" ? "live" : "flight";
+  const [pick, setPick] = useState<{ phase: string; tab: Tab } | null>(null);
+  const tab = pick && pick.phase === phase ? pick.tab : initial;
+  const [info, setInfo] = useState<null | "root" | (typeof docs)[number]>(null);
+  const status: PassStatus = phase === "after" ? "ended" : state.sim.reservation === "confirmed" ? "confirmed" : "pending";
+  const doc = info && info !== "root" ? info : null;
+
   return (
     <>
-      <ScreenTitle eyebrow="Your access" title="My Flight" />
+      <section aria-labelledby="flight-title" className="relative isolate px-5 pt-[calc(var(--safe-top)+6.25rem)]">
+        <Backdrop src={images.before} position="30% 62%" className="!bottom-auto !h-[21rem]" />
+        <p className="font-mono text-[0.62rem] uppercase tracking-[0.24em] text-sky">Ibiza 2027 · {phaseLabels[phase]}</p>
+        <h1 id="flight-title" className="font-display mt-2 text-[clamp(2.2rem,11.5vw,3.1rem)] leading-[0.92]">My Flight</h1>
+        <div className="mt-4"><FlightPass name={state.me.pseudo} status={status} metal={metal} demo /></div>
+        <TiltToggle metal={metal} label="Activer le reflet au mouvement" labelOn="Reflet au mouvement actif" />
+      </section>
 
-      <Block>
-        <article aria-label="Pass événementiel SKYLINE" className="border border-silver/40 bg-jet p-5">
-          <div className="flex items-start justify-between gap-4">
-            <Emblem size={64} />
-            <DemoTag />
+      {phase === "after" ? (
+        <section className="px-5 pt-8" aria-labelledby="after-title">
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.22em] text-silver">Historique</p>
+          <h2 id="after-title" className="font-display mt-2 text-[1.5rem] leading-tight">Ibiza 2027 fait désormais partie de votre histoire.</h2>
+          <p className="mt-3 text-[0.92rem] leading-relaxed text-cloud/75">Retrouvez votre édition et vos souvenirs dans votre Club.</p>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link href="/v3/club/memories" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-cloud px-5 font-mono text-[0.64rem] uppercase tracking-[0.16em] text-jet">Mes souvenirs <ArrowRight size={14} strokeWidth={1.75} aria-hidden /></Link>
+            <Link href="/v3/club" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-silver/45 px-5 font-mono text-[0.64rem] uppercase tracking-[0.16em]">Mon Club</Link>
           </div>
-          <p className="mt-5 font-mono text-[0.58rem] uppercase tracking-[0.22em] text-cloud/55">Pass événementiel SKYLINE</p>
-          <p className="font-display mt-1.5 text-[1.3rem]">{state.me.pseudo}</p>
-          <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 font-mono text-[0.62rem] uppercase tracking-[0.14em]">
-            <div><dt className="text-cloud/50">Édition</dt><dd className="mt-1">Ibiza 2027</dd></div>
-            <div><dt className="text-cloud/50">Statut</dt><dd className="mt-1">{after ? "Édition terminée" : "[Statut officiel]"}</dd></div>
-            <div><dt className="text-cloud/50">N° de pass</dt><dd className="mt-1">[Attribué par l&apos;équipe]</dd></div>
-            <div><dt className="text-cloud/50">Trajet</dt><dd className="mt-1">France → Ibiza</dd></div>
-          </dl>
-        </article>
-        <p className="mt-3 border-l border-sky pl-4 text-[0.82rem] leading-relaxed text-cloud/80">Le pass SKYLINE donne accès à l&apos;événement. Ce n&apos;est <strong className="font-medium text-cloud">pas un titre de transport</strong> et il ne remplace pas la carte d&apos;embarquement de la compagnie aérienne.</p>
-      </Block>
+        </section>
+      ) : (
+        <section className="px-5 pt-7" aria-label="Informations du voyage">
+          <LayoutGroup>
+            <div role="tablist" aria-label="Informations du voyage" className="grid grid-cols-3 border-b border-line">
+              {tabs.map((x) => (
+                <button key={x.id} type="button" role="tab" id={`ft-${x.id}`} aria-controls="ft-panel" aria-selected={tab === x.id} onClick={() => setPick({ phase, tab: x.id })}
+                  className={cn("relative flex min-h-14 flex-col items-start justify-center pr-2 pb-2.5 pt-1 text-left font-mono text-[0.58rem] uppercase leading-tight tracking-[0.14em] transition", tab === x.id ? "text-cloud" : "text-cloud/50")}>
+                  <span aria-hidden className="mb-1 text-[0.5rem] text-sky">0{tabs.indexOf(x) + 1}</span>
+                  <span>{x.label}</span>
+                  {tab === x.id && <motion.span layoutId="ft-ink" aria-hidden className="absolute inset-x-0 -bottom-px h-0.5 bg-sky" transition={reduce ? { duration: 0 } : { duration: 0.35, ease }} />}
+                </button>
+              ))}
+            </div>
+          </LayoutGroup>
+          <div role="tabpanel" id="ft-panel" aria-labelledby={`ft-${tab}`} className="min-h-[13rem] pt-4">
+            {demo && <p className="mb-3 flex items-center gap-2 font-mono text-[0.54rem] uppercase tracking-[0.18em] text-cloud/55"><DemoTag>Démo</DemoTag>Aperçu fictif de la mise en page</p>}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div key={tab} initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={reduce ? undefined : { opacity: 0 }} transition={{ duration: 0.3, ease }}>
+                <Panel tab={tab} trip={trip} />
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        </section>
+      )}
 
-      <Block label="Réservation">
-        <dl className="border-t border-line"><Row k="Statut" v="[Statut officiel]" status="pending" /><Row k="Référence" v="[Référence officielle]" status="pending" /></dl>
-      </Block>
+      <section className="px-5 pb-10 pt-6">
+        <button type="button" onClick={() => setInfo("root")} aria-haspopup="dialog" className="flex min-h-14 w-full items-center justify-between border-y border-line text-left text-[0.95rem]">Informations importantes<ArrowRight size={16} strokeWidth={1.5} aria-hidden className="text-silver" /></button>
+      </section>
 
-      <Block label="Départ vérifié">
-        <dl className="border-t border-line"><Row k="Aéroport" v="[À confirmer]" status="pending" /><Row k="Date et heure" v="[À confirmer]" status="pending" /><Row k="Compagnie / vol" v="[Information officielle]" status="pending" /></dl>
-        <p className="mt-3 text-[0.78rem] text-dim">Seules les informations vérifiées par SKYLINE s&apos;affichent ici. Les détails de vol officiels sont ceux de la compagnie aérienne.</p>
-      </Block>
-
-      <Block label="Programme pratique" className="scroll-mt-24">
-        <div id="programme" className="scroll-mt-28" />
-        {state.phase === "before" ? (
-          <div role="status" className="border border-dashed border-cloud/20 px-5 py-7 text-center"><p className="font-display text-[1.02rem]">Programme à venir</p><p className="mx-auto mt-2 max-w-[32ch] text-[0.85rem] text-dim">Il sera publié ici par l&apos;équipe, uniquement lorsqu&apos;il sera confirmé.</p></div>
+      <Sheet open={!!info} onClose={() => setInfo(null)} eyebrow={doc ? "Démo" : "SKYLINE"} title={doc ? doc.title : "Informations importantes"}>
+        {doc ? (
+          <>
+            <button type="button" onClick={() => setInfo("root")} className="-ml-1 mb-3 inline-flex min-h-11 items-center gap-2 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-dim"><ArrowLeft size={16} strokeWidth={1.5} aria-hidden /> Retour</button>
+            <p className="leading-relaxed text-cloud/80">{doc.text}</p><p className="mt-3 text-xs text-dim">Contenu de démonstration.</p>
+          </>
         ) : (
-          <ul className="divide-y divide-line border-y border-line">
-            {["Activité 1", "Activité 2", "Activité 3"].map((a) => (
-              <li key={a} className="flex items-center gap-4 py-3.5"><span className="w-12 font-mono text-[0.7rem] text-cloud/60">--:--</span><span className="flex-1 text-[0.92rem]">[Titre et lieu officiels]</span><DemoTag /></li>
-            ))}
-          </ul>
+          <>
+            <p className="text-[0.92rem] leading-relaxed text-cloud/80">Le pass SKYLINE donne accès à l&apos;événement. Ce n&apos;est <strong className="font-medium text-cloud">pas un titre de transport</strong> et il ne remplace pas la carte d&apos;embarquement de la compagnie aérienne. Les détails de vol officiels sont ceux de la compagnie.</p>
+            <p className="mt-3 text-[0.92rem] leading-relaxed text-cloud/80">Seules les informations confirmées par SKYLINE s&apos;affichent dans MY FLIGHT.</p>
+            <ul className="mt-4 divide-y divide-line border-y border-line">
+              {docs.map((d) => <li key={d.id}><button type="button" onClick={() => setInfo(d)} className="flex min-h-14 w-full items-center justify-between text-left text-[0.95rem]">{d.title}<ArrowRight size={16} strokeWidth={1.5} aria-hidden className="text-silver" /></button></li>)}
+            </ul>
+          </>
         )}
-      </Block>
-
-      <Block label="Documents essentiels">
-        <ul className="divide-y divide-line border-y border-line">
-          {docs.map((d) => (
-            <li key={d.id}><button type="button" onClick={() => setDoc(d)} aria-haspopup="dialog" className="flex min-h-14 w-full items-center justify-between text-left text-[0.95rem]">{d.title}<span aria-hidden className="text-silver">→</span></button></li>
-          ))}
-        </ul>
-      </Block>
-
-      {after && <Block><Link href="/v3/club" className="inline-flex min-h-11 items-center border-b border-sky/70 pb-0.5 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-sky">Retrouver mon Club →</Link></Block>}
-      <div className="h-8" />
-      <Sheet open={!!doc} onClose={() => setDoc(null)} eyebrow="Démo" title={doc?.title ?? ""}><p className="leading-relaxed text-cloud/80">{doc?.text}</p><p className="mt-3 text-xs text-dim">Contenu de démonstration.</p></Sheet>
+      </Sheet>
     </>
   );
 }

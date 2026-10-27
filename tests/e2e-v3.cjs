@@ -52,6 +52,7 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
   {
     const { ctx, p } = await mk(); await seed(p, eligible); const vis = (t) => p.getByText(t).locator("visible=true");
     await p.goto(B + "/v3/club/space"); await p.waitForTimeout(900);
+    await p.getByRole("button", { name: "Modifier" }).first().click(); await p.waitForTimeout(500);
     await p.getByLabel("Pseudo").fill("A"); ok("SPACE : pseudo trop court signalé", (await vis("Au moins 2 caractères.").count()) === 1);
     await p.getByLabel("Pseudo").fill("dj.fan.com"); ok("SPACE : pseudo avec lien refusé", (await vis(/Pas de lien ni d'identifiant/).count()) === 1);
     await p.getByLabel("Pseudo").fill("Alex2"); await p.getByLabel("Description courte").fill("x".repeat(200)); ok("SPACE : description limitée à 140", (await vis("140/140").count()) === 1);
@@ -61,15 +62,42 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
     await p.locator("input[type=file]").setInputFiles(png); await p.waitForTimeout(400);
     ok("PHOTO : aperçu local + « en cours de vérification »", (await p.locator("img[src^='blob:']").count()) >= 1 && (await vis(/En cours de vérification/).count()) === 1);
     await p.getByRole("button", { name: "Retirer la photo" }).click(); ok("PHOTO : retrait", (await p.locator("img[src^='blob:']").count()) === 0);
-    ok("VISIBILITÉ : désactivée par défaut", !(await p.getByRole("switch", { name: /annuaire/ }).isChecked()));
-    await p.locator("label").filter({ hasText: /annuaire/ }).first().click(); await p.waitForTimeout(300); ok("VISIBILITÉ : activable (éligible)", await p.getByRole("switch", { name: /annuaire/ }).isChecked());
+    await p.getByRole("button", { name: "Terminé" }).click(); await p.waitForTimeout(500);
+    ok("VISIBILITÉ : désactivée par défaut", !(await p.getByRole("switch", { name: /Profil (privé|visible)/ }).isChecked()));
+    await p.locator("label").filter({ hasText: /Profil (privé|visible)/ }).first().click(); await p.waitForTimeout(300); ok("VISIBILITÉ : activable (éligible)", await p.getByRole("switch", { name: /Profil (privé|visible)/ }).isChecked());
     ok("APERÇU : reflète le profil", (await p.getByText("Alex2").locator("visible=true").count()) >= 1);
     ok("ÉDITIONS : l'espace persiste (Ibiza 2027 + prochaines)", (await vis("Ibiza 2027").count()) >= 1 && (await vis(/prochaines éditions/).count()) === 1);
-    await p.reload(); await p.waitForTimeout(900); ok("SPACE : sauvegarde locale persistante", (await p.getByLabel("Pseudo").inputValue()) === "Alex2");
+    await p.reload(); await p.waitForTimeout(900); await p.getByRole("button", { name: "Modifier" }).first().click(); await p.waitForTimeout(500); ok("SPACE : sauvegarde locale persistante", (await p.getByLabel("Pseudo").inputValue()) === "Alex2");
     await ctx.close();
     const c2 = await mk(); await c2.p.goto(B + "/v3/club/space"); await c2.p.waitForTimeout(800);
-    ok("VISIBILITÉ : refusée sans éligibilité (lien vers l'activation)", !(await c2.p.locator("label").filter({ hasText: /annuaire/ }).first().click().then(() => c2.p.waitForTimeout(300)).then(() => c2.p.getByRole("switch", { name: /annuaire/ }).isChecked())) && (await c2.p.getByRole("link", { name: /conditions/ }).count()) === 1);
+    ok("VISIBILITÉ : refusée sans éligibilité (lien vers l'activation)", !(await c2.p.locator("label").filter({ hasText: /Profil (privé|visible)/ }).first().click().then(() => c2.p.waitForTimeout(300)).then(() => c2.p.getByRole("switch", { name: /Profil (privé|visible)/ }).isChecked())) && (await c2.p.getByRole("link", { name: /conditions/ }).count()) === 1);
     await c2.ctx.close();
+  }
+
+  /* 3b. MY FLIGHT */
+  {
+    const { ctx, p } = await mk(); await seed(p, { sim: { reservation: "pending", tone: false, trip: false } }); const vis = (t) => p.getByText(t).locator("visible=true");
+    await p.goto(B + "/v3/flight"); await p.waitForTimeout(1500);
+    ok("FLIGHT : pass (nom, édition, statut réel)", (await vis("Ibiza 2027").count()) >= 1 && (await vis("En attente de confirmation").count()) === 1);
+    ok("FLIGHT : aucun faux QR (emplacement uniquement)", (await p.locator("canvas, img[alt*='QR' i], svg[aria-label*='QR' i]").count()) === 0 && (await p.getByRole("img", { name: /Emplacement du QR/ }).count()) === 1);
+    ok("FLIGHT : message unique quand rien n'est confirmé", (await vis("Les détails de votre voyage apparaîtront ici dès leur confirmation.").count()) === 1 && (await vis("À confirmer").count()) === 0);
+    await p.getByRole("tab", { name: /Your stay/ }).click(); await p.waitForTimeout(500);
+    ok("FLIGHT : onglet séjour", (await vis(/Hébergement, transferts et programme/).count()) === 1);
+    await p.getByRole("tab", { name: /Live updates/ }).click(); await p.waitForTimeout(500);
+    ok("FLIGHT : onglet annonces", (await vis(/annonces officielles/).count()) === 1);
+    await p.getByRole("button", { name: /Informations importantes/ }).click(); await p.waitForTimeout(500);
+    ok("FLIGHT : informations importantes accessibles", (await p.getByRole("dialog").getByText(/pas un titre de transport/i).count()) === 1);
+    await p.keyboard.press("Escape"); await p.waitForTimeout(400);
+    ok("FLIGHT : pas de défilement horizontal", (await p.evaluate(() => document.documentElement.scrollWidth - innerWidth)) <= 0);
+    await ctx.close();
+    const c2 = await mk(); await seed(c2.p, { phase: "during", sim: { reservation: "confirmed", tone: false, trip: true } });
+    await c2.p.goto(B + "/v3/flight"); await c2.p.waitForTimeout(1500);
+    ok("FLIGHT : pendant Ibiza → annonces d'abord, aperçu signalé fictif", (await c2.p.getByRole("tab", { name: /Live updates/ }).getAttribute("aria-selected")) === "true" && (await c2.p.getByText("Annonce fictive").locator("visible=true").count()) === 1);
+    await c2.ctx.close();
+    const c3 = await mk(); await seed(c3.p, { phase: "after" });
+    await c3.p.goto(B + "/v3/flight"); await c3.p.waitForTimeout(1500);
+    ok("FLIGHT : après Ibiza → historique et souvenirs", (await c3.p.getByRole("link", { name: /Mes souvenirs/ }).count()) === 1 && (await c3.p.getByRole("tablist").count()) === 0);
+    await c3.ctx.close();
   }
 
   /* 4. MEMBERS */
@@ -170,7 +198,7 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
     const { ctx, p } = await mk(); await seed(p, { ...eligible, me: { pseudo: "Alex", city: "Paris", bio: "", genres: ["House"], visible: true }, locale: "en" }); const vis = (t) => p.getByText(t).locator("visible=true");
     await p.goto(B + "/v3/club/members"); await p.waitForTimeout(1000);
     ok("EN : annuaire traduit", (await vis("8 visible members").count()) === 1 && (await vis(/Alphabetical order/).count()) === 1);
-    await p.goto(B + "/v3/club/space"); await p.waitForTimeout(800); ok("EN : My Space traduit", (await vis("Short description").count()) === 1 && (await vis(/follows you from one edition/).count()) === 1);
+    await p.goto(B + "/v3/club/space"); await p.waitForTimeout(800); ok("EN : My Space traduit", (await p.getByRole("button", { name: "Edit" }).first().count()) === 1);
     await p.goto(B + "/v3/club/messages"); await p.waitForTimeout(800); ok("EN : messages traduits", (await vis("Conversations").count()) >= 1 && (await vis(/1 unread/).count()) === 1);
     await p.goto(B + "/v3/explore/radio"); await p.waitForTimeout(800); ok("EN : radio traduite", (await vis("Official playlists").count()) === 1);
     await ctx.close();
@@ -196,7 +224,7 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
     await p.locator("nav[aria-label='Navigation du prototype']").getByRole("link", { name: "Home" }).click(); await p.waitForURL(B + "/"); await p.waitForTimeout(800);
     ok("APPLICATION : l'onglet Home ramène à l'accueil", (await p.locator("nav[aria-label='Navigation principale']").count()) === 1);
     await p.locator("nav[aria-label='Navigation principale']").getByRole("link", { name: "My Flight" }).click(); await p.waitForURL("**/v3/flight"); await p.waitForTimeout(700);
-    ok("APPLICATION : l'onglet My Flight mène au nouveau My Flight", (await vis(/pas un titre de transport/).count()) === 1);
+    ok("APPLICATION : l'onglet My Flight mène au nouveau My Flight", (await vis(/pas un titre de transport/i).count()) === 1);
     await p.goto(B + "/explore"); await p.waitForTimeout(900);
     await p.getByRole("link", { name: /Skyline Radio/ }).click(); await p.waitForURL("**/v3/explore/radio"); await p.waitForTimeout(700);
     ok("APPLICATION : Explore → Skyline Radio", (await vis("Playlists officielles").count()) === 1);

@@ -41,18 +41,20 @@ export const seedIntro: Record<string, string> = { m3: "Salut ! On a l'air d'aim
 export type RadioItem = { id: string; slot: string };
 /** SKYLINE RADIO — tout est placeholder jusqu'à réception de contenus AUTORISÉS (voir registre des droits). */
 export const radio = {
-  featured: { id: "sel1", slot: "Visuel officiel · 4:5" },
+  featured: { id: "sel1", slot: "Visuel officiel · 4:5", cover: "sunset" as const },
   selections: [
-    { id: "sel1", slot: "Visuel officiel · 1:1", tracks: 4 },
-    { id: "sel2", slot: "Visuel officiel · 1:1", tracks: 4 },
+    { id: "sel1", slot: "Visuel officiel · 1:1", tracks: 4, cover: "sunset" as const },
+    { id: "sel2", slot: "Visuel officiel · 1:1", tracks: 4, cover: "airport" as const },
+    { id: "sel3", slot: "Visuel officiel · 1:1", tracks: 4, cover: "warm" as const },
   ],
   djs: [
     { id: "dj1", slot: "Portrait officiel · 4:5", mixes: ["mix1"] },
     { id: "dj2", slot: "Portrait officiel · 4:5", mixes: ["mix2"] },
+    { id: "dj3", slot: "Portrait officiel · 4:5", mixes: [] as string[] },
   ],
   mixes: [
-    { id: "mix1", slot: "Pochette officielle · 1:1", dj: "dj1" },
-    { id: "mix2", slot: "Pochette officielle · 1:1", dj: "dj2" },
+    { id: "mix1", slot: "Pochette officielle · 1:1", dj: "dj1", cover: "blue" as const },
+    { id: "mix2", slot: "Pochette officielle · 1:1", dj: "dj2", cover: "laser" as const },
   ],
 };
 
@@ -79,3 +81,27 @@ export const sitemap: ScreenNode[] = [
   { label: "PROFIL & PARAMÈTRES (via l'avatar)", href: "/v3/profile", note: "Confidentialité · blocages · notifications · données" },
   { label: "SKYLINE HQ (organisateurs, environnement séparé)", href: "/v3/wireframes#hq", note: "Wireframe" },
 ];
+
+/**
+ * Informations de voyage publiées par l'équipe SKYLINE. Aucune n'est inventée : en production, tout vient du serveur
+ * (et seulement lorsque c'est confirmé). `demoTrip` n'est qu'un aperçu fictif de la mise en page, affiché à la demande
+ * depuis la simulation du prototype et toujours signalé « Démo ».
+ */
+export type Trip = {
+  departure: { airport: string; when: string; meeting?: string } | null;
+  stay: { lodging?: string; transfers: { id: string; time: string; label: string; place: string }[]; program: { id: string; time: string; label: string; place: string }[] } | null;
+  updates: { id: string; time: string; title: string; text: string }[];
+};
+export const noTrip: Trip = { departure: null, stay: null, updates: [] };
+export const demoTrip: Trip = {
+  departure: { airport: "Aéroport de démonstration", when: "Jour J · 00:00", meeting: "Point de rendez-vous fictif · Terminal X" },
+  stay: {
+    lodging: "Hébergement fictif",
+    transfers: [{ id: "t1", time: "00:00", label: "Transfert fictif", place: "Lieu fictif" }],
+    program: [
+      { id: "p1", time: "00:00", label: "Activité fictive 1", place: "Lieu fictif" },
+      { id: "p2", time: "00:00", label: "Activité fictive 2", place: "Lieu fictif" },
+    ],
+  },
+  updates: [{ id: "u1", time: "00:00", title: "Annonce fictive", text: "Exemple d'annonce officielle : horaire, lieu ou modification." }],
+};

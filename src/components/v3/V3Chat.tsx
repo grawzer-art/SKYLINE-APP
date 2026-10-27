@@ -1,8 +1,10 @@
 "use client";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
-import { Flag, MoreHorizontal, X } from "lucide-react";
-import { ScreenTitle, Block, Initials, Empty } from "./ui";
+import { ArrowLeft, Flag, MoreHorizontal, X } from "lucide-react";
+import Link from "next/link";
+import { ScreenTitle, Block, Empty } from "./ui";
+import { Face } from "./visual";
 import { CommunityGate } from "./community";
 import { ReportForm } from "./ReportForm";
 import { Button } from "@/components/ui/Button";
@@ -49,9 +51,13 @@ export function V3Chat({ id }: { id: string }) {
         <><ScreenTitle {...gate} title={t("chat.unavailable")} /><Block><Empty title={t("chat.unavailable")} text={t("chat.unavailable.text")} /></Block></>
       ) : (
         <>
-          <ScreenTitle {...gate}>
-            <div className="mt-3"><button type="button" onClick={() => setPanel("menu")} aria-haspopup="dialog" aria-label={t("chat.menu")} className="inline-flex min-h-11 items-center gap-2 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-dim hover:text-cloud"><MoreHorizontal size={18} strokeWidth={1.5} aria-hidden />{t("chat.menu")}</button></div>
-          </ScreenTitle>
+          <header className="px-5 pt-[calc(var(--safe-top)+5.5rem)]">
+            <div className="flex items-center justify-between">
+              <Link href="/v3/club/messages" className="-ml-1 inline-flex min-h-11 items-center gap-2 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-dim hover:text-cloud"><ArrowLeft size={16} strokeWidth={1.5} aria-hidden />{t("common.messages")}</Link>
+              <button type="button" onClick={() => setPanel("menu")} aria-haspopup="dialog" aria-label={t("chat.menu")} className="grid size-11 place-items-center rounded-full border border-cloud/25 transition active:scale-95"><MoreHorizontal size={18} strokeWidth={1.5} aria-hidden /></button>
+            </div>
+            <div className="mt-3 flex items-center gap-4 border-b border-line pb-5"><Face name={m?.pseudo ?? "?"} size={60} tone="sky" /><div><h1 className="font-display text-[1.7rem] leading-none">{m?.pseudo}</h1><p className="mt-1.5 font-mono text-[0.58rem] uppercase tracking-[0.16em] text-dim">{m?.city} · {t("chat.eyebrow")}</p></div></div>
+          </header>
           {!state.tipDismissed && (
             <div className="mx-5 mt-3 flex items-start gap-3 border border-sky/40 p-4">
               <div className="flex-1"><p className="font-mono text-[0.58rem] uppercase tracking-[0.18em] text-sky">{t("chat.tip.title")}</p><p className="mt-1.5 text-[0.82rem] leading-relaxed text-cloud/80">{t("chat.tip.text")}</p></div>
@@ -62,8 +68,8 @@ export function V3Chat({ id }: { id: string }) {
             <ul aria-label={m?.pseudo} className="space-y-3">
               {msgs.map((x, i) => (
                 <li key={i} className={cn("flex items-start", x.from === "me" ? "justify-end" : "justify-start gap-3")}>
-                  {x.from === "them" && <Initials name={m?.pseudo ?? "?"} size={28} className="mt-1" />}
-                  <p className={cn("max-w-[74%] px-4 py-2.5 text-[0.92rem] leading-snug [overflow-wrap:anywhere]", x.from === "me" ? "bg-cloud text-jet" : "border border-line bg-surface-1")}>{x.text}<span className={cn("mt-1 block font-mono text-[0.5rem] uppercase tracking-[0.12em]", x.from === "me" ? "text-jet/55" : "text-dim")}>{x.t}</span></p>
+                  {x.from === "them" && <Face name={m?.pseudo ?? "?"} size={30} tone="none" className="mt-1" />}
+                  <p className={cn("max-w-[74%] px-4 py-2.5 text-[0.92rem] leading-snug [overflow-wrap:anywhere]", x.from === "me" ? "rounded-[18px] rounded-br-[4px] bg-cloud text-jet" : "rounded-[18px] rounded-bl-[4px] border border-line bg-surface-1")}>{x.text}<span className={cn("mt-1 block font-mono text-[0.5rem] uppercase tracking-[0.12em]", x.from === "me" ? "text-jet/55" : "text-dim")}>{x.t}</span></p>
                   {x.from === "them" && <button type="button" onClick={() => setPanel({ report: i })} aria-haspopup="dialog" aria-label={t("chat.msg.report")} className="grid size-11 shrink-0 place-items-center text-silver/60 hover:text-cloud"><Flag size={14} strokeWidth={1.5} aria-hidden /></button>}
                 </li>
               ))}

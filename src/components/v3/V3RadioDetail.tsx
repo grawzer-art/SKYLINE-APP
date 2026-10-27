@@ -14,7 +14,7 @@ export function V3Selection({ id }: { id: string }) {
     <>
       <ScreenTitle eyebrow={t("radio.selections")} title={title} back={{ href: "/v3/explore/radio", label: t("radio.back.radio") }} />
       <Block>
-        <div className="flex items-center gap-5"><Cover slot={s?.slot ?? "—"} className="size-28" /><div className="flex-1"><DemoTag /><p className="mt-2 font-mono text-[0.58rem] uppercase tracking-[0.16em] text-dim">SKYLINE · {s?.tracks ?? 0} {t("radio.tracks")}</p></div><PlayButton big item={{ id, title, by: "SKYLINE" }} /></div>
+        <div className="flex items-center gap-5"><Cover cover={s?.cover} slot={s?.slot ?? "—"} className="size-28" /><div className="flex-1"><DemoTag /><p className="mt-2 font-mono text-[0.58rem] uppercase tracking-[0.16em] text-dim">SKYLINE · {s?.tracks ?? 0} {t("radio.tracks")}</p></div><PlayButton big item={{ id, title, by: "SKYLINE" }} /></div>
       </Block>
       <Block label={t("radio.tracks")}>
         <ol className="divide-y divide-line border-y border-line">
@@ -42,7 +42,7 @@ export function V3Dj({ id }: { id: string }) {
       </Block>
       <Block label={t("radio.mixes.by")}>
         <ul className="divide-y divide-line border-y border-line">
-          {radio.mixes.filter((x) => x.dj === id).map((x) => <RadioRow key={x.id} id={x.id} title={L.mix(x.id)} by={L.dj(id)} slot={x.slot} />)}
+          {radio.mixes.filter((x) => x.dj === id).map((x) => <RadioRow key={x.id} id={x.id} title={L.mix(x.id)} by={L.dj(id)} slot={x.slot} cover={x.cover} />)}
         </ul>
       </Block>
       <p className="px-5 pb-8 pt-4 text-[0.72rem] text-dim">{t("radio.rights")}</p>
