@@ -22,8 +22,8 @@ export function useRadioLabels() {
 /** Pochette provisoire : découpe d'une photographie authentique (sans personne), à remplacer par le visuel officiel. */
 export function Cover({ cover, slot, className }: { cover?: VisualKey; slot: string; className?: string }) {
   return cover
-    ? <span className={cn("relative block shrink-0 overflow-hidden rounded-[4px]", className)}><Photo src={visuals[cover]} sizes="160px" /></span>
-    : <span aria-hidden className={cn("grid shrink-0 place-items-center border border-dashed border-cloud/20 p-1 text-center font-mono text-[0.44rem] uppercase leading-tight tracking-[0.1em] text-cloud/40", className)}>{slot}</span>;
+    ? <span className={cn("relative block shrink-0 overflow-hidden rounded-[8px]", className)}><Photo src={visuals[cover]} sizes="160px" /></span>
+    : <span aria-hidden className={cn("grid shrink-0 place-items-center border border-dashed border-cloud/20 p-1 text-center font-mono text-[0.7rem] uppercase leading-tight tracking-[0.1em] text-cloud/60", className)}>{slot}</span>;
 }
 
 /** Bouton lecture/pause lié au lecteur global. */
@@ -47,7 +47,7 @@ export function RadioRow({ id, title, by, slot, cover, href }: { id: string; tit
         <Cover cover={cover} slot={slot} className="size-16" />
         <span className="min-w-0 flex-1">
           {href ? <Link href={href} className="block truncate text-[0.98rem]">{title}</Link> : <span className="block truncate text-[0.98rem]">{title}</span>}
-          <span className="mt-0.5 block truncate font-mono text-[0.58rem] uppercase tracking-[0.14em] text-dim">{by}</span>
+          <span className="mt-0.5 block truncate font-mono text-[0.7rem] uppercase tracking-[0.14em] text-dim">{by}</span>
         </span>
         <PlayButton item={{ id, title, by, href }} />
       </div>

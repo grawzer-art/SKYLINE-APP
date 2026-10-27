@@ -19,15 +19,15 @@ export function FlightPass({ name, status, metal, demo }: { name: string; status
         <div className="flex items-start justify-between p-[1.15rem] pb-0">
           <Emblem size={46} className="[filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.8))]" />
           <div className="text-right font-mono uppercase">
-            <p className="text-[0.55rem] tracking-[0.3em] text-silver">Skyline Pass</p>
-            <p className="mt-1 text-[0.62rem] tracking-[0.22em] text-sky">Ibiza 2027</p>
+            <p className="text-[0.7rem] tracking-[0.3em] text-silver">Skyline Pass</p>
+            <p className="mt-1 text-[0.72rem] tracking-[0.22em] text-sky">Ibiza 2027</p>
           </div>
         </div>
 
         <div className="px-[1.15rem] pt-4">
-          <p className="font-mono text-[0.5rem] uppercase tracking-[0.34em] text-silver/80">Participant</p>
+          <p className="font-mono text-[0.7rem] uppercase tracking-[0.34em] text-silver/80">Participant</p>
           <p className="metal-text font-display mt-1.5 truncate text-[clamp(1.7rem,8.6vw,2.25rem)] uppercase leading-[1.02]">{name}</p>
-          <div className="mt-3.5 flex items-center gap-3 font-mono text-[0.62rem] uppercase tracking-[0.2em]">
+          <div className="mt-3.5 flex items-center gap-3 font-mono text-[0.72rem] uppercase tracking-[0.2em]">
             <span className="text-cloud/90">France</span>
             <span aria-hidden className="relative h-px flex-1 bg-gradient-to-r from-silver/60 via-sky/60 to-silver/60"><Plane size={13} strokeWidth={1.5} className="absolute left-1/2 top-1/2 size-[13px] -translate-x-1/2 -translate-y-1/2 rotate-45 bg-[#0a0c10] px-px text-sky" /></span>
             <span className="text-cloud/90">Ibiza</span>
@@ -42,17 +42,17 @@ export function FlightPass({ name, status, metal, demo }: { name: string; status
 
         <div className="flex items-center justify-between gap-4 p-[1.15rem] pt-4">
           <div className="min-w-0 font-mono uppercase">
-            <p className="text-[0.5rem] tracking-[0.26em] text-cloud/50">Accès</p>
-            <p className="mt-1.5 flex items-center gap-2 text-[0.68rem] leading-snug tracking-[0.1em]"><span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", status === "confirmed" ? "bg-sky" : status === "ended" ? "bg-silver" : "bg-cloud/35")} />{statusText[status]}</p>
-            <p className="mt-3 text-[0.5rem] tracking-[0.26em] text-cloud/50">N° de pass</p>
-            <p className="mt-1.5 text-[0.68rem] tracking-[0.1em] text-cloud/55">Attribué par l&apos;équipe</p>
+            <p className="text-[0.7rem] tracking-[0.26em] text-cloud/64">Accès</p>
+            <p className="mt-1.5 flex items-center gap-2 text-[0.75rem] leading-snug tracking-[0.1em]"><span aria-hidden className={cn("size-1.5 shrink-0 rounded-full", status === "confirmed" ? "bg-sky" : status === "ended" ? "bg-silver" : "bg-cloud/35")} />{statusText[status]}</p>
+            <p className="mt-3 text-[0.7rem] tracking-[0.26em] text-cloud/64">N° de pass</p>
+            <p className="mt-1.5 text-[0.75rem] tracking-[0.1em] text-cloud/68">Attribué par l&apos;équipe</p>
           </div>
-          <div role="img" aria-label="Emplacement du QR code d'accès, non disponible dans le prototype" className="relative grid size-[4.9rem] shrink-0 place-items-center">
+          <div role="img" aria-label="Emplacement du QR code d'accès, non disponible dans le prototype" className="relative grid size-[5.4rem] shrink-0 place-items-center">
             {["left-0 top-0 border-l border-t", "right-0 top-0 border-r border-t", "bottom-0 left-0 border-b border-l", "bottom-0 right-0 border-b border-r"].map((c) => <span key={c} aria-hidden className={cn("absolute size-3.5 border-sky/70", c)} />)}
-            <p className="px-2 text-center font-mono text-[0.46rem] uppercase leading-relaxed tracking-[0.18em] text-cloud/45">QR d&apos;accès<br />à la confirmation</p>
+            <p className="px-2 text-center leading-tight text-cloud/70"><span className="font-mono text-[0.9rem] tracking-[0.1em] text-cloud/85">QR</span><span className="mt-1 block text-[0.72rem]">à la confirmation</span></p>
           </div>
         </div>
-        <div className="flex items-center justify-between gap-3 border-t border-silver/10 px-[1.15rem] py-2.5"><p className="font-mono text-[0.46rem] uppercase tracking-[0.18em] text-cloud/40">Pas un titre de transport</p>{demo && <DemoTag />}</div>
+        <div className="flex items-center justify-between gap-3 border-t border-silver/10 px-[1.15rem] py-2.5"><p className="font-mono text-[0.7rem] uppercase tracking-[0.18em] text-cloud/60">Pas un titre de transport</p>{demo && <DemoTag />}</div>
       </div>
     </MetalSurface>
   );

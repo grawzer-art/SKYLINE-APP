@@ -2,7 +2,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ScreenTitle, Block, Initials, Empty, DemoTag } from "./ui";
+import { ScreenTitle, Block, Empty, DemoTag } from "./ui";
+import { Face } from "./visual";
 import { CommunityGate } from "./community";
 import { ReportForm } from "./ReportForm";
 import { Button } from "@/components/ui/Button";
@@ -43,22 +44,22 @@ export function V3Member({ id }: { id: string }) {
           <>
             <ScreenTitle {...gate} />
             <Block>
-              <div className="flex items-center gap-4"><Initials name={m.pseudo} size={72} /><div><p className="font-mono text-[0.62rem] uppercase tracking-[0.16em] text-cloud/80">{m.city}</p><p className="mt-1 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-dim">{m.genres.join(" · ")}</p><div className="mt-2"><DemoTag>Profil fictif</DemoTag></div></div></div>
+              <div className="flex items-center gap-4"><Face name={m.pseudo} size={76} tone="sky" /><div><p className="font-mono text-[0.72rem] uppercase tracking-[0.16em] text-cloud/80">{m.city}</p><p className="mt-1 font-mono text-[0.7rem] uppercase tracking-[0.14em] text-dim">{m.genres.join(" · ")}</p><div className="mt-2"><DemoTag>Profil fictif</DemoTag></div></div></div>
               <p className="mt-5 text-[0.95rem] leading-relaxed text-cloud/85">{m.bio}</p>
-              <p className="mt-3 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-sky">{inCommon.length ? t("member.common", { list: inCommon.join(", ") }) : <span className="text-dim">{t("member.common.none")}</span>}</p>
+              <p className="mt-3 font-mono text-[0.72rem] uppercase tracking-[0.14em] text-sky">{inCommon.length ? t("member.common", { list: inCommon.join(", ") }) : <span className="text-dim">{t("member.common.none")}</span>}</p>
             </Block>
             <Block>
               {blocked ? (
-                <div role="status" className="border border-dashed border-cloud/25 p-4"><p className="text-[0.9rem]">{t("member.blocked")}</p><Button variant="ghost" className="mt-3 w-full" onClick={() => c.unblock(m.id)}>{t("member.unblock")}</Button></div>
+                <div role="status" className="rounded-[8px] border border-dashed border-cloud/25 p-4"><p className="text-[0.9rem]">{t("member.blocked")}</p><Button variant="ghost" className="mt-3 w-full" onClick={() => c.unblock(m.id)}>{t("member.unblock")}</Button></div>
               ) : linked ? (
                 <Link href={`/v3/club/messages/${m.id}`} className="flex min-h-12 w-full items-center justify-center rounded-full bg-cloud px-6 font-mono text-[0.72rem] uppercase tracking-[0.14em] text-jet">{t("member.message")}</Link>
               ) : out?.state === "sent" ? (
-                <div role="status" className="border border-line p-4 text-[0.9rem]">{t("member.request.sent", { name: m.pseudo })}<Button variant="ghost" className="mt-3 w-full" onClick={() => c.cancelRequest(m.id)}>{t("member.request.cancel")}</Button></div>
+                <div role="status" className="rounded-[8px] border border-line p-4 text-[0.9rem]">{t("member.request.sent", { name: m.pseudo })}<Button variant="ghost" className="mt-3 w-full" onClick={() => c.cancelRequest(m.id)}>{t("member.request.cancel")}</Button></div>
               ) : (
                 <Button onClick={() => { setErr(null); setPanel("request"); }} aria-haspopup="dialog" className="w-full">{t("member.request")}</Button>
               )}
               {!blocked && (
-                <div className="mt-4 flex gap-6 font-mono text-[0.62rem] uppercase tracking-[0.16em] text-dim">
+                <div className="mt-4 flex gap-6 font-mono text-[0.72rem] uppercase tracking-[0.16em] text-dim">
                   <button type="button" onClick={() => setPanel("block")} aria-haspopup="dialog" className="min-h-11 underline-offset-4 hover:text-cloud hover:underline">{t("member.block")}</button>
                   <button type="button" onClick={() => setPanel("report")} aria-haspopup="dialog" disabled={reported} className="min-h-11 underline-offset-4 hover:text-cloud hover:underline disabled:no-underline disabled:opacity-60">{reported ? t("member.reported") : t("member.report")}</button>
                 </div>
@@ -74,7 +75,7 @@ export function V3Member({ id }: { id: string }) {
                   className="mt-2 w-full resize-none border border-line bg-surface-2 px-4 py-3 text-[1rem] outline-none focus:border-sky" />
                 <p id="intro-hint" className="mt-1.5 text-[0.72rem] text-dim">{t("member.request.intro.hint", { n: intro.length })}</p>
                 {err && <p role="alert" className="mt-2 text-[0.8rem] text-sunset">{err}</p>}
-                <p className="mt-3 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-dim">{t("members.quota", { n: c.quotaLeft, max: LIMITS.requestsPerDay })}</p>
+                <p className="mt-3 font-mono text-[0.7rem] uppercase tracking-[0.14em] text-dim">{t("members.quota", { n: c.quotaLeft, max: LIMITS.requestsPerDay })}</p>
                 <div className="mt-4 grid gap-3"><Button onClick={submit}>{t("member.request.send")}</Button><Button variant="ghost" onClick={() => setPanel(null)}>{t("common.cancel")}</Button></div>
               </>)}
               {panel === "block" && (<>

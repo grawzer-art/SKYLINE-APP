@@ -84,7 +84,7 @@ export function Sheet({ open, onClose, title, eyebrow, children }: {
           >
             <div className="flex items-start justify-between gap-4 px-5 pb-3 pt-5">
               <div>
-                {eyebrow && <p className="font-mono text-[0.68rem] uppercase tracking-[0.22em] text-sky">{eyebrow}</p>}
+                {eyebrow && <p className="font-mono text-[0.75rem] uppercase tracking-[0.22em] text-sky">{eyebrow}</p>}
                 <h2 id={titleId} className="font-display mt-2 text-[1.5rem]">{title}</h2>
               </div>
               <button type="button" onClick={close} aria-label="Fermer"

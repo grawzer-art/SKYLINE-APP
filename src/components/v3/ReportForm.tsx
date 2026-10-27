@@ -10,7 +10,7 @@ export function ReportForm({ name, quote, chat, onSend, onCancel }: { name: stri
   const [reason, setReason] = useState<(typeof reasons)[number]>(reasons[0]);
   return (
     <>
-      {quote && <blockquote className="mb-4 border-l border-sunset pl-4 text-[0.88rem] text-cloud/80"><span className="mb-1 block font-mono text-[0.52rem] uppercase tracking-[0.16em] text-dim">{t("report.message")} · {name}</span>{quote}</blockquote>}
+      {quote && <blockquote className="mb-4 border-l border-sunset pl-4 text-[0.88rem] text-cloud/80"><span className="mb-1 block font-mono text-[0.7rem] uppercase tracking-[0.16em] text-dim">{t("report.message")} · {name}</span>{quote}</blockquote>}
       <fieldset><legend className="text-sm text-dim">{t("report.reason")}</legend>
         <div className="mt-3 space-y-2">{reasons.map((r) => (
           <label key={r} className="flex min-h-12 cursor-pointer items-center gap-3 border border-line px-4 text-[0.92rem]"><input type="radio" name="report-reason" checked={reason === r} onChange={() => setReason(r)} className="accent-[#8FB8FF]" />{t(r)}</label>

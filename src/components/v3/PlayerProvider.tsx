@@ -63,11 +63,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
             <div className="min-w-0 flex-1">
               {current.href ? <Link href={current.href} className="block truncate text-[0.88rem]">{current.title}</Link> : <p className="truncate text-[0.88rem]">{current.title}</p>}
               {unavailable
-                ? <p role="status" className="font-mono text-[0.56rem] uppercase tracking-[0.14em] text-cloud/60">{t("radio.unavailable")}</p>
+                ? <p role="status" className="font-mono text-[0.7rem] uppercase tracking-[0.14em] text-cloud/72">{t("radio.unavailable")}</p>
                 : <div className="flex items-center gap-2">
                     <label htmlFor="mini-pos" className="sr-only">{t("radio.position")}</label>
                     <input id="mini-pos" type="range" min={0} max={duration || 0} step={0.1} value={Math.min(time, duration || 0)} onChange={(e) => seek(Number(e.target.value))} className="h-5 flex-1 accent-[#8FB8FF]" />
-                    <span className="font-mono text-[0.56rem] tabular-nums text-cloud/65">{fmt(time)}/{duration ? fmt(duration) : "—"}</span>
+                    <span className="font-mono text-[0.7rem] tabular-nums text-cloud/75">{fmt(time)}/{duration ? fmt(duration) : "—"}</span>
                   </div>}
             </div>
             <button type="button" onClick={close} aria-label={t("radio.player.close")} className="grid size-11 shrink-0 place-items-center text-silver"><X size={18} strokeWidth={1.5} aria-hidden /></button>

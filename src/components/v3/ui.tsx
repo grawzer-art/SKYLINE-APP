@@ -6,7 +6,7 @@ import { cn } from "@/lib/cn";
 
 /** Étiquette « fictif » : tout contenu du prototype est une démonstration. */
 export const DemoTag = ({ children = "Démo" }: { children?: ReactNode }) => (
-  <span className="border border-cloud/30 px-1.5 py-0.5 font-mono text-[0.52rem] uppercase tracking-[0.16em] text-cloud/60">{children}</span>
+  <span className="rounded-[8px] border border-cloud/30 px-1.5 py-0.5 font-mono text-[0.7rem] uppercase tracking-[0.16em] text-cloud/72">{children}</span>
 );
 
 /** Initiales sur fond sobre : aucune photo de personne dans le prototype. */
@@ -21,13 +21,13 @@ export function Initials({ name, size = 44, className }: { name: string; size?: 
 
 export function ScreenTitle({ eyebrow, title, back, children }: { eyebrow: string; title: string; back?: { href: string; label: string }; children?: ReactNode }) {
   return (
-    <header className="px-5 pt-[calc(var(--safe-top)+6.25rem)]">
+    <header className="px-5 pt-[calc(var(--safe-top)+5.25rem)]">
       {back && (
-        <Link href={back.href} className="-ml-1 mb-4 inline-flex min-h-11 items-center gap-2 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-dim transition hover:text-cloud">
+        <Link href={back.href} className="-ml-1 mb-4 inline-flex min-h-11 items-center gap-2 font-mono text-[0.72rem] uppercase tracking-[0.18em] text-dim transition hover:text-cloud">
           <ArrowLeft size={16} strokeWidth={1.5} aria-hidden /> {back.label}
         </Link>
       )}
-      <p className="font-mono text-[0.6rem] uppercase tracking-[0.22em] text-sky">{eyebrow}</p>
+      <p className="font-mono text-[0.72rem] uppercase tracking-[0.22em] text-sky">{eyebrow}</p>
       <h1 className="font-display mt-2 text-[clamp(1.7rem,8.4vw,2.5rem)]">{title}</h1>
       {children}
     </header>
@@ -37,7 +37,7 @@ export function ScreenTitle({ eyebrow, title, back, children }: { eyebrow: strin
 export function Block({ label, children, className }: { label?: string; children: ReactNode; className?: string }) {
   return (
     <section className={cn("px-5 pt-8", className)}>
-      {label && <h2 className="mb-3 font-mono text-[0.6rem] uppercase tracking-[0.22em] text-cloud/60">{label}</h2>}
+      {label && <h2 className="mb-3 font-mono text-[0.72rem] uppercase tracking-[0.22em] text-cloud/72">{label}</h2>}
       {children}
     </section>
   );
@@ -68,7 +68,7 @@ export function Switch({ on, onChange, label, hint }: { on: boolean; onChange: (
 }
 
 export const Empty = ({ title, text }: { title: string; text: string }) => (
-  <div role="status" className="border border-dashed border-cloud/20 px-5 py-8 text-center">
+  <div role="status" className="rounded-[8px] border border-dashed border-cloud/25 px-5 py-8 text-center">
     <p className="font-display text-[1.05rem]">{title}</p>
     <p className="mx-auto mt-2 max-w-[30ch] text-[0.85rem] text-dim">{text}</p>
   </div>

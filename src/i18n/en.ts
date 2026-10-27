@@ -16,7 +16,7 @@ export const en: Record<Key, string> = {
   "gate.ok": "Done", "gate.todo": "To confirm", "gate.waiting": "Waiting",
   "gate.adult.label": "I confirm that I am 18 or older.", "gate.charter.label": "I accept the community charter.", "gate.charter.read": "Read the charter",
   "gate.consent.label": "I want to use the community features (profile, directory, messages).",
-  "gate.cta": "Enable the community", "gate.cta.waiting": "Waiting for your booking to be confirmed",
+  "gate.p1.t": "Private by default", "gate.p1.d": "Your profile only appears in the directory if you choose so.", "gate.p2.t": "You choose who writes to you", "gate.p2.d": "Members or nobody, editable at any time in My Space.", "gate.p3.t": "Leave whenever you want", "gate.p3.d": "Leaving the community takes one gesture, from this page.", "gate.prefs": "Manage my preferences", "gate.conditions": "View conditions", "gate.cta": "Enable the community", "gate.cta.waiting": "Waiting for your booking to be confirmed",
   "gate.done.title": "Community enabled", "gate.done.text": "Your profile stays private until you choose to make it visible.", "gate.done.space": "Open My Space",
   "gate.leave": "Leave the community", "gate.leave.title": "Leave the community?",
   "gate.leave.text": "Your profile is hidden, your conversations are paused and nobody can contact you. You can come back at any time; your data is kept until you ask for its deletion.",

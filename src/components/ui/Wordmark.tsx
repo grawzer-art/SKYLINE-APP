@@ -12,7 +12,7 @@ export function Wordmark({ className }: { className?: string }) {
   }
   return (
     <span role="img" aria-label="SKYLINE (emplacement du wordmark officiel)"
-      className={cn("inline-flex h-7 items-center border border-dashed border-cloud/35 px-2.5 font-mono text-[0.54rem] uppercase tracking-[0.16em] text-cloud/60", className)}>
+      className={cn("inline-flex h-7 items-center border border-dashed border-cloud/35 px-2.5 font-mono text-[0.7rem] uppercase tracking-[0.16em] text-cloud/72", className)}>
       Wordmark officiel · à fournir
     </span>
   );

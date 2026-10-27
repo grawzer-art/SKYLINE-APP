@@ -11,12 +11,12 @@ export function V3Explore({ signals }: { signals: React.ReactNode }) {
     <>
       <ScreenTitle eyebrow="Skyline culture" title="Explore" />
       <Block>
-        <Link href="/v3/explore/radio" className="group relative isolate flex aspect-[16/10] items-end overflow-hidden rounded-[4px] border border-cloud/15 p-5">
+        <Link href="/v3/explore/radio" className="group relative isolate flex aspect-[16/10] items-end overflow-hidden rounded-[8px] border border-cloud/15 p-5">
           <Photo src={images.before} alt="" objectPosition="30% 75%" sizes="(max-width: 480px) 100vw, 480px" />
           <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-jet via-jet/50 to-jet/10" />
           <span className="relative flex w-full items-end justify-between">
-            <span><span className="block font-mono text-[0.58rem] uppercase tracking-[0.2em] text-sunset">Sélections officielles</span><span className="font-display mt-1.5 block text-[1.4rem]">Skyline Radio</span></span>
-            <span className="flex items-center gap-1.5 font-mono text-[0.62rem] uppercase tracking-[0.18em]">Écouter <ArrowRight size={15} strokeWidth={1.5} aria-hidden className="transition group-hover:translate-x-1" /></span>
+            <span><span className="block font-mono text-[0.7rem] uppercase tracking-[0.2em] text-sunset">Sélections officielles</span><span className="font-display mt-1.5 block text-[1.4rem]">Skyline Radio</span></span>
+            <span className="flex items-center gap-1.5 font-mono text-[0.72rem] uppercase tracking-[0.18em]">Écouter <ArrowRight size={15} strokeWidth={1.5} aria-hidden className="transition group-hover:translate-x-1" /></span>
           </span>
         </Link>
       </Block>

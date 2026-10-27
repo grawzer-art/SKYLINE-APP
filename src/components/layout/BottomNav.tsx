@@ -27,7 +27,7 @@ export function BottomNav({ signalIds = [] }: { signalIds?: string[] }) {
                   <Icon name={item.icon} size={20} className={cn(item.id === "flight" && "-rotate-45")} />
                   {item.id === "explore" && unseen.length > 0 && <span aria-hidden className="absolute -right-1.5 -top-1 size-1.5 rounded-full bg-sunset" />}
                 </span>
-                <span className="font-mono text-[0.58rem] uppercase tracking-[0.18em]">{item.label}{item.id === "explore" && unseen.length > 0 && <span className="sr-only"> — nouvelle révélation</span>}</span>
+                <span className="font-mono text-[0.7rem] uppercase tracking-[0.18em]">{item.label}{item.id === "explore" && unseen.length > 0 && <span className="sr-only"> — nouvelle révélation</span>}</span>
               </Link>
               {active && <span aria-hidden className="absolute inset-x-[30%] top-0 h-px bg-sky" />}
             </li>
