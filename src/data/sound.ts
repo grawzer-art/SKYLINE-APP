@@ -11,9 +11,10 @@ export type SoundCollection = { id: string; title: string; genre: string; taglin
 
 export const soundCollections: SoundCollection[] = [
   { id: "sunset-club", title: "Sunset Club", genre: "Afro House / Melodic House", tagline: "Quand le soleil touche la mer.", cover: "sunset",
-    // TEST DE VALIDATION (provisoire) : playlist publique d'un tiers (compte « LUK »), choisie pour tester le lecteur avec de la vraie musique.
-    // Intégration et droits NON confirmés : à remplacer par une playlist SKYLINE (ou autorisée) avant toute mise en production.
-    soundcloudUrl: "https://soundcloud.com/luk_music/sets/afro-house-remix-songs-afro" },
+    // TEST DE VALIDATION (provisoire) : playlist publique d'Andres Jaramillo, sélection Afro House / Ibiza Sunset.
+    // URL publique vérifiée, mais intégration effective et droits d'usage commercial NON confirmés.
+    // Remplacer par une playlist SKYLINE ou autorisée avant toute mise en production.
+    soundcloudUrl: "https://soundcloud.com/andres-jaramillo-718256361/sets/black-coffee-2026-ibiza-chill" },
   { id: "above-the-clouds", title: "Above The Clouds", genre: "Deep House / Chill", tagline: "Au-dessus des nuages, tout ralentit.", cover: "blue", soundcloudUrl: null },
   { id: "after-hours", title: "After Hours", genre: "Tech House / Club", tagline: "Quand la nuit prend le relais.", cover: "laser", soundcloudUrl: null },
   { id: "island-mode", title: "Island Mode", genre: "Summer / Feel Good", tagline: "Le son de l'été, sans effort.", cover: "warm", soundcloudUrl: null },
