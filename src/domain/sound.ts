@@ -28,6 +28,9 @@ export function embedSrc(url: string): string {
   return `https://w.soundcloud.com/player/?${p.toString()}`;
 }
 
+/** Options officielles de `widget.load()` : mêmes réglages que l'iframe initiale, jamais de lecture automatique. */
+export const embedLoadOptions = () => ({ color: "#8FB8FF", auto_play: false, visual: false, hide_related: true, show_comments: false, show_user: true, show_reposts: false, show_teaser: false, show_playcount: false, buying: false, liking: false, download: false, sharing: false });
+
 /**
  * Hauteur du lecteur compact officiel : 166 px (hauteur standard du widget classique d'un titre).
  * Pour une playlist, SoundCloud décide seul de ce qu'il affiche à cette hauteur : nous ne recadrons ni ne recouvrons jamais le widget.

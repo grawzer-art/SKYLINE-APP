@@ -5,8 +5,8 @@ import { motion, useReducedMotion } from "motion/react";
 import { ArrowLeft } from "lucide-react";
 import { Backdrop } from "./visual";
 import { DemoTag } from "./ui";
-import { SoundCloudEmbed } from "./SoundCloudEmbed";
-import { usePlayer } from "./PlayerProvider";
+import { SoundPlayerCard } from "@/components/sound/SoundPlayerCard";
+import { useSound } from "@/components/sound/SoundProvider";
 import { Photo } from "@/components/ui/Photo";
 import { images } from "@/data/demo";
 import { soundCollections } from "@/data/sound";
@@ -20,24 +20,30 @@ const TEST = "test";
 /** SKYLINE SOUND : quatre collections, un lecteur SoundCloud officiel affiché dans l'app à la sélection. */
 export function V3Sound() {
   const reduce = useReducedMotion();
-  const player = usePlayer();
-  const [picked, setPicked] = useState<string | null>(null);
+  const snd = useSound();
+  // Au retour sur la page, on retrouve la collection en cours : le widget n'a jamais été recréé.
+  const [picked, setPicked] = useState<string | null>(snd.collection?.id ?? null);
   const [testInput, setTestInput] = useState("");
   const [testUrl, setTestUrl] = useState<string | null>(null);
   const [testErr, setTestErr] = useState<string | null>(null);
 
   const anyUrl = soundCollections.some((c) => parseSoundCloudUrl(c.soundcloudUrl).ok);
   const col = soundCollections.find((c) => c.id === picked) ?? null;
-  const source = picked === TEST ? testUrl : col?.soundcloudUrl ?? null;
+  const source = picked === TEST ? (snd.collection?.id === TEST ? snd.collection.url : testUrl) : col?.soundcloudUrl ?? null;
   const parsed = parseSoundCloudUrl(source);
   const title = picked === TEST ? "URL de test" : col?.title ?? "";
+  const choose = (id: string, url: string | null, name: string) => {
+    setPicked(id);
+    const r = parseSoundCloudUrl(url);
+    if (r.ok) snd.select({ id, title: name, url: r.url, kind: r.kind });
+  };
   const rise = (d: number) => ({ initial: reduce ? false : { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.8, ease, delay: d } } as const);
 
   const loadTest = (e: React.FormEvent) => {
     e.preventDefault();
     const r = parseSoundCloudUrl(testInput);
     if (!r.ok) { setTestErr(r.reason === "host" ? "Seules les adresses soundcloud.com sont acceptées." : r.reason === "empty" ? "Collez une adresse SoundCloud." : "Adresse invalide : elle doit commencer par https://."); return; }
-    setTestErr(null); setTestUrl(r.url); setPicked(TEST);
+    setTestErr(null); setTestUrl(r.url); choose(TEST, r.url, "URL de test");
   };
 
   return (
@@ -57,7 +63,7 @@ export function V3Sound() {
             const has = parseSoundCloudUrl(c.soundcloudUrl).ok; const on = picked === c.id;
             return (
               <li key={c.id}>
-                <button type="button" aria-pressed={on} onClick={() => setPicked(c.id)}
+                <button type="button" aria-pressed={on} onClick={() => choose(c.id, c.soundcloudUrl, c.title)}
                   className={cn("group relative isolate block aspect-square w-full overflow-hidden rounded-[10px] border text-left transition active:scale-[0.98]", on ? "border-sky ring-1 ring-sky" : "border-cloud/15")}>
                   <Photo src={visuals[c.cover]} objectPosition={c.coverPosition} sizes="(max-width: 480px) 45vw, 220px" imgClassName="transition duration-700 group-hover:scale-105 motion-reduce:transition-none" />
                   <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-jet via-jet/45 to-jet/5" />
@@ -74,23 +80,26 @@ export function V3Sound() {
       </section>
 
       <section aria-live="polite" aria-label="Lecteur" className="px-5 pt-7">
-        {!picked ? (
+        {!picked && !snd.collection && (
           <p role="status" className="border-l border-sky pl-4 text-[1rem] font-light leading-snug text-cloud/85">{anyUrl ? "Choisissez une collection pour lancer le lecteur." : "Les playlists SKYLINE SOUND apparaîtront ici dès leur publication."}</p>
-        ) : (
-          <div key={picked}>
+        )}
+        {picked && (
+          <div>
             <p className="font-mono text-[0.75rem] uppercase tracking-[0.2em] text-sky">{col?.genre ?? "Prototype"}</p>
             <h2 className="font-display mt-1.5 text-[1.5rem] leading-none">{title}</h2>
             {col && <p className="mt-2 text-[0.95rem] text-cloud/80">{col.tagline}</p>}
-            <div className="mt-4">
-              {parsed.ok ? (
-                <SoundCloudEmbed key={parsed.url} url={parsed.url} kind={parsed.kind} title={title} onPlay={player.close} />
-              ) : (
-                <div role="status" className="rounded-[10px] border border-dashed border-cloud/25 px-5 py-8">
-                  <p className="font-display text-[1.1rem]">Cette collection arrive bientôt.</p>
-                  <p className="mt-2 max-w-[32ch] text-[0.92rem] leading-snug text-dim">La playlist officielle sera ajoutée ici dès sa publication sur SoundCloud.</p>
-                </div>
-              )}
-            </div>
+            {!parsed.ok && (
+              <div role="status" className="mt-4 rounded-[10px] border border-dashed border-cloud/25 px-5 py-8">
+                <p className="font-display text-[1.1rem]">Cette collection arrive bientôt.</p>
+                <p className="mt-2 max-w-[32ch] text-[0.92rem] leading-snug text-dim">La playlist officielle sera ajoutée ici dès sa publication sur SoundCloud.</p>
+              </div>
+            )}
+          </div>
+        )}
+        {snd.collection && (
+          <div className="mt-4">
+            {snd.collection.id !== picked && <p className="mb-2 font-mono text-[0.75rem] uppercase tracking-[0.16em] text-cloud/75">En lecture : {snd.collection.title}</p>}
+            <SoundPlayerCard />
           </div>
         )}
       </section>
