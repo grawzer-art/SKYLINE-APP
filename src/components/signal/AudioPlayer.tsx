@@ -1,4 +1,5 @@
 "use client";
+import { announceAudio, onOtherAudio } from "@/lib/audioBus";
 import { useEffect, useId, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -18,6 +19,7 @@ export function AudioPlayer({ src, title, className }: { src?: string; title: st
   const [failed, setFailed] = useState(false);
 
   useEffect(() => { const a = ref.current; return () => { a?.pause(); }; }, []);
+  useEffect(() => onOtherAudio("signal", () => ref.current?.pause()), []); // un seul son à la fois
 
   if (!src || failed) {
     return (
@@ -35,7 +37,7 @@ export function AudioPlayer({ src, title, className }: { src?: string; title: st
   return (
     <div className={cn("flex items-center gap-4 border-y border-cloud/15 py-3", className)}>
       <audio ref={ref} src={src} preload="none"
-        onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)}
+        onPlay={() => { setPlaying(true); announceAudio("signal"); }} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)}
         onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
         onError={() => setFailed(true)} />
       <button type="button" onClick={toggle} aria-label={`${playing ? "Mettre en pause" : "Écouter"} : ${title}`}

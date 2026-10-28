@@ -49,16 +49,13 @@ export function V3Club() {
         <NavTile href="/v3/club/memories" title="Souvenirs" sub={t("club.tile.souvenirs")} visual={visuals.warm} />
       </nav>
 
-      <section className="px-5 pt-10">
-        <h2 className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-cloud/68">{t("club.history")}</h2>
-        <p className="mt-3 flex items-baseline justify-between border-b border-line pb-3 text-[0.95rem]">
-          {state.phase === "before" ? <span className="text-cloud/75">{t("club.history.empty")}</span> : <><span>Ibiza 2027</span><span className="font-mono text-[0.7rem] uppercase tracking-[0.14em] text-dim">{t("club.history.dates")}</span></>}
-        </p>
-        <h2 className="mt-7 font-mono text-[0.7rem] uppercase tracking-[0.22em] text-cloud/68">{t("club.next")}</h2>
-        <p className="mt-3 text-[0.85rem] text-cloud/75">{t("club.next.text")}</p>
-      </section>
+      {state.phase !== "before" && (
+        <section className="px-5 pt-10">
+          <h2 className="font-mono text-[0.72rem] uppercase tracking-[0.22em] text-cloud/72">{t("club.history")}</h2>
+          <p className="mt-3 flex items-baseline justify-between border-b border-line pb-3 text-[0.95rem]"><span>Ibiza 2027</span><span className="font-mono text-[0.72rem] uppercase tracking-[0.14em] text-dim">{t("club.history.dates")}</span></p>
+        </section>
+      )}
 
-      <p className="font-tagline px-5 pb-2 pt-10 text-center text-[0.7rem] text-silver/70">{t("club.signature")}</p>
     </>
   );
 }

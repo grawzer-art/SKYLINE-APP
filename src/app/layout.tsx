@@ -3,6 +3,7 @@ import "@fontsource-variable/archivo/wdth.css"; // substitut OFL de Helvetica No
 import "@fontsource-variable/jetbrains-mono";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
+import { SoundProvider } from "@/components/sound/SoundProvider";
 
 export const metadata: Metadata = {
   title: "SKYLINE — Pre-boarding",
@@ -24,7 +25,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr">
       <body>
-        <AppShell>{children}</AppShell>
+        <SoundProvider><AppShell>{children}</AppShell></SoundProvider>
       </body>
     </html>
   );

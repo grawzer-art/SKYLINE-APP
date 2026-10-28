@@ -21,10 +21,9 @@ export function SignalCard({ signal: s }: { signal?: Signal }) {
         <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-jet via-jet/55 via-55% to-jet/10" />
         <span className="relative flex h-full w-full flex-col justify-between">
           <span className="flex items-center justify-between gap-3 font-mono text-[0.7rem] uppercase tracking-[0.18em]">
-            <span className="text-cloud/80">Skyline Signal</span>
+            <span className="text-cloud/80">Signal</span>
             <span className="flex items-center gap-1.5">
               {fresh && <span className="inline-flex items-center gap-1.5 border border-sky/60 px-1.5 py-0.5 text-sky"><span aria-hidden className="size-1 rounded-full bg-sky motion-safe:animate-pulse" />New<span className="sr-only"> — nouvelle révélation</span></span>}
-              {s.demo && <span className="border border-cloud/30 px-1.5 py-0.5 text-cloud/72">Démo</span>}
             </span>
           </span>
           <span className="flex items-end justify-between gap-4">

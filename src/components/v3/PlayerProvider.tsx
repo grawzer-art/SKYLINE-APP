@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Pause, Play, X } from "lucide-react";
 import { useCommunity } from "@/lib/useCommunity";
 import { testToneUrl } from "@/lib/testTone";
+import { announceAudio, onOtherAudio } from "@/lib/audioBus";
 
 export type PlayerItem = { id: string; title: string; by: string; href?: string };
 type Ctx = {
@@ -33,6 +34,8 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const unavailable = !hasSource || failed;
 
   useEffect(() => { const a = audio.current; return () => a?.pause(); }, []);
+  // Un seul son à la fois : si SKYLINE SOUND (SoundCloud) démarre, ce lecteur de démonstration s'arrête.
+  useEffect(() => onOtherAudio("legacy", () => { audio.current?.pause(); }), []);
 
   const play = useCallback((item: PlayerItem) => {
     setCurrent(item); setFailed(false); setTime(0);
@@ -50,7 +53,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <PlayerCtx.Provider value={value}>
-      <audio ref={audio} preload="none" onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)}
+      <audio ref={audio} preload="none" onPlay={() => { setPlaying(true); announceAudio("legacy"); }} onPause={() => setPlaying(false)} onEnded={() => setPlaying(false)}
         onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} onError={() => setFailed(true)} />
       {children}
       {current && !hideBar && (

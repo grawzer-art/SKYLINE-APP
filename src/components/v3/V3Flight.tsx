@@ -71,7 +71,7 @@ function Panel({ tab, trip }: { tab: Tab; trip: Trip }) {
 export function V3Flight() {
   const { state } = useProto();
   const reduce = useReducedMotion();
-  const metal = useMetal();
+  const metal = useMetal(1.7);
   const phase = state.phase;
   const demo = state.sim.trip;
   const trip = demo ? demoTrip : noTrip;
