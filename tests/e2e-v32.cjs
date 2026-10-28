@@ -25,8 +25,8 @@ let fails = 0; const ok = (n, c, d = "") => { console.log(`${c ? "PASS" : "FAIL"
     await p.getByRole("link", { name: /Alba/ }).first().click(); await p.waitForURL("**/members/**"); await p.waitForTimeout(800);
     ok("PARCOURS : CLUB → MEMBERS → profil", (await p.getByText("Alba").locator("visible=true").count()) >= 1);
     await p.goto(B + "/explore"); await p.waitForTimeout(900);
-    await p.getByRole("link", { name: /Skyline Radio/ }).first().click(); await p.waitForURL("**/v3/explore/radio"); await p.waitForTimeout(800);
-    ok("PARCOURS : EXPLORE → SKYLINE RADIO", (await p.locator("#radio-title:visible").count()) === 1);
+    await p.getByRole("link", { name: /Skyline Sound/ }).first().click(); await p.waitForURL("**/v3/explore/sound"); await p.waitForTimeout(800);
+    ok("PARCOURS : EXPLORE → SKYLINE SOUND", (await p.locator("#sound-title:visible").count()) === 1);
     ok("PARCOURS : aucune erreur console", errs.length === 0, errs.join(" | "));
     await ctx.close();
     const c2 = await mk({}, null);
@@ -39,7 +39,7 @@ let fails = 0; const ok = (n, c, d = "") => { console.log(`${c ? "PASS" : "FAIL"
   }
 
   /* Texte agrandi + débordements + tailles minimales */
-  const routes = ["/", "/explore", "/v3/flight", "/v3/club", "/v3/club/community", "/v3/club/space", "/v3/club/members", "/v3/club/messages", "/v3/club/messages/m1", "/v3/explore/radio"];
+  const routes = ["/", "/explore", "/v3/flight", "/v3/club", "/v3/club/community", "/v3/club/space", "/v3/club/members", "/v3/club/messages", "/v3/club/messages/m1", "/v3/explore/sound"];
   for (const [label, scale] of [["normal", 16], ["texte agrandi (20 px)", 20]]) {
     const { ctx, p } = await mk({}, active); let bad = [];
     for (const r of routes) {
@@ -63,7 +63,7 @@ let fails = 0; const ok = (n, c, d = "") => { console.log(`${c ? "PASS" : "FAIL"
   /* Zones tactiles */
   {
     const { ctx, p } = await mk({}, active); let bad = [];
-    for (const r of ["/v3/flight", "/v3/club", "/v3/club/members", "/v3/club/messages", "/v3/explore/radio"]) {
+    for (const r of ["/v3/flight", "/v3/club", "/v3/club/members", "/v3/club/messages", "/v3/explore/sound"]) {
       await p.goto(B + r); await p.waitForTimeout(900);
       const s = await p.evaluate(() => [...document.querySelectorAll("a, button, [role=tab], [role=switch], input, select")].filter((e) => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return r.width && r.height && cs.visibility !== "hidden" && !e.closest("[aria-hidden='true']") && !e.classList.contains("sr-only") && e.type !== "checkbox" && (r.height < 40 || r.width < 40); }).map((e) => `${(e.getAttribute("aria-label") || e.textContent || e.tagName).trim().slice(0, 18)} ${Math.round(e.getBoundingClientRect().width)}x${Math.round(e.getBoundingClientRect().height)}`));
       if (s.length) bad.push(r + " " + s.slice(0, 4).join(","));

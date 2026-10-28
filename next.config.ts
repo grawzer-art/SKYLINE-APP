@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
       { source: "/club", destination: "/v3/club", permanent: false },
       { source: "/pass", destination: "/v3/flight", permanent: false },
       { source: "/more", destination: "/", permanent: false },
+      // SKYLINE RADIO devient SKYLINE SOUND (lecteur SoundCloud officiel).
+      { source: "/v3/explore/radio", destination: "/v3/explore/sound", permanent: false },
     ];
   },
   partialPrefetching: true,

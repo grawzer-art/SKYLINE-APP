@@ -66,7 +66,7 @@ export const sitemap: ScreenNode[] = [
   ] },
   { label: "MY FLIGHT", href: "/v3/flight", note: "Pass · réservation · informations officielles · programme pratique" },
   { label: "EXPLORE", href: "/v3/explore", note: "Artistes · lineup · contenus", children: [
-    { label: "SKYLINE RADIO", href: "/v3/explore/radio", note: "Sélections · DJ · mixes · lecteur" },
+    { label: "SKYLINE SOUND", href: "/v3/explore/sound", note: "Collections · lecteur SoundCloud" },
   ] },
   { label: "CLUB", href: "/v3/club", note: "Carte membre · accès aux 4 espaces", children: [
     { label: "MY SPACE", href: "/v3/club/space", note: "Profil membre · visibilité" },

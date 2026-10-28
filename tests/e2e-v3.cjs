@@ -5,7 +5,7 @@ const fs = require("fs"); const os = require("os"); const path = require("path")
 const B = process.env.BASE || "http://localhost:3100";
 const KEY = "skyline.v3.proto.v2";
 let fails = 0; const ok = (l, c) => { if (!c) fails++; console.log(c ? "PASS" : "FAIL", l); };
-const routes = ["/v3", "/v3/flight", "/v3/explore", "/v3/explore/radio", "/v3/explore/radio/dj/dj1", "/v3/explore/radio/sel/sel1", "/v3/club", "/v3/club/community", "/v3/club/space", "/v3/club/members", "/v3/club/members/m4", "/v3/club/messages", "/v3/club/messages/m1", "/v3/club/memories", "/v3/profile", "/v3/screens", "/v3/wireframes"];
+const routes = ["/v3", "/v3/flight", "/v3/explore", "/v3/explore/sound", "/v3/explore/radio/dj/dj1", "/v3/explore/radio/sel/sel1", "/v3/club", "/v3/club/community", "/v3/club/space", "/v3/club/members", "/v3/club/members/m4", "/v3/club/messages", "/v3/club/messages/m1", "/v3/club/memories", "/v3/profile", "/v3/screens", "/v3/wireframes"];
 const png = path.join(os.tmpdir(), "photo-test.png"); const txt = path.join(os.tmpdir(), "note.txt");
 fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==", "base64")); fs.writeFileSync(txt, "pas une image");
 
@@ -169,30 +169,6 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
     ok("HORS LIGNE : composeur désactivé + explication", (await o.p.getByLabel("Votre message").isDisabled()) && (await o.p.getByText(/hors ligne/).locator("visible=true").count()) >= 1); await o.ctx.setOffline(false); await o.ctx.close();
   }
 
-  /* 6. RADIO */
-  {
-    const { ctx, p } = await mk(); await seed(p, eligible); const vis = (t) => p.getByText(t).locator("visible=true");
-    await p.goto(B + "/v3/explore/radio"); await p.waitForTimeout(1000);
-    ok("RADIO : aucun média lancé au chargement", await p.evaluate(() => [...document.querySelectorAll("audio")].every((a) => a.paused)));
-    ok("RADIO : contenus « à confirmer » (aucun titre inventé)", (await vis(/Sélection officielle à confirmer/).count()) >= 1 && (await vis(/DJ à confirmer/).count()) >= 1);
-    await p.getByRole("button", { name: /Écouter : Mix exclusif à confirmer · 1/ }).click(); await p.waitForTimeout(500);
-    ok("RADIO : sans média autorisé → « indisponible » dans le lecteur", (await p.getByRole("region", { name: /Lecteur/ }).getByText(/indisponible/).count()) === 1);
-    await p.getByRole("button", { name: "Fermer le lecteur" }).click();
-    await p.getByRole("button", { name: /Avant|Pendant|Après/ }).click(); await p.waitForTimeout(400); await p.getByRole("radio", { name: "Signal de test" }).click(); await p.keyboard.press("Escape"); await p.waitForTimeout(500);
-    await p.getByRole("button", { name: /Écouter : Mix exclusif à confirmer · 1/ }).click(); await p.waitForTimeout(1200);
-    const paused = () => p.evaluate(() => document.querySelector("audio").paused);
-    ok("LECTEUR : lecture sur clic", !(await paused()));
-    const t1 = await p.evaluate(() => document.querySelector("audio").currentTime); await p.waitForTimeout(800); ok("LECTEUR : progression", (await p.evaluate(() => document.querySelector("audio").currentTime)) > t1);
-    await p.getByRole("link", { name: /DJ à confirmer · 1/ }).click(); await p.waitForURL("**/dj/dj1"); await p.waitForTimeout(900);
-    ok("LECTEUR : persiste pendant la navigation", (await p.getByRole("region", { name: /Lecteur/ }).count()) === 1);
-    ok("LECTEUR : la lecture continue", !(await paused()));
-    await p.getByRole("region", { name: /Lecteur/ }).getByRole("button", { name: /Mettre en pause/ }).click(); await p.waitForTimeout(300); ok("LECTEUR : pause", await paused());
-    await p.getByRole("slider", { name: "Position de lecture" }).focus(); await p.keyboard.press("ArrowRight"); await p.waitForTimeout(200); ok("LECTEUR : recherche au clavier", (await p.evaluate(() => document.querySelector("audio").currentTime)) > 1);
-    await p.getByRole("button", { name: "Fermer le lecteur" }).click(); await p.waitForTimeout(300); ok("LECTEUR : fermeture arrête la lecture", (await p.getByRole("region", { name: /Lecteur/ }).count()) === 0 && (await paused()));
-    await p.goto(B + "/v3/explore/radio/sel/sel1"); await p.waitForTimeout(900); ok("PLAYLIST : titres « à confirmer »", (await p.getByText(/Titre à confirmer · 1/).locator("visible=true").count()) === 1);
-    await ctx.close();
-  }
-
   /* 7. Anglais */
   {
     const { ctx, p } = await mk(); await seed(p, { ...eligible, me: { pseudo: "Alex", city: "Paris", bio: "", genres: ["House"], visible: true }, locale: "en" }); const vis = (t) => p.getByText(t).locator("visible=true");
@@ -200,7 +176,6 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
     ok("EN : annuaire traduit", (await vis("8 visible members").count()) === 1 && (await vis(/Alphabetical order/).count()) === 1);
     await p.goto(B + "/v3/club/space"); await p.waitForTimeout(800); ok("EN : My Space traduit", (await p.getByRole("button", { name: "Edit" }).first().count()) === 1);
     await p.goto(B + "/v3/club/messages"); await p.waitForTimeout(800); ok("EN : messages traduits", (await vis("Conversations").count()) >= 1 && (await vis(/1 unread/).count()) === 1);
-    await p.goto(B + "/v3/explore/radio"); await p.waitForTimeout(800); ok("EN : radio traduite", (await vis("Official playlists").count()) === 1);
     await ctx.close();
   }
 
@@ -226,8 +201,8 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
     await p.locator("nav[aria-label='Navigation principale']").getByRole("link", { name: "My Flight" }).click(); await p.waitForURL("**/v3/flight"); await p.waitForTimeout(700);
     ok("APPLICATION : l'onglet My Flight mène au nouveau My Flight", (await vis(/pas un titre de transport/i).count()) === 1);
     await p.goto(B + "/explore"); await p.waitForTimeout(900);
-    await p.getByRole("link", { name: /Skyline Radio/ }).click(); await p.waitForURL("**/v3/explore/radio"); await p.waitForTimeout(700);
-    ok("APPLICATION : Explore → Skyline Radio", (await vis("Playlists officielles").count()) === 1);
+    await p.getByRole("link", { name: /Skyline Sound/ }).click(); await p.waitForURL("**/v3/explore/sound"); await p.waitForTimeout(700);
+    ok("APPLICATION : Explore → Skyline Sound", (await vis("Quatre ambiances pour accompagner le voyage.").count()) === 1);
     const r1 = await ctx.request.get(B + "/club", { maxRedirects: 0 }); ok("ANCIENNE ROUTE /club redirigée", r1.status() === 307 || r1.status() === 308);
     await ctx.close();
   }

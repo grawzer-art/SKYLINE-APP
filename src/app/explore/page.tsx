@@ -22,12 +22,12 @@ export default function Page() {
         <p className="mt-3 max-w-[32ch] text-[1.02rem] leading-snug text-cloud/80">Musique, révélations et souvenirs d&apos;Ibiza 2027.</p>
       </div>
       <div className="px-5 pt-6">
-        <Link href="/v3/explore/radio" className="group relative isolate flex aspect-[5/4] items-end overflow-hidden rounded-[10px] border border-cloud/15 p-5">
+        <Link href="/v3/explore/sound" className="group relative isolate flex aspect-[5/4] items-end overflow-hidden rounded-[10px] border border-cloud/15 p-5">
           <Photo src={images.before} alt="" objectPosition="30% 70%" sizes="(max-width: 480px) 100vw, 480px" imgClassName="transition duration-1000 group-hover:scale-[1.03] motion-reduce:transition-none" />
           <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-jet via-jet/45 to-jet/5" />
           <span className="relative flex w-full items-end justify-between gap-4">
-            <span><span className="block font-mono text-[0.75rem] uppercase tracking-[0.2em] text-sunset">Sélections officielles</span><span className="font-display mt-2 block text-[1.8rem] leading-none">Skyline Radio</span></span>
-            <span className="grid size-14 shrink-0 place-items-center rounded-full bg-cloud text-jet transition group-active:scale-95"><ArrowRight size={20} strokeWidth={1.75} aria-label="Ouvrir" /></span>
+            <span><span className="block font-mono text-[0.75rem] uppercase tracking-[0.2em] text-sunset">Collections musicales</span><span className="font-display mt-2 block text-[1.8rem] leading-none">Skyline Sound</span></span>
+            <span className="grid size-14 shrink-0 place-items-center rounded-full bg-cloud text-jet transition group-active:scale-95"><ArrowRight size={20} strokeWidth={1.75} aria-label="Ouvrir Skyline Sound" /></span>
           </span>
         </Link>
       </div>
