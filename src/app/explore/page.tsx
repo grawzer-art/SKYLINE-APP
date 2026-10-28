@@ -19,7 +19,6 @@ export default function Page() {
       <div className="px-5">
         <p className="font-mono text-[0.75rem] uppercase tracking-[0.22em] text-sky">Skyline Culture</p>
         <h1 className="font-display mt-3 text-[clamp(2.2rem,11vw,3.3rem)] leading-[0.92]">Explore</h1>
-        <p className="mt-3 max-w-[32ch] text-[1.02rem] leading-snug text-cloud/80">Musique, révélations et souvenirs d&apos;Ibiza 2027.</p>
       </div>
       <div className="px-5 pt-6">
         <Link href="/v3/explore/sound" className="group relative isolate flex aspect-[5/4] items-end overflow-hidden rounded-[10px] border border-cloud/15 p-5">
@@ -39,8 +38,7 @@ export default function Page() {
         </Link>
       </div>
       <section className="px-5 pt-9" aria-labelledby="lineup-title">
-        <p className="font-mono text-[0.75rem] uppercase tracking-[0.22em] text-sky">Line-up</p>
-        <h2 id="lineup-title" className="font-display mt-2 text-[1.4rem]">Programmation</h2>
+        <h2 id="lineup-title" className="font-display text-[1.4rem]">Programmation</h2>
         <p role="status" className="mt-3 max-w-[34ch] border-l border-sky pl-4 text-[1rem] font-light leading-snug text-cloud/85">Les artistes seront dévoilés ici, un à un, dès qu&apos;ils seront confirmés.</p>
       </section>
       <ConceptCard />

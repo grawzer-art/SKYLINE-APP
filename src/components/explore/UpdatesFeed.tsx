@@ -17,7 +17,6 @@ export function UpdatesFeed() {
   const [selected, setSelected] = useState<NewsItem | null>(null);
   const reduce = useReducedMotion();
   const items = news.filter((n) => filter === "all" || n.category === filter);
-  const count = (f: Filter) => (f === "all" ? news.length : news.filter((n) => n.category === f).length);
 
   return (
     <Section id="updates" eyebrow="Latest" title="Annonces">
@@ -27,7 +26,6 @@ export function UpdatesFeed() {
             className={cn("inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl border px-4 text-[0.82rem] font-medium transition active:scale-95",
               filter === f.id ? "border-sky bg-sky text-jet" : "border-line bg-surface-1 text-cloud")}>
             {f.label}
-            <span className={cn("font-mono text-[0.75rem]", filter === f.id ? "text-jet/70" : "text-dim")}>{count(f.id)}</span>
           </button>
         ))}
       </div>
