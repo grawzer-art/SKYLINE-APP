@@ -25,3 +25,8 @@ tsc ✔ · lint ✔ · build ✔ · unitaires (45 + 7 + 16 nouveaux) ✔ · e2e 
 
 ## Pour passer à un test réel
 Coller une URL de playlist SoundCloud embarquable dans `src/data/sound.ts` (ou dans le champ « Tester une URL » de la page), ouvrir la Preview sur iPhone, puis dérouler la liste du point 3.
+
+## Validation réelle — SUNSET CLUB (provisoire)
+URL renseignée : `https://soundcloud.com/luk_music/sets/afro-house-remix-songs-afro` (playlist « AFRO HOUSE REMIX SONGS » du compte LUK, trouvée par recherche web ; l'adresse vient du paramètre `in=` des pages de ses mixes).
+**Non vérifiés depuis cet environnement (SoundCloud bloqué)** : que la playlist soit toujours en ligne, que le propriétaire autorise l'intégration, que la lecture démarre. Ces mixes sont majoritairement des remixes de titres connus (Tiësto, Guetta, Rihanna…) : **inadaptés à une production** (droits). Les trois autres collections restent à `null`.
+À tester à la main sur iPhone : voir la liste du message de livraison.

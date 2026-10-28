@@ -17,14 +17,24 @@ const fakeApi = `window.__h={};window.SC={Widget:Object.assign(function(){return
     ok("SOUND : redirection de l'ancienne route radio", (await (async () => { await p.goto(B + "/v3/explore/radio"); await p.waitForTimeout(800); return p.url(); })()).endsWith("/v3/explore/sound"));
     for (const t of ["Sunset Club", "Above The Clouds", "After Hours", "Island Mode"]) ok(`SOUND : collection ${t}`, (await p.getByRole("button", { name: new RegExp(t) }).count()) === 1);
     ok("SOUND : genres affichés", (await p.getByText("Afro House / Melodic House").count()) === 1 && (await p.getByText("Deep House / Chill").count()) === 1 && (await p.getByText("Tech House / Club").count()) === 1 && (await p.getByText("Summer / Feel Good").count()) === 1);
-    ok("SOUND : état vide global (aucune playlist renseignée)", (await p.getByText(/apparaîtront ici dès leur publication/).count()) === 1);
-    ok("SOUND : aucune iframe tant qu'aucune URL", (await p.locator("iframe").count()) === 0);
-    await p.getByRole("button", { name: /Sunset Club/ }).click(); await p.waitForTimeout(400);
-    ok("SOUND : collection sans URL → « arrive bientôt », sans iframe", (await p.getByText("Cette collection arrive bientôt.").count()) === 1 && (await p.locator("iframe").count()) === 0);
+    ok("SOUND : invitation à choisir une collection", (await p.getByText(/Choisissez une collection/).count()) === 1);
+    ok("SOUND : aucune iframe (ni requête SoundCloud) avant le choix", (await p.locator("iframe").count()) === 0);
+    await p.getByRole("button", { name: /Above The Clouds/ }).click(); await p.waitForTimeout(400);
+    ok("SOUND : collection sans URL → « arrive bientôt », sans iframe (Above The Clouds)", (await p.getByText("Cette collection arrive bientôt.").count()) === 1 && (await p.locator("iframe").count()) === 0);
     ok("SOUND : aucun audio ni lecture automatique", await p.evaluate(() => [...document.querySelectorAll("audio")].every((a) => a.paused)));
     await p.locator("summary").click(); await p.getByLabel(/Collez l'adresse/).fill("https://example.com/a/b"); await p.getByRole("button", { name: "Charger le lecteur" }).click(); await p.waitForTimeout(300);
     ok("SOUND : URL hors SoundCloud refusée", (await p.getByRole("alert").filter({ hasText: /soundcloud\.com/ }).count()) === 1 && (await p.locator("iframe").count()) === 0);
     ok("SOUND : aucune erreur JS", errs.length === 0, errs.join("|"));
+    await ctx.close();
+  }
+
+  /* SUNSET CLUB : playlist configurée */
+  {
+    const { ctx, p } = await mk({}, true); await p.goto(B + "/v3/explore/sound"); await p.waitForTimeout(800);
+    await p.getByRole("button", { name: /Sunset Club/ }).click(); await p.waitForTimeout(800);
+    const src = await p.locator("iframe").getAttribute("src");
+    ok("SUNSET CLUB : iframe officielle sur la playlist configurée", src.startsWith("https://w.soundcloud.com/player/?") && src.includes(encodeURIComponent("https://soundcloud.com/luk_music/sets/afro-house-remix-songs-afro")));
+    ok("SUNSET CLUB : « Bientôt » retiré de la collection configurée", (await p.getByRole("button", { name: /Sunset Club/ }).getByText("Bientôt").count()) === 0);
     await ctx.close();
   }
 
