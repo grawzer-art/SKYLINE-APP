@@ -5,11 +5,18 @@ const { chromium } = require("playwright");
 const B = process.env.BASE || "http://localhost:3100";
 let fails = 0; const ok = (n, c, d = "") => { console.log(`${c ? "PASS" : "FAIL"} ${n}${!c && d ? " — " + d : ""}`); if (!c) fails++; };
 const URLS = { set: "https://soundcloud.com/skyline-test/sets/demo", track: "https://soundcloud.com/skyline-test/demo" };
-const fakeApi = `window.__h={};window.SC={Widget:Object.assign(function(){return{bind:function(e,cb){window.__h[e]=cb;if(e==='ready')setTimeout(cb,60)},unbind:function(){}}},{Events:{READY:'ready',PLAY:'play',PAUSE:'pause',FINISH:'finish',ERROR:'error'}})};window.__fire=function(e){window.__h[e]&&window.__h[e]()};`;
+const fakeApi = `(function(){var H={};var calls=[];window.__calls=calls;window.__h=H;window.__fire=function(e){H[e]&&H[e]()};
+var F=function(el){var src=new URL(el.src).searchParams.get('url')||'';var n=/\\/sets\\//.test(src)?3:1,i=0,paused=true;
+function f(e,d){setTimeout(function(){H[e]&&H[e]()},d||30)}
+return{bind:function(e,cb){H[e]=cb;if(e==='ready')setTimeout(cb,300)},unbind:function(){},
+getSounds:function(cb){setTimeout(function(){cb(new Array(n).fill({}))},10)},getCurrentSoundIndex:function(cb){cb(i)},
+play:function(){calls.push('play');paused=false;f('play')},pause:function(){calls.push('pause');paused=true;f('pause')},
+next:function(){calls.push('next');if(i<n-1)i++;if(!paused)f('play')},prev:function(){calls.push('prev');if(i>0)i--;if(!paused)f('play')}}};
+F.Events={READY:'ready',PLAY:'play',PAUSE:'pause',FINISH:'finish',ERROR:'error'};window.SC={Widget:F};})();`;
 (async () => {
   const b = await chromium.launch();
   const mk = async (o = {}, mock = false) => { const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, ...o }); if (mock) { await ctx.route("https://w.soundcloud.com/player/api.js", (r) => r.fulfill({ contentType: "application/javascript", body: fakeApi })); await ctx.route("https://w.soundcloud.com/player/?**", (r) => r.fulfill({ contentType: "text/html", body: "<!doctype html><title>stub</title><body style='background:#222;color:#fff'>widget</body>" })); } const p = await ctx.newPage(); const errs = []; p.on("pageerror", (e) => errs.push(e.message)); return { ctx, p, errs }; };
-  const loadTest = async (p, url) => { await p.locator("summary").click(); await p.getByLabel(/Collez l'adresse/).fill(url); await p.getByRole("button", { name: "Charger le lecteur" }).click(); await p.waitForTimeout(500); };
+  const loadTest = async (p, url, wait = 500) => { if (!(await p.locator("details").evaluate((d) => d.open))) await p.locator("summary").click(); await p.getByLabel(/Collez l'adresse/).fill(url); await p.getByRole("button", { name: "Charger le lecteur" }).click(); await p.waitForTimeout(wait); };
 
   /* États vides */
   {
@@ -62,6 +69,34 @@ const fakeApi = `window.__h={};window.SC={Widget:Object.assign(function(){return
     }
     await loadTest(p, URLS.track).catch(() => {}); await p.waitForTimeout(300);
     ok(`MOBILE ${w} px : aucun défilement horizontal avec le lecteur`, (await p.evaluate(() => document.documentElement.scrollWidth - innerWidth)) <= 0);
+    await ctx.close();
+  }
+
+  /* Commandes SKYLINE pilotant le widget (API officielle) */
+  {
+    const { ctx, p, errs } = await mk({}, true); await p.goto(B + "/v3/explore/sound"); await p.waitForTimeout(800);
+    const btn = (n) => p.getByRole("button", { name: n, exact: true });
+    await loadTest(p, URLS.set, 80);
+    ok("COMMANDES : désactivées tant que le widget n'est pas prêt", await btn("Lecture").isDisabled() && await btn("Titre précédent").isDisabled() && await btn("Titre suivant").isDisabled());
+    await p.waitForTimeout(700);
+    ok("COMMANDES (playlist de 3) : toutes actives une fois prêt, compteur 1 / 3", !(await btn("Lecture").isDisabled()) && !(await btn("Titre suivant").isDisabled()) && !(await btn("Titre précédent").isDisabled()) && (await p.getByText("1 / 3").count()) === 1);
+    await btn("Lecture").click(); await p.waitForTimeout(200);
+    ok("COMMANDES : lecture → play() officiel appelé une fois, bouton devient « Pause », statut synchronisé", (await p.evaluate(() => window.__calls.filter((c) => c === "play").length)) === 1 && (await btn("Pause").count()) === 1 && (await p.getByRole("status").filter({ hasText: "Lecture en cours" }).count()) === 1);
+    ok("COMMANDES : bouton central bleu SKYLINE, précédent/suivant blancs", (await btn("Pause").evaluate((e) => getComputedStyle(e).backgroundColor)) === "rgb(143, 184, 255)" && (await btn("Titre suivant").evaluate((e) => getComputedStyle(e).backgroundColor)) === "rgb(245, 245, 243)");
+    await btn("Titre suivant").click(); await p.waitForTimeout(250);
+    ok("COMMANDES : suivant → next() officiel, compteur 2 / 3", (await p.evaluate(() => window.__calls.includes("next"))) && (await p.getByText("2 / 3").count()) === 1);
+    await btn("Titre précédent").click(); await p.waitForTimeout(250);
+    ok("COMMANDES : précédent → prev() officiel, compteur 1 / 3", (await p.evaluate(() => window.__calls.includes("prev"))) && (await p.getByText("1 / 3").count()) === 1);
+    await btn("Pause").click(); await p.waitForTimeout(200);
+    ok("COMMANDES : pause → pause() officiel, bouton redevient « Lecture »", (await p.evaluate(() => window.__calls.includes("pause"))) && (await btn("Lecture").count()) === 1);
+    ok("COMMANDES : un seul lecteur (une iframe)", (await p.locator("iframe").count()) === 1);
+    await p.evaluate(() => window.__fire("error")); await p.waitForTimeout(200);
+    ok("COMMANDES : désactivées en cas d'erreur", await btn("Lecture").isDisabled() && await btn("Titre suivant").isDisabled());
+    await p.getByRole("button", { name: /Island Mode/ }).click(); await p.waitForTimeout(300);
+    await loadTest(p, URLS.track, 1000);
+    ok("COMMANDES (morceau unique) : précédent/suivant désactivés, lecture active, pas de compteur", await btn("Titre précédent").isDisabled() && await btn("Titre suivant").isDisabled() && !(await btn("Lecture").isDisabled()) && (await p.getByText(/\d \/ \d/).count()) === 0);
+    await btn("Lecture").click(); await p.waitForTimeout(200); ok("COMMANDES (morceau unique) : lecture OK", (await btn("Pause").count()) === 1);
+    ok("COMMANDES : aucune erreur JS", errs.length === 0, errs.join("|"));
     await ctx.close();
   }
 

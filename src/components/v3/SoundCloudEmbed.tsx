@@ -1,9 +1,13 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Pause, Play, SkipBack, SkipForward } from "lucide-react";
 import { embedHeight, embedSrc, type EmbedKind } from "@/domain/sound";
 
-type SCWidget = { bind: (e: string, cb: () => void) => void; unbind: (e: string) => void };
+type SCWidget = {
+  bind: (e: string, cb: () => void) => void; unbind: (e: string) => void;
+  play: () => void; pause: () => void; next: () => void; prev: () => void;
+  getSounds: (cb: (sounds: unknown[]) => void) => void; getCurrentSoundIndex: (cb: (i: number) => void) => void;
+};
 type SCApi = { Widget: ((el: HTMLIFrameElement) => SCWidget) & { Events: Record<"READY" | "PLAY" | "PAUSE" | "FINISH" | "ERROR", string> } };
 declare global { interface Window { SC?: SCApi } }
 
@@ -28,7 +32,10 @@ const label: Record<Status, string> = { loading: "Chargement du lecteur SoundClo
  */
 export function SoundCloudEmbed({ url, kind, title, onPlay }: { url: string; kind: EmbedKind; title: string; onPlay?: () => void }) {
   const frame = useRef<HTMLIFrameElement>(null);
+  const [ctl, setCtl] = useState<SCWidget | null>(null); // un seul widget, piloté par les méthodes officielles
   const [status, setStatus] = useState<Status>("loading");
+  const [tracks, setTracks] = useState<number | null>(null); // null = pas encore connu
+  const [index, setIndex] = useState(0);
   const onPlayRef = useRef(onPlay); useEffect(() => { onPlayRef.current = onPlay; });
 
   useEffect(() => {
@@ -36,17 +43,26 @@ export function SoundCloudEmbed({ url, kind, title, onPlay }: { url: string; kin
     const timer = setTimeout(() => { if (!cancelled) setStatus((s) => (s === "loading" ? "error" : s)); }, 15000);
     loadApi().then((sc) => {
       if (cancelled || !frame.current) return;
-      widget = sc.Widget(frame.current); events = sc.Widget.Events;
-      widget.bind(events.READY, () => { clearTimeout(timer); if (!cancelled) setStatus((s) => (s === "loading" || s === "error" ? "ready" : s)); });
-      widget.bind(events.PLAY, () => { if (!cancelled) { setStatus("playing"); onPlayRef.current?.(); } });
-      widget.bind(events.PAUSE, () => { if (!cancelled) setStatus("paused"); });
-      widget.bind(events.FINISH, () => { if (!cancelled) setStatus("finished"); });
-      widget.bind(events.ERROR, () => { if (!cancelled) setStatus("error"); });
+      const w = widget = sc.Widget(frame.current); setCtl(w); events = sc.Widget.Events;
+      const sync = () => { w.getCurrentSoundIndex((i) => { if (!cancelled && Number.isFinite(i)) setIndex(i); }); };
+      w.bind(events.READY, () => {
+        clearTimeout(timer); if (cancelled) return;
+        setStatus((s) => (s === "loading" || s === "error" ? "ready" : s));
+        w.getSounds((list) => { if (!cancelled) setTracks(Array.isArray(list) ? list.length : 0); }); sync();
+      });
+      w.bind(events.PLAY, () => { if (!cancelled) { setStatus("playing"); onPlayRef.current?.(); sync(); } });
+      w.bind(events.PAUSE, () => { if (!cancelled) setStatus("paused"); });
+      w.bind(events.FINISH, () => { if (!cancelled) setStatus("finished"); });
+      w.bind(events.ERROR, () => { if (!cancelled) setStatus("error"); });
     }).catch(() => { clearTimeout(timer); if (!cancelled) setStatus("error"); });
     return () => { cancelled = true; clearTimeout(timer); if (widget && events) for (const e of Object.values(events)) try { widget.unbind(e); } catch { /* iframe déjà détachée */ } };
   }, [url]);
 
   const h = embedHeight(kind);
+  const usable = (status === "ready" || status === "playing" || status === "paused" || status === "finished") && (tracks ?? 0) > 0;
+  const multi = usable && (tracks ?? 0) > 1;
+  const playing = status === "playing";
+  const round = "grid shrink-0 place-items-center rounded-full transition active:scale-95 disabled:opacity-35 disabled:active:scale-100";
   return (
     <div className="rounded-[12px] border border-line bg-surface-1 p-3">
       <div className="relative" style={{ minHeight: h }}>
@@ -60,7 +76,15 @@ export function SoundCloudEmbed({ url, kind, title, onPlay }: { url: string; kin
           </div>
         )}
       </div>
-      <div className="mt-2 flex items-center justify-between gap-3 px-1">
+      <div role="group" aria-label="Commandes de lecture" className="mt-4 flex items-center justify-center gap-5">
+        <button type="button" onClick={() => ctl?.prev()} disabled={!multi} aria-label="Titre précédent" className={`${round} size-12 bg-cloud text-jet`}><SkipBack size={20} strokeWidth={1.75} aria-hidden fill="currentColor" /></button>
+        <button type="button" onClick={() => (playing ? ctl?.pause() : ctl?.play())} disabled={!usable} aria-label={playing ? "Pause" : "Lecture"} className={`${round} size-16 bg-[#8FB8FF] text-jet`}>
+          {playing ? <Pause size={26} strokeWidth={1.75} aria-hidden fill="currentColor" /> : <Play size={26} strokeWidth={1.75} aria-hidden fill="currentColor" className="translate-x-0.5" />}
+        </button>
+        <button type="button" onClick={() => ctl?.next()} disabled={!multi} aria-label="Titre suivant" className={`${round} size-12 bg-cloud text-jet`}><SkipForward size={20} strokeWidth={1.75} aria-hidden fill="currentColor" /></button>
+      </div>
+      <p className="mt-3 text-center font-mono text-[0.75rem] tabular-nums tracking-[0.14em] text-cloud/70" aria-live="off">{multi ? `${index + 1} / ${tracks}` : "\u00A0"}</p>
+      <div className="mt-1 flex items-center justify-between gap-3 px-1">
         <p role="status" aria-live="polite" className="flex items-center gap-2 font-mono text-[0.75rem] uppercase tracking-[0.14em] text-cloud/80"><span aria-hidden className={`size-1.5 rounded-full ${status === "playing" ? "bg-sky" : status === "error" ? "bg-sunset" : "bg-cloud/35"}`} />{label[status]}</p>
         <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1.5 font-mono text-[0.75rem] uppercase tracking-[0.14em] text-sky">SoundCloud <ExternalLink size={13} strokeWidth={1.5} aria-hidden /></a>
       </div>
