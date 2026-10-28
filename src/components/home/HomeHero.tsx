@@ -15,11 +15,11 @@ const phases: Record<EventPhase, {
   cta: { label: string; href: string }; countdown: "departure" | "end" | null; countdownLabel?: string;
 }> = {
   before: {
-    eyebrow: "Pre-boarding / 2027", lines: ["La fête", "commence", "à 10 000", "mètres."], accentLine: 2, accent: "text-sky",
+    eyebrow: "Pre-boarding", lines: ["La fête", "commence", "à 10 000", "mètres."], accentLine: 2, accent: "text-sky",
     image: images.before, objectPos: "30% 100%", cta: { label: "My Flight", href: "/flight" }, countdown: "departure", countdownLabel: "Départ dans",
   },
   during: {
-    eyebrow: "Ibiza / 2027 — en cours", lines: ["Bienvenue", "à Ibiza."], accentLine: 1, accent: "text-sunset",
+    eyebrow: "En cours à Ibiza", lines: ["Bienvenue", "à Ibiza."], accentLine: 1, accent: "text-sunset",
     image: images.during, objectPos: "50% 40%", cta: { label: "My Flight", href: "/flight" }, countdown: "end", countdownLabel: "Fin dans",
   },
   after: {
@@ -57,7 +57,7 @@ export function HomeHero() {
 
   return (
     <section aria-labelledby="home-title"
-      className="relative isolate flex min-h-[calc(100svh-var(--nav-h)-var(--safe-bottom)-15rem)] flex-col justify-between overflow-hidden pb-5 pt-[calc(var(--safe-top)+4.5rem)]">
+      className="relative isolate flex min-h-[calc(100svh-var(--nav-h)-var(--safe-bottom)-15rem)] flex-col justify-between overflow-hidden pb-9 pt-[calc(var(--safe-top)+4.5rem)]">
       {/* Photographie : révélation lente à l'arrivée ; changement d'ambiance par phase */}
       <motion.div key={phase} className="absolute inset-0 -z-10" initial={reduce ? false : { opacity: 0, scale: 1.08 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.6, ease }}>
         <Photo src={cfg.image} priority provisional={PLACEHOLDER_PHOTOS} alt="" tagClassName="top-[calc(var(--safe-top)+4rem)]" objectPosition={cfg.objectPos} />
@@ -67,19 +67,18 @@ export function HomeHero() {
 
       {/* Identité membre — discrète, façon étiquette */}
       <motion.div {...rise(0.2)} className="px-5">
-        <p className="font-display text-[1.05rem] leading-tight">
-          {user.fullName}<br /><span className="font-mono text-[0.75rem] uppercase tracking-[0.2em] text-cloud/75">{user.memberLine}</span>
+        <p className="font-display text-[1.1rem] leading-tight">{user.fullName}
         </p>
       </motion.div>
 
 
       <div className="px-5 [text-shadow:0_1px_16px_rgb(0_0_0/0.7)]">
         <motion.p {...rise(0.3)} className={cn("font-mono text-[0.72rem] uppercase tracking-[0.22em]", phase === "before" ? "text-cloud/90" : cfg.accent)}>{cfg.eyebrow}</motion.p>
-        <motion.h1 id="home-title" {...rise(0.42)} className="font-display mt-4 text-[clamp(2rem,10vw,2.9rem)] leading-[0.95] text-cloud">
+        <motion.h1 id="home-title" {...rise(0.42)} className="font-display mt-5 text-[clamp(2rem,10vw,2.9rem)] leading-[0.95] text-cloud">
           {cfg.lines.map((l, i) => <span key={l} className={cn("block", i === cfg.accentLine && cfg.accent)}>{l}</span>)}
         </motion.h1>
 
-        <motion.div {...rise(0.6)} className="mt-6 flex items-end justify-between gap-4 border-t border-cloud/20 pt-3.5">
+        <motion.div {...rise(0.6)} className="mt-10 flex items-end justify-between gap-4 border-t border-cloud/20 pt-5">
           {cfg.countdown ? (
             <QuietCountdown target={cfg.countdown === "end" ? event.endISO : event.departureISO} label={cfg.countdownLabel ?? ""} />
           ) : <p className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-cloud/72">Édition {event.year}</p>}

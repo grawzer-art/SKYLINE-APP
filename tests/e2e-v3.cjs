@@ -81,9 +81,9 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
     ok("FLIGHT : pass (nom, édition, statut réel)", (await vis("Ibiza 2027").count()) >= 1 && (await vis("En attente de confirmation").count()) === 1);
     ok("FLIGHT : aucun faux QR (emplacement uniquement)", (await p.locator("canvas, img[alt*='QR' i], svg[aria-label*='QR' i]").count()) === 0 && (await p.getByRole("img", { name: /Emplacement du QR/ }).count()) === 1);
     ok("FLIGHT : message unique quand rien n'est confirmé", (await vis("Les détails de votre voyage apparaîtront ici dès leur confirmation.").count()) === 1 && (await vis("À confirmer").count()) === 0);
-    await p.getByRole("tab", { name: /Your stay/ }).click(); await p.waitForTimeout(500);
+    await p.getByRole("tab", { name: /Séjour/ }).click(); await p.waitForTimeout(500);
     ok("FLIGHT : onglet séjour", (await vis(/Hébergement, transferts et programme/).count()) === 1);
-    await p.getByRole("tab", { name: /Live updates/ }).click(); await p.waitForTimeout(500);
+    await p.getByRole("tab", { name: /Infos/ }).click(); await p.waitForTimeout(500);
     ok("FLIGHT : onglet annonces", (await vis(/annonces officielles/).count()) === 1);
     await p.getByRole("button", { name: /Informations importantes/ }).click(); await p.waitForTimeout(500);
     ok("FLIGHT : informations importantes accessibles", (await p.getByRole("dialog").getByText(/pas un titre de transport/i).count()) === 1);
@@ -92,7 +92,7 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
     await ctx.close();
     const c2 = await mk(); await seed(c2.p, { phase: "during", sim: { reservation: "confirmed", tone: false, trip: true } });
     await c2.p.goto(B + "/v3/flight"); await c2.p.waitForTimeout(1500);
-    ok("FLIGHT : pendant Ibiza → annonces d'abord, aperçu signalé fictif", (await c2.p.getByRole("tab", { name: /Live updates/ }).getAttribute("aria-selected")) === "true" && (await c2.p.getByText("Annonce fictive").locator("visible=true").count()) === 1);
+    ok("FLIGHT : pendant Ibiza → annonces d'abord, aperçu signalé fictif", (await c2.p.getByRole("tab", { name: /Infos/ }).getAttribute("aria-selected")) === "true" && (await c2.p.getByText("Annonce fictive").locator("visible=true").count()) === 1);
     await c2.ctx.close();
     const c3 = await mk(); await seed(c3.p, { phase: "after" });
     await c3.p.goto(B + "/v3/flight"); await c3.p.waitForTimeout(1500);

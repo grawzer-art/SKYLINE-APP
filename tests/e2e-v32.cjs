@@ -38,6 +38,22 @@ let fails = 0; const ok = (n, c, d = "") => { console.log(`${c ? "PASS" : "FAIL"
     await c2.ctx.close();
   }
 
+  /* V3.4 : HOME et MY FLIGHT épurés, fonctions conservées */
+  {
+    const { ctx, p } = await mk({}, { sim: { reservation: "confirmed", tone: false, trip: false } });
+    await p.goto(B + "/"); await p.waitForTimeout(1500);
+    ok("HOME V3.4 : slogan, compte à rebours, accès My Flight, dernière annonce conservés", (await p.getByRole("heading", { level: 1 }).innerText()).replace(/\s+/g, " ").toLowerCase().includes("la fête commence à 10 000 mètres") && (await p.getByRole("timer").count()) === 1 && (await p.getByRole("link", { name: /My Flight/ }).count()) >= 1 && (await p.getByRole("link", { name: /Un lieu à Ibiza/ }).count()) === 1);
+    ok("HOME V3.4 : plus de tuiles redondantes ni de badge Démo sur l'annonce", (await p.getByLabel("Accès rapides").count()) === 0 && (await p.getByRole("link", { name: /Un lieu à Ibiza/ }).getByText("Démo").count()) === 0);
+    await p.goto(B + "/v3/flight"); await p.waitForTimeout(1500);
+    const pass = p.getByRole("group", { name: /Pass SKYLINE/ });
+    ok("PASS V3.4 : nom, édition, destination, statut d'accès, QR et mention de sécurité conservés", (await pass.getByText("ALEX", { exact: false }).count()) >= 1 && (await pass.getByText("Ibiza 2027").count()) >= 1 && (await pass.getByText("Ibiza", { exact: true }).count()) >= 1 && (await pass.getByText("Réservation confirmée").count()) === 1 && (await pass.getByRole("img", { name: /QR/ }).count()) === 1 && (await pass.getByText(/titre de transport/i).count()) === 1);
+    ok("PASS V3.4 : libellés techniques retirés (Participant, N° de pass)", (await pass.getByText("Participant").count()) === 0 && (await pass.getByText(/N° de pass/i).count()) === 0);
+    ok("ONGLETS V3.4 : VOL / SÉJOUR / INFOS", (await p.getByRole("tab").allInnerTexts()).map((t) => t.trim().toLowerCase()).join("|") === "vol|séjour|infos");
+    await p.getByRole("tab", { name: "Infos" }).click(); await p.waitForTimeout(400);
+    ok("ONGLETS V3.4 : « Informations importantes » accessibles dans INFOS", (await p.getByRole("button", { name: /Informations importantes/ }).count()) === 1);
+    await ctx.close();
+  }
+
   /* Texte agrandi + débordements + tailles minimales */
   const routes = ["/", "/explore", "/v3/flight", "/v3/club", "/v3/club/community", "/v3/club/space", "/v3/club/members", "/v3/club/messages", "/v3/club/messages/m1", "/v3/explore/sound"];
   for (const [label, scale] of [["normal", 16], ["texte agrandi (20 px)", 20]]) {
@@ -78,8 +94,8 @@ let fails = 0; const ok = (n, c, d = "") => { console.log(`${c ? "PASS" : "FAIL"
     let focusable = 0, outlined = 0;
     for (let i = 0; i < 8; i++) { await p.keyboard.press("Tab"); const r = await p.evaluate(() => { const e = document.activeElement; if (!e || e === document.body) return null; const cs = getComputedStyle(e); return cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) > 0; }); if (r !== null) { focusable++; if (r) outlined++; } }
     ok("CLAVIER : focus visible sur les premiers éléments", focusable >= 5 && outlined === focusable, `${outlined}/${focusable}`);
-    await p.getByRole("tab", { name: /Your stay/ }).focus(); await p.keyboard.press("Enter"); await p.waitForTimeout(400);
-    ok("CLAVIER : onglet activable au clavier", (await p.getByRole("tab", { name: /Your stay/ }).getAttribute("aria-selected")) === "true");
+    await p.getByRole("tab", { name: /Séjour/ }).focus(); await p.keyboard.press("Enter"); await p.waitForTimeout(400);
+    ok("CLAVIER : onglet activable au clavier", (await p.getByRole("tab", { name: /Séjour/ }).getAttribute("aria-selected")) === "true");
     await ctx.close();
   }
 
