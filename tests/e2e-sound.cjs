@@ -53,7 +53,7 @@ const fakeApi = `window.__h={};window.SC={Widget:Object.assign(function(){return
     const f = p.locator("iframe"); const src = await f.getAttribute("src");
     if (w === 390) {
       ok("WIDGET : iframe officielle w.soundcloud.com, URL encodée", src.startsWith("https://w.soundcloud.com/player/?") && src.includes(encodeURIComponent(URLS.set)));
-      ok("WIDGET : pas de lecture automatique, éléments SoundCloud non masqués", src.includes("auto_play=false") && (await f.evaluate((e) => getComputedStyle(e).visibility !== "hidden" && getComputedStyle(e).opacity !== "0" && e.getBoundingClientRect().height >= 300)));
+      ok("WIDGET : compact (166 px, visual=false, couleur), sans lecture auto, ni recadrage CSS", src.includes("auto_play=false") && src.includes("visual=false") && src.includes(encodeURIComponent("#8FB8FF")) && (await f.evaluate((e) => getComputedStyle(e).visibility !== "hidden" && getComputedStyle(e).opacity !== "0" && Math.round(e.getBoundingClientRect().height) === 166 && getComputedStyle(e).clipPath === "none" && getComputedStyle(e).transform === "none")));
       ok("WIDGET : statut « Lecteur prêt »", (await p.getByRole("status").filter({ hasText: "Lecteur prêt" }).count()) === 1);
       await p.evaluate(() => window.__fire("play")); await p.waitForTimeout(200); ok("WIDGET : événement lecture → « Lecture en cours »", (await p.getByText("Lecture en cours").count()) === 1);
       await p.evaluate(() => window.__fire("pause")); await p.waitForTimeout(200); ok("WIDGET : événement pause → « En pause »", (await p.getByText("En pause").count()) === 1);

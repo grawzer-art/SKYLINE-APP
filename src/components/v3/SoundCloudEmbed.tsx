@@ -48,19 +48,19 @@ export function SoundCloudEmbed({ url, kind, title, onPlay }: { url: string; kin
 
   const h = embedHeight(kind);
   return (
-    <div>
-      <div className="relative overflow-hidden rounded-[10px] border border-cloud/15 bg-surface-1" style={{ minHeight: h }}>
+    <div className="rounded-[12px] border border-line bg-surface-1 p-3">
+      <div className="relative" style={{ minHeight: h }}>
         <iframe ref={frame} title={`Lecteur SoundCloud — ${title}`} src={embedSrc(url)} width="100%" height={h} loading="lazy" allow="encrypted-media" className="block w-full border-0" />
-        {status === "loading" && <div aria-hidden className="pointer-events-none absolute inset-0 grid place-items-center bg-surface-1/80 font-mono text-[0.75rem] uppercase tracking-[0.16em] text-cloud/70 motion-safe:animate-pulse">Chargement…</div>}
+        {status === "loading" && <div aria-hidden className="pointer-events-none absolute inset-0 grid place-items-center bg-surface-1 font-mono text-[0.75rem] uppercase tracking-[0.16em] text-cloud/70 motion-safe:animate-pulse">Chargement…</div>}
         {status === "error" && (
-          <div role="alert" className="absolute inset-0 flex flex-col items-start justify-center gap-3 bg-surface-1 p-5">
+          <div role="alert" className="absolute inset-0 flex flex-col items-start justify-center gap-3 bg-surface-1 p-2">
             <p className="font-display text-[1.05rem]">Le lecteur n&apos;a pas pu se charger.</p>
             <p className="text-[0.9rem] leading-snug text-cloud/75">Vérifiez votre connexion. Certaines playlists ne sont lisibles que sur SoundCloud.</p>
             <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-cloud px-5 font-mono text-[0.75rem] uppercase tracking-[0.14em] text-jet">Écouter sur SoundCloud <ExternalLink size={14} strokeWidth={1.75} aria-hidden /></a>
           </div>
         )}
       </div>
-      <div className="mt-3 flex items-center justify-between gap-3">
+      <div className="mt-2 flex items-center justify-between gap-3 px-1">
         <p role="status" aria-live="polite" className="flex items-center gap-2 font-mono text-[0.75rem] uppercase tracking-[0.14em] text-cloud/80"><span aria-hidden className={`size-1.5 rounded-full ${status === "playing" ? "bg-sky" : status === "error" ? "bg-sunset" : "bg-cloud/35"}`} />{label[status]}</p>
         <a href={url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-11 items-center gap-1.5 font-mono text-[0.75rem] uppercase tracking-[0.14em] text-sky">SoundCloud <ExternalLink size={13} strokeWidth={1.5} aria-hidden /></a>
       </div>

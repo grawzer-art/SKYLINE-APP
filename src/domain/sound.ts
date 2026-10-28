@@ -22,9 +22,16 @@ export function parseSoundCloudUrl(input: string | null | undefined): ParsedSoun
 
 /** URL de l'iframe du widget officiel. Jamais de lecture automatique ; éléments SoundCloud conservés (pas de masquage). */
 export function embedSrc(url: string): string {
-  const p = new URLSearchParams({ url, color: "#8FB8FF", auto_play: "false", hide_related: "true", show_comments: "false", show_user: "true", show_reposts: "false", show_teaser: "true", visual: "false" });
+  // Paramètres officiels du widget : version « classique » compacte (visual=false), accent Sky Blue, sans commentaires,
+  // sans suggestions, sans actions annexes. Titre, artiste, logo et lien SoundCloud restent affichés par le widget lui-même.
+  const p = new URLSearchParams({ url, color: "#8FB8FF", auto_play: "false", visual: "false", hide_related: "true", show_comments: "false", show_user: "true", show_reposts: "false", show_teaser: "false", show_playcount: "false", buying: "false", liking: "false", download: "false", sharing: "false" });
   return `https://w.soundcloud.com/player/?${p.toString()}`;
 }
 
-/** Hauteur recommandée par SoundCloud : 166 px pour un titre, plus haute pour afficher la liste d'une playlist. */
-export const embedHeight = (kind: EmbedKind) => (kind === "set" ? 380 : kind === "track" ? 166 : 300);
+/**
+ * Hauteur du lecteur compact officiel : 166 px (hauteur standard du widget classique d'un titre).
+ * Pour une playlist, SoundCloud décide seul de ce qu'il affiche à cette hauteur : nous ne recadrons ni ne recouvrons jamais le widget.
+ */
+export const COMPACT_HEIGHT = 166;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const embedHeight = (_kind?: EmbedKind) => COMPACT_HEIGHT;

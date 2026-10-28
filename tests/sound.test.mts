@@ -23,7 +23,8 @@ t("iframe : widget officiel, URL encodée, jamais de lecture automatique", () =>
   assert.ok(s.includes("url=https%3A%2F%2Fsoundcloud.com%2Fartist%2Fsets%2Fmix"));
   assert.ok(s.includes("auto_play=false"));
 });
-t("hauteurs recommandées", () => { assert.equal(embedHeight("track"), 166); assert.ok(embedHeight("set") > 166); });
+t("lecteur compact : 166 px pour titres et playlists", () => { assert.equal(embedHeight("track"), 166); assert.equal(embedHeight("set"), 166); });
+t("paramètres compacts officiels (visual=false, couleur, sans liste ni commentaires)", () => { const q = new URL(embedSrc("https://soundcloud.com/a/sets/b")).searchParams; assert.equal(q.get("visual"), "false"); assert.equal(q.get("color"), "#8FB8FF"); assert.equal(q.get("show_comments"), "false"); assert.equal(q.get("hide_related"), "true"); assert.equal(q.get("auto_play"), "false"); });
 t("quatre collections prévues, ids uniques", () => { assert.deepEqual(soundCollections.map((c) => c.title), ["Sunset Club", "Above The Clouds", "After Hours", "Island Mode"]); assert.equal(new Set(soundCollections.map((c) => c.id)).size, 4); });
 t("aucune URL inventée : toute URL renseignée est une URL SoundCloud valide", () => { for (const c of soundCollections) if (c.soundcloudUrl) assert.equal(parseSoundCloudUrl(c.soundcloudUrl).ok, true); });
 console.log(`${n} tests SKYLINE SOUND : OK`);
