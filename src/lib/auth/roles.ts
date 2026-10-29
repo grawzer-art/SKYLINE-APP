@@ -7,18 +7,18 @@ export const ROLES = ["participant", "staff", "admin"] as const;
 export type Role = (typeof ROLES)[number];
 
 /** Session de DÉMONSTRATION : aucun vrai compte n'existe encore. Remplacée par une authentification serveur en production. */
-export type DemoSession = { sub: string; name: string; roles: Role[]; demo: true; iat: number; exp: number };
+export type DemoSession = { sub: string; name: string; roles: Role[]; /** Membre de l'équipe STAFF HQ associé au compte (absent pour un participant). */ memberId?: string; demo: true; iat: number; exp: number };
 
 export const hasRole = (roles: readonly Role[] | undefined, role: Role) => !!roles?.includes(role);
 /** STAFF HQ : réservé aux comptes « staff » ou « admin ». Un participant seul n'y entre jamais. */
 export const canEnterStaff = (roles: readonly Role[] | undefined) => hasRole(roles, "staff") || hasRole(roles, "admin");
 export const canEnterMembers = (roles: readonly Role[] | undefined) => hasRole(roles, "participant") || canEnterStaff(roles);
 
-export type DemoAccount = { id: string; label: string; hint: string; name: string; roles: Role[] };
-/** Comptes fictifs pour la démonstration (aucune donnée réelle). */
+export type DemoAccount = { id: string; label: string; hint: string; name: string; roles: Role[]; memberId?: string };
+/** Comptes fictifs pour la démonstration (aucune donnée réelle). Équipe active : TOM, GRAW, QAFARD uniquement. */
 export const DEMO_ACCOUNTS: DemoAccount[] = [
   { id: "participant", label: "Participant", hint: "Accès MEMBERS uniquement", name: "Alex (démo)", roles: ["participant"] },
-  { id: "staff", label: "Staff", hint: "Accès STAFF HQ", name: "Camille (démo)", roles: ["staff"] },
-  { id: "staff-participant", label: "Staff + participant", hint: "Accès aux deux espaces", name: "Noé (démo)", roles: ["participant", "staff"] },
-  { id: "admin", label: "Admin", hint: "Accès STAFF HQ, droits d'administration futurs", name: "Sasha (démo)", roles: ["admin"] },
+  { id: "tom", label: "Tom", hint: "Fondateur · coordination", name: "Tom", roles: ["admin"], memberId: "tom" },
+  { id: "graw", label: "Graw", hint: "Directeur Artistique & Digital · coordination · aussi participant", name: "Graw", roles: ["participant", "admin"], memberId: "graw" },
+  { id: "qafard", label: "Qafard", hint: "Photographe", name: "Qafard", roles: ["staff"], memberId: "qafard" },
 ];

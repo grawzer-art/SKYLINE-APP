@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { Avatar, StaffSection, StaffTitle, DemoLine } from "@/components/staff/ui";
-import { getStaffMember, staffMembers } from "@/data/staff";
+import { activeMembers, getStaffMember } from "@/data/staff";
 
-export function generateStaticParams() { return staffMembers.map((m) => ({ id: m.id })); }
+export function generateStaticParams() { return activeMembers().map((m) => ({ id: m.id })); }
 
 /** Fiche staff : fonction(s) et responsabilités (métier) SÉPARÉES des rôles d'accès (sécurité). Coordonnées seulement si autorisées. */
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {

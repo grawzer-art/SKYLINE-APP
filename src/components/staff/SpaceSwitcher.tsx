@@ -6,7 +6,7 @@ import { canEnterStaff, type Role } from "@/lib/auth/roles";
 import { rememberSpace } from "@/lib/space";
 import { cn } from "@/lib/cn";
 
-export type SessionInfo = { name: string; roles: Role[]; demo: true } | null;
+export type SessionInfo = { name: string; roles: Role[]; memberId?: string; demo: true } | null;
 /** État de la démonstration + session (informative : l'autorisation réelle est faite côté serveur par le proxy). `undefined` = lecture en cours. */
 export function useDemoStatus() {
   const [st, setSt] = useState<{ enabled: boolean; session: SessionInfo } | undefined>(undefined);

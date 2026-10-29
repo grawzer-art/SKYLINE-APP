@@ -19,7 +19,7 @@ const tabs = [
 export function StaffShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   if (pathname === "/staff/access") return <>{children}</>;
-  const active = (href: string) => (href === "/staff" ? pathname === "/staff" : pathname.startsWith(href));
+  const active = (href: string) => (href === "/staff" ? pathname === "/staff" || pathname.startsWith("/staff/missions") : pathname.startsWith(href)); // MISSIONS vit sous l'onglet HQ
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-50 mx-auto w-full max-w-[480px] border-b border-line bg-jet/90 px-5 pt-[var(--safe-top)] backdrop-blur-xl">

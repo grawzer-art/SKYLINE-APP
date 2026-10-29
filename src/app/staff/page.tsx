@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { StaffTitle, StaffSection, DemoLine } from "@/components/staff/ui";
+import { MissionsGlance } from "@/components/staff/MissionsGlance";
 import { announcements, getStaffMember, schedule, scheduleStatusLabel } from "@/data/staff";
 
 /** HQ : vue d'ensemble — la prochaine échéance, les priorités, les annonces internes. */
@@ -11,6 +12,7 @@ export default function Page() {
   return (
     <>
       <StaffTitle eyebrow="Ibiza 2027 · Organisation" title="HQ" />
+      <MissionsGlance />
 
       {first && (
         <StaffSection>

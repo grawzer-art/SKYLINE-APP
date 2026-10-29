@@ -3,7 +3,7 @@
 const { chromium } = require("playwright");
 const B = process.env.BASE || "http://localhost:3100";
 let fails = 0; const ok = (n, c, d = "") => { console.log(`${c ? "PASS" : "FAIL"} ${n}${!c && d ? " — " + d : ""}`); if (!c) fails++; };
-const STAFF_PATHS = ["/staff", "/staff/schedule", "/staff/comms", "/staff/comms/general", "/staff/team", "/staff/team/st1", "/staff/profile"];
+const STAFF_PATHS = ["/staff", "/staff/missions", "/staff/schedule", "/staff/comms", "/staff/comms/general", "/staff/team", "/staff/team/tom", "/staff/profile"];
 const b64u = (s) => Buffer.from(s).toString("base64url");
 (async () => {
   const browser = await chromium.launch();
@@ -22,7 +22,7 @@ const b64u = (s) => Buffer.from(s).toString("base64url");
     await p.goto(B + "/"); await p.waitForTimeout(800); ok("OUVERTURE : choix mémorisé (réouverture directe sur Members)", new URL(p.url()).pathname === "/");
     await p.goto(B + "/start"); await p.waitForTimeout(600);
     await p.getByRole("link", { name: /Staff HQ/ }).click(); await p.waitForURL("**/staff/access**"); await p.waitForTimeout(600);
-    ok("OUVERTURE : choisir Staff sans session → accès (démo) vérifié par le serveur", (await p.getByRole("button", { name: /^Staff\s+Accès STAFF HQ/ }).count()) === 1);
+    ok("OUVERTURE : choisir Staff sans session → accès (démo) vérifié par le serveur", (await p.getByRole("button", { name: /^Qafard/ }).count()) === 1);
     await p.getByRole("button", { name: /^Participant/ }).click(); await p.waitForTimeout(900);
     ok("OUVERTURE : compte participant refusé malgré le choix Staff", new URL(p.url()).search.includes("denied=1"));
     await p.goto(B + "/"); await p.waitForTimeout(900);
@@ -30,7 +30,7 @@ const b64u = (s) => Buffer.from(s).toString("base64url");
     await p.getByRole("link", { name: /Retour à Members/ }).click(); await p.waitForURL(B + "/"); await p.waitForTimeout(600);
     await p.goto(B + "/"); await p.waitForTimeout(600); ok("OUVERTURE : « Retour à Members » remet Members comme choix", new URL(p.url()).pathname === "/");
     await ctx.close();
-    ({ ctx, p } = await fresh()); await login(ctx, "staff-participant"); await p.goto(B + "/start"); await p.waitForTimeout(600);
+    ({ ctx, p } = await fresh()); await login(ctx, "graw"); await p.goto(B + "/start"); await p.waitForTimeout(600);
     await p.getByRole("link", { name: /Staff HQ/ }).click(); await p.waitForURL(B + "/staff"); await p.waitForTimeout(800);
     ok("OUVERTURE : compte staff → STAFF HQ directement", (await p.getByRole("heading", { level: 1, name: "HQ" }).count()) === 1);
     await p.goto(B + "/"); await p.waitForTimeout(800); ok("OUVERTURE : réouverture → STAFF HQ", new URL(p.url()).pathname === "/staff");
@@ -65,7 +65,7 @@ const b64u = (s) => Buffer.from(s).toString("base64url");
     await ctx.close();
   }
   /* 3. Rôles : participant refusé, staff / admin / staff+participant acceptés */
-  for (const [acc, allowed] of [["participant", false], ["staff", true], ["staff-participant", true], ["admin", true]]) {
+  for (const [acc, allowed] of [["participant", false], ["qafard", true], ["graw", true], ["tom", true]]) {
     const { ctx } = await mk(); const r = await login(ctx, acc);
     ok(`RÔLE ${acc} : session créée (cookie httpOnly signé)`, r.status() === 303 && /sk_demo=/.test(r.headers()["set-cookie"] || "") && /HttpOnly/i.test(r.headers()["set-cookie"] || ""));
     let okAll = true, bad = "";
@@ -76,8 +76,8 @@ const b64u = (s) => Buffer.from(s).toString("base64url");
   /* 4. Parcours navigateur : staff */
   {
     const { ctx, p, errs } = await mk(); await p.goto(B + "/staff"); await p.waitForTimeout(800);
-    ok("ACCÈS : sans session, /staff mène à la page d'accès démo explicite", (await p.getByText(/démonstration/i).count()) >= 1 && (await p.getByRole("button", { name: /^Staff/ }).count()) >= 1);
-    await p.getByRole("button", { name: /^Staff\s+Accès STAFF HQ/ }).click(); await p.waitForURL(B + "/staff"); await p.waitForTimeout(900);
+    ok("ACCÈS : sans session, /staff mène à la page d'accès démo explicite", (await p.getByText(/démonstration/i).count()) >= 1 && (await p.getByRole("button", { name: /^Qafard/ }).count()) >= 1);
+    await p.getByRole("button", { name: /^Qafard/ }).click(); await p.waitForURL(B + "/staff"); await p.waitForTimeout(900);
     ok("HQ : titre, prochaine échéance, priorités, annonces internes", (await p.getByRole("heading", { level: 1, name: "HQ" }).count()) === 1 && (await p.getByText("Prochaine échéance").count()) === 1 && (await p.getByText("Informations prioritaires").count()) === 1 && (await p.getByText("Annonces internes").count()) === 1);
     ok("HQ : navigation à quatre onglets (HQ, Schedule, Comms, Team)", (await p.getByRole("navigation", { name: "Navigation STAFF HQ" }).getByRole("link").allInnerTexts()).map((t) => t.trim().toLowerCase()).join("|") === "hq|schedule|comms|team");
     ok("HQ : pas de chrome participant (navigation Home / Club absente)", (await p.getByRole("navigation", { name: "Navigation principale" }).count()) === 0);
@@ -89,21 +89,21 @@ const b64u = (s) => Buffer.from(s).toString("base64url");
     await p.getByRole("link", { name: /Général/ }).click(); await p.waitForURL("**/comms/general"); await p.waitForTimeout(500);
     ok("COMMS : canal en lecture, saisie inactive (aucune messagerie simulée)", (await p.getByPlaceholder(/non connectée/).isDisabled()) && (await p.getByRole("button", { name: "Envoyer" }).isDisabled()));
     await tab("Team").click(); await p.waitForURL("**/staff/team"); await p.waitForTimeout(500);
-    ok("TEAM : annuaire, filtre par fonction", (await p.getByText(/7 personnes/).count()) === 1);
+    ok("TEAM : annuaire, filtre par fonction", (await p.getByText(/3 personnes/).count()) === 1);
     await p.getByRole("button", { name: "Photographe" }).click(); await p.waitForTimeout(300);
     ok("TEAM : le filtre fonctionne", (await p.getByText(/1 personne/).count()) === 1);
-    await p.getByRole("link", { name: /Léo M\./ }).click(); await p.waitForURL("**/team/st4"); await p.waitForTimeout(1000);
+    await p.getByRole("link", { name: /Qafard/ }).click(); await p.waitForURL("**/team/qafard"); await p.waitForTimeout(1000);
     const vis = (t, o) => p.getByText(t, o).locator("visible=true");
     ok("FICHE : fonction et responsabilités séparées des rôles d'accès, coordonnées non partagées", (await vis("Responsabilités").count()) === 1 && (await vis("Accès", { exact: true }).count()) === 1 && (await vis(/Coordonnées non partagées/).count()) === 1);
-    await p.goto(B + "/staff/team/st1"); await p.waitForTimeout(600);
-    ok("FICHE : coordonnées visibles seulement si autorisées (fictives)", (await p.getByText(/exemple\.invalid/).count()) === 1);
+    await p.goto(B + "/staff/team/tom"); await p.waitForTimeout(600);
+    ok("FICHE : équipe active limitée à Tom, Graw, Qafard (fiche Sarah / Loïck / Bastien introuvable)", (await p.getByRole("heading", { level: 1, name: "Tom" }).count()) === 1 && (await ctx.request.get(B + "/staff/team/sarah")).status() === 404 && (await ctx.request.get(B + "/staff/team/loick")).status() === 404);
     ok("STAFF : aucune erreur JS", errs.length === 0, errs.join("|"));
     ok("STAFF : pages inconnues → 404", (await ctx.request.get(B + "/staff/team/zz")).status() === 404 && (await ctx.request.get(B + "/staff/comms/zz")).status() === 404);
     await ctx.close();
   }
   /* 5. Sélecteur d'espace */
   {
-    const { ctx, p } = await mk(); await login(ctx, "staff-participant");
+    const { ctx, p } = await mk(); await login(ctx, "graw");
     await p.goto(B + "/v3/profile"); await p.waitForTimeout(1000);
     const sw = p.getByRole("group", { name: "Espace" });
     ok("SÉLECTEUR : compte staff+participant le voit dans le profil MEMBERS", (await sw.count()) === 1);
@@ -118,13 +118,13 @@ const b64u = (s) => Buffer.from(s).toString("base64url");
     await c2.p.goto(B + "/staff"); await c2.p.waitForTimeout(700);
     ok("PARTICIPANT : /staff affiche le refus explicite", new URL(c2.p.url()).search.includes("denied=1") && (await c2.p.getByRole("alert").filter({ hasText: /n.a pas accès/ }).count()) === 1);
     await c2.ctx.close();
-    const c3 = await mk(); await login(c3.ctx, "staff"); await c3.p.goto(B + "/"); await c3.p.waitForTimeout(800); await c3.p.getByRole("button", { name: "Mon profil" }).click().catch(() => {}); await c3.p.waitForTimeout(600);
+    const c3 = await mk(); await login(c3.ctx, "qafard"); await c3.p.goto(B + "/"); await c3.p.waitForTimeout(800); await c3.p.getByRole("button", { name: "Mon profil" }).click().catch(() => {}); await c3.p.waitForTimeout(600);
     ok("SÉLECTEUR : disponible aussi dans le profil de l'application participant (production)", (await c3.p.getByRole("group", { name: "Espace" }).count()) === 1);
     await c3.ctx.close();
   }
   /* 6. Mobiles, texte, tactile */
   for (const w of [375, 390, 430]) {
-    const { ctx, p } = await mk({ viewport: { width: w, height: 812 } }); await login(ctx, "staff"); let bad = [];
+    const { ctx, p } = await mk({ viewport: { width: w, height: 812 } }); await login(ctx, "qafard"); let bad = [];
     for (const r of [...STAFF_PATHS, "/staff/access"]) { await p.goto(B + r); await p.waitForTimeout(500); const ov = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth); if (ov > 0) bad.push(`${r}:+${ov}`); }
     ok(`MOBILE ${w} px : aucun défilement horizontal sur STAFF HQ`, bad.length === 0, bad.join(" "));
     if (w === 375) {
@@ -139,13 +139,13 @@ const b64u = (s) => Buffer.from(s).toString("base64url");
   /* 7. Production (démo désactivée par défaut) — nécessite un second serveur lancé avec VERCEL_ENV=production */
   if (process.env.BASE_PROD) {
     const P = process.env.BASE_PROD; const { ctx, p } = await mk();
-    const r = await ctx.request.post(B + "/api/demo-session", { form: { account: "admin" }, maxRedirects: 0 }); const token = /sk_demo=([^;]+)/.exec(r.headers()["set-cookie"] || "")[1];
+    const r = await ctx.request.post(B + "/api/demo-session", { form: { account: "tom" }, maxRedirects: 0 }); const token = /sk_demo=([^;]+)/.exec(r.headers()["set-cookie"] || "")[1];
     await ctx.addCookies([{ name: "sk_demo", value: token, url: P }]);
     const g = await ctx.request.get(P + "/staff", { maxRedirects: 0 });
     ok("PRODUCTION : un jeton valide ne donne AUCUN accès quand la démo est désactivée", g.status() >= 300 && g.status() < 400 && (g.headers()["location"] || "").includes("/staff/access"));
-    ok("PRODUCTION : l'ouverture de session démo est refusée (404)", (await ctx.request.post(P + "/api/demo-session", { form: { account: "admin" }, maxRedirects: 0 })).status() === 404);
+    ok("PRODUCTION : l'ouverture de session démo est refusée (404)", (await ctx.request.post(P + "/api/demo-session", { form: { account: "tom" }, maxRedirects: 0 })).status() === 404);
     await p.goto(P + "/staff/access"); await p.waitForTimeout(1200);
-    ok("PRODUCTION : la page d'accès explique que la démo est désactivée, sans comptes proposés", (await p.getByText(/désactivée sur cet environnement/).count()) === 1 && (await p.getByRole("button", { name: /^Staff/ }).count()) === 0);
+    ok("PRODUCTION : la page d'accès explique que la démo est désactivée, sans comptes proposés", (await p.getByText(/désactivée sur cet environnement/).count()) === 1 && (await p.getByRole("button", { name: /^Tom/ }).count()) === 0);
     await ctx.close();
   }
   await browser.close(); console.log(fails ? `${fails} ÉCHEC(S)` : "TOUT PASSE"); process.exit(fails ? 1 : 0);

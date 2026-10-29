@@ -13,7 +13,7 @@ const safeNext = (n: string | null) => (n && n.startsWith("/") && !n.startsWith(
 export async function GET(req: NextRequest) {
   if (disabled()) return NextResponse.json({ enabled: false, session: null }, { headers: noStore });
   const s = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
-  return NextResponse.json({ enabled: true, session: s ? { name: s.name, roles: s.roles, demo: true } : null }, { headers: noStore });
+  return NextResponse.json({ enabled: true, session: s ? { name: s.name, roles: s.roles, memberId: s.memberId, demo: true } : null }, { headers: noStore });
 }
 
 export async function POST(req: NextRequest) {
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
   if (account === "logout") { const r = back("/staff/access"); r.cookies.delete(SESSION_COOKIE); return r; }
   const a = DEMO_ACCOUNTS.find((x) => x.id === account);
   if (!a) return back("/staff/access?error=1");
-  const token = await signSession({ sub: `demo-${a.id}`, name: a.name, roles: a.roles });
+  const token = await signSession({ sub: `demo-${a.id}`, name: a.name, roles: a.roles, memberId: a.memberId });
   const r = back(next);
   r.cookies.set(SESSION_COOKIE, token, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: SESSION_TTL_SECONDS });
   return r;

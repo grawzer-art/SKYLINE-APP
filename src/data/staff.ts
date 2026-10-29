@@ -7,8 +7,8 @@ import type { Role } from "@/lib/auth/roles";
 export const STAFF_DEMO_NOTICE = "Données de démonstration — contenus fictifs";
 
 /** FONCTION (métier) : ne donne AUCUN droit. Les droits viennent des rôles de sécurité (`accessRoles`). */
-export type StaffFunction = "Direction artistique" | "Photographe" | "Communication" | "Logistique" | "Production" | "Accueil participants" | "Partenaires";
-export const staffFunctions: StaffFunction[] = ["Direction artistique", "Photographe", "Communication", "Logistique", "Production", "Accueil participants", "Partenaires"];
+export type StaffFunction = "Fondateur" | "Direction artistique & digital" | "Photographe";
+export const staffFunctions: StaffFunction[] = ["Fondateur", "Direction artistique & digital", "Photographe"];
 
 export type StaffMember = {
   id: string; name: string; functions: StaffFunction[]; responsibilities: string[];
@@ -16,17 +16,20 @@ export type StaffMember = {
   accessRoles: Role[];
   /** Coordonnées : affichées uniquement si la personne a donné son accord (`allowed`). */
   contact: { allowed: boolean; email?: string };
+  /**
+   * Équipe ACTIVE : seuls les membres `active: true` apparaissent partout (annuaire, missions, responsables).
+   * Pour ajouter quelqu'un plus tard : une entrée ici (+ un compte côté serveur), sans toucher au reste de l'application.
+   */
+  active: boolean;
 };
 export const staffMembers: StaffMember[] = [
-  { id: "st1", name: "Camille R.", functions: ["Direction artistique"], responsibilities: ["Cohérence visuelle de l'édition", "Validation des supports"], accessRoles: ["staff", "admin"], contact: { allowed: true, email: "camille@exemple.invalid" } },
-  { id: "st2", name: "Noé B.", functions: ["Production"], responsibilities: ["Coordination générale", "Planning opérationnel"], accessRoles: ["staff", "admin"], contact: { allowed: false } },
-  { id: "st3", name: "Inès L.", functions: ["Communication"], responsibilities: ["Annonces participants", "SKYLINE SIGNAL"], accessRoles: ["staff"], contact: { allowed: false } },
-  { id: "st4", name: "Léo M.", functions: ["Photographe"], responsibilities: ["Couverture photo", "Autorisations d'image"], accessRoles: ["staff"], contact: { allowed: false } },
-  { id: "st5", name: "Maëlys T.", functions: ["Logistique"], responsibilities: ["Transferts", "Hébergements"], accessRoles: ["staff"], contact: { allowed: false } },
-  { id: "st6", name: "Sasha P.", functions: ["Accueil participants"], responsibilities: ["Point de rendez-vous", "Questions participants"], accessRoles: ["staff"], contact: { allowed: false } },
-  { id: "st7", name: "Alba V.", functions: ["Partenaires", "Communication"], responsibilities: ["Relation partenaires", "Contenus partenaires"], accessRoles: ["staff"], contact: { allowed: false } },
+  { id: "tom", name: "Tom", functions: ["Fondateur"], responsibilities: ["Vision et décisions", "Coordination de l'équipe"], accessRoles: ["admin"], contact: { allowed: false }, active: true },
+  { id: "graw", name: "Graw", functions: ["Direction artistique & digital"], responsibilities: ["Direction artistique", "Application et digital"], accessRoles: ["participant", "admin"], contact: { allowed: false }, active: true },
+  { id: "qafard", name: "Qafard", functions: ["Photographe"], responsibilities: ["Couverture photo", "Autorisations d'image"], accessRoles: ["staff"], contact: { allowed: false }, active: true },
 ];
-export const getStaffMember = (id: string) => staffMembers.find((m) => m.id === id);
+/** Équipe active (source unique pour l'annuaire, les responsables de mission et les validateurs). */
+export const activeMembers = () => staffMembers.filter((m) => m.active);
+export const getStaffMember = (id: string) => staffMembers.find((m) => m.id === id && m.active);
 export const initials = (n: string) => n.trim().slice(0, 1).toUpperCase();
 
 export type ScheduleStatus = "planned" | "preparing" | "confirmed";
@@ -34,13 +37,13 @@ export const scheduleStatusLabel: Record<ScheduleStatus, string> = { planned: "�
 export type ScheduleItem = { id: string; phase: "Préparation" | "Veille" | "Sur place"; when: string; time: string; title: string; ownerId: string; status: ScheduleStatus; place: string };
 /** Échéances RELATIVES (J-n) et heures « --:-- » : aucun horaire réel n'est confirmé dans la démonstration. */
 export const schedule: ScheduleItem[] = [
-  { id: "sc1", phase: "Préparation", when: "J-45", time: "--:--", title: "Validation des supports de communication", ownerId: "st1", status: "preparing", place: "À définir" },
-  { id: "sc2", phase: "Préparation", when: "J-30", time: "--:--", title: "Plan de transferts participants", ownerId: "st5", status: "planned", place: "À définir" },
-  { id: "sc3", phase: "Préparation", when: "J-14", time: "--:--", title: "Briefing équipe : rôles et responsabilités", ownerId: "st2", status: "planned", place: "À définir" },
-  { id: "sc4", phase: "Veille", when: "J-1", time: "--:--", title: "Point de rendez-vous participants", ownerId: "st6", status: "planned", place: "À définir" },
-  { id: "sc5", phase: "Veille", when: "J-1", time: "--:--", title: "Vérification des accès et listes", ownerId: "st2", status: "planned", place: "À définir" },
-  { id: "sc6", phase: "Sur place", when: "Jour J", time: "--:--", title: "Accueil et départ du groupe", ownerId: "st6", status: "planned", place: "À définir" },
-  { id: "sc7", phase: "Sur place", when: "Jour J", time: "--:--", title: "Couverture photo de l'expérience", ownerId: "st4", status: "planned", place: "À définir" },
+  { id: "sc1", phase: "Préparation", when: "J-45", time: "--:--", title: "Validation des supports de communication", ownerId: "graw", status: "preparing", place: "À définir" },
+  { id: "sc2", phase: "Préparation", when: "J-30", time: "--:--", title: "Plan de transferts participants", ownerId: "tom", status: "planned", place: "À définir" },
+  { id: "sc3", phase: "Préparation", when: "J-14", time: "--:--", title: "Briefing équipe : rôles et responsabilités", ownerId: "tom", status: "planned", place: "À définir" },
+  { id: "sc4", phase: "Veille", when: "J-1", time: "--:--", title: "Point de rendez-vous participants", ownerId: "tom", status: "planned", place: "À définir" },
+  { id: "sc5", phase: "Veille", when: "J-1", time: "--:--", title: "Vérification des accès et listes", ownerId: "tom", status: "planned", place: "À définir" },
+  { id: "sc6", phase: "Sur place", when: "Jour J", time: "--:--", title: "Accueil et départ du groupe", ownerId: "tom", status: "planned", place: "À définir" },
+  { id: "sc7", phase: "Sur place", when: "Jour J", time: "--:--", title: "Couverture photo de l'expérience", ownerId: "qafard", status: "planned", place: "À définir" },
 ];
 
 export type Announcement = { id: string; title: string; text: string; channel: string; tag: "Priorité" | "Info" };

@@ -2,13 +2,13 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Avatar } from "./ui";
-import { staffFunctions, staffMembers, type StaffFunction } from "@/data/staff";
+import { activeMembers, staffFunctions, type StaffFunction } from "@/data/staff";
 import { cn } from "@/lib/cn";
 
 /** Annuaire du staff : filtre par fonction (métier). Les coordonnées ne figurent jamais dans la liste. */
 export function TeamDirectory() {
   const [f, setF] = useState<StaffFunction | null>(null);
-  const list = staffMembers.filter((m) => !f || m.functions.includes(f)).sort((a, b) => a.name.localeCompare(b.name, "fr"));
+  const list = activeMembers().filter((m) => !f || m.functions.includes(f)).sort((a, b) => a.name.localeCompare(b.name, "fr"));
   return (
     <>
       <div role="group" aria-label="Filtrer par fonction" className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5">

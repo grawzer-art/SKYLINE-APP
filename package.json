@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:unit": "node --experimental-strip-types --no-warnings tests/community.test.mts && node --experimental-strip-types --no-warnings tests/i18n.test.mts && node --experimental-strip-types --no-warnings tests/sound.test.mts",
-    "test:e2e": "node tests/e2e-v3.cjs && node tests/e2e-v32.cjs && node tests/e2e-sound.cjs && node tests/e2e-pass.cjs && node tests/e2e-staff.cjs"
+    "test:unit": "node --experimental-strip-types --no-warnings tests/community.test.mts && node --experimental-strip-types --no-warnings tests/i18n.test.mts && node --experimental-strip-types --no-warnings tests/sound.test.mts && node --experimental-strip-types --no-warnings tests/missions.test.mts",
+    "test:e2e": "node tests/e2e-v3.cjs && node tests/e2e-v32.cjs && node tests/e2e-sound.cjs && node tests/e2e-pass.cjs && node tests/e2e-staff.cjs && node tests/e2e-missions.cjs"
   },
   "dependencies": {
     "@fontsource-variable/archivo": "^5.3.0",
