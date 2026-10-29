@@ -30,8 +30,8 @@ Tables : `accounts` (identité globale) · `platform_roles` · `space_access` ·
 - **Accès** (`src/lib/auth/roles.ts`) : `platform` / `spaces` / `staff` (miroir de la base) ; fonctions professionnelles à part (`src/data/staff.ts`).
 
 ## 3. Preview stable — état vérifié
-- Branche `staff-preview` = commit `346dec9` (identique à `feat/staff-v2-b0-foundation`).
-- **Confirmé par GitHub / Vercel** : le déploiement du projet **`skyline-app`** pour ce commit a le statut « Deployment has completed » (réussi). Lien d'inspection Vercel (connexion requise) : `https://vercel.com/jarvis-1348/skyline-app/4aFjAR5Gh5kFbHyH27FoRZ5UKwQ6`. Le projet `skyline-ap` a aussi déployé (non retenu).
+- Branche `staff-preview` = même commit que `feat/staff-v2-b0-foundation` (les deux sont poussées ensemble ; le statut Vercel est lu sur le dernier commit).
+- **Confirmé par GitHub / Vercel** : le déploiement du projet **`skyline-app`** de `staff-preview` a le statut « Deployment has completed » (réussi) sur le dernier commit poussé. Lien d'inspection Vercel (connexion requise) : voir la dernière ligne « Vercel – skyline-app » des statuts du commit sur GitHub (ex. `https://vercel.com/jarvis-1348/skyline-app/<id>`). Le projet `skyline-ap` a aussi déployé (non retenu).
 - **Adresse stable `skyline-app`** : `https://skyline-app-git-staff-preview-jarvis-1348.vercel.app`. La règle de nommage `<projet>-git-<branche>-jarvis-1348.vercel.app` est **confirmée par des données Vercel réelles** (alias `skyline-app-git-feat-skyline-sound-…` lu dans le commentaire Vercel de la PR, et alias `skyline-ap-git-staff-preview-jarvis-1348.vercel.app` lu dans le lien de retour d'expérience du contrôle Vercel de ce commit). L'alias exact de `skyline-app` n'a toutefois **pas pu être ouvert** depuis l'environnement de développement (réseau externe bloqué) : le confirmer en 10 secondes dans *Vercel → skyline-app → Deployments → déploiement de `staff-preview` → Domains*, et vérifier que la « protection des déploiements » de Vercel ne bloque pas l'accès (connexion Vercel demandée = protection active).
 
 ## 4. Connexion : redirections et mots de passe
@@ -87,5 +87,5 @@ Garde-fous contre toute confusion (testés) :
 - Se déconnecter n'efface pas les données locales (non chiffrées, sur l'appareil) : bouton « Effacer mes missions locales ».
 En mode démonstration (sans variable d'activation), rien ne change.
 
-## 8. Tests exécutés (sur `346dec9`)
+## 8. Tests exécutés (sur le code de la branche)
 `npm run test:rls` : **29 tests** de migrations / RLS (dont participants, cumul d'accès, super admin sans accès STAFF) + **15 tests** du script de rôles (PGlite, hors réseau) · `npm run test:auth` : mode Supabase (URL factice) : isolation, falsification, formulaire, bandeau et stockage local séparé · unitaires (règles de missions, accès, redirections, garde-fou « sans mot de passe ») · e2e MEMBERS / SKYLINE SOUND / STAFF / MISSIONS · typecheck, lint, build. **Limites** : PGlite simule Supabase (rôles, `auth.uid()`) ; aucune connexion à votre projet réel n'a été testée ; l'envoi des e-mails et l'iPhone/PWA restent à vérifier sur la Preview. Les valeurs attendues du §6 (étapes 7 et 10) ont été calculées en exécutant les trois migrations sur ce Postgres de test.
