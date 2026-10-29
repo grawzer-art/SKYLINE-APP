@@ -52,7 +52,8 @@ const PATHS = ["/staff", "/staff/missions", "/staff/schedule", "/staff/comms", "
     ok("LOGIN : adresse invalide refusée côté formulaire (aucune requête)", (await p.getByRole("alert").filter({ hasText: "adresse e-mail valide" }).count()) === 1 && calls.length === 0);
     await p.getByLabel("Adresse e-mail").fill("Test@Example.com"); await p.getByRole("button", { name: "Recevoir un code" }).click(); await p.waitForTimeout(800);
     const otp = calls.find((c) => c.path.endsWith("/otp"));
-    ok("LOGIN : demande de code → create_user=false (aucun compte créé), e-mail normalisé, retour vers /auth/callback?next=…", !!otp && otp.body.create_user === false && otp.body.email === "test@example.com" && /\/auth\/callback\?next=%2Fstaff%2Fmissions$/.test(otp.redirect || ""), JSON.stringify(otp));
+    ok("LOGIN : demande de code → create_user=false (aucun compte créé), e-mail normalisé, retour vers l'URL EXACTE /auth/callback (sans paramètre)", !!otp && otp.body.create_user === false && otp.body.email === "test@example.com" && /\/auth\/callback$/.test(otp.redirect || "") && !/\?/.test(otp.redirect || ""), JSON.stringify(otp));
+    const cookies = await ctx.cookies(); ok("LOGIN : destination mémorisée dans un cookie court (15 min), validée côté serveur", !!cookies.find((c) => c.name === "sk_login_next" && decodeURIComponent(c.value) === "/staff/missions"));
     ok("LOGIN : message neutre (n'indique pas si le compte existe) et saisie du code", (await p.getByText("Si ce compte existe, un code vient d'être envoyé").count()) === 1 && (await p.getByLabel("Code reçu").count()) === 1);
     await p.getByLabel("Code reçu").fill("12"); await p.getByRole("button", { name: "Se connecter" }).click(); await p.waitForTimeout(300);
     ok("LOGIN : code mal formé refusé côté formulaire", (await p.getByRole("alert").filter({ hasText: "code reçu" }).count()) === 1);
@@ -68,6 +69,41 @@ const PATHS = ["/staff", "/staff/missions", "/staff/schedule", "/staff/comms", "
     ok("LOGIN : aucune clé secrète dans le code client (service_role / secret absents des pages)", !/service_role|SERVICE_ROLE|sb_secret/.test(await p.content()));
     for (const w of [375, 390, 430]) { await p.setViewportSize({ width: w, height: 800 }); await p.goto(S + "/staff/login"); await p.waitForTimeout(500); ok(`LOGIN ${w} px : aucun défilement horizontal`, (await p.evaluate(() => document.documentElement.scrollWidth - innerWidth)) <= 0); }
     await ctx.close();
+  }
+  /* 3. Compte connecté (Supabase) + écrans encore LOCAUX : aucune confusion données partagées / locales.
+        (Serveur de démonstration + cookie de démo pour passer le proxy ; la réponse de /api/staff/session est SIMULÉE en mode supabase.) */
+  {
+    const asSupabase = async (ctx, who) => { await ctx.route("**/api/staff/session", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ mode: "supabase", enabled: true, session: { name: who.name, roles: who.roles, memberId: who.id, demo: false } }) })); };
+    const login = (ctx, a) => ctx.request.post(B + "/api/demo-session", { form: { account: a }, maxRedirects: 0 });
+    const mkc = async () => { const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }); await ctx.addCookies([{ name: "sk_space", value: "staff", url: B }]); return ctx; };
+    const ctx = await mkc(); await login(ctx, "tom"); await asSupabase(ctx, { id: "tom", name: "Tom", roles: ["admin"] });
+    const p = await ctx.newPage();
+    // données de démonstration préexistantes (V1) : doivent rester INTACTES et invisibles en mode supabase
+    await p.goto(B + "/staff/missions"); await p.waitForTimeout(800);
+    await p.evaluate(() => localStorage.setItem("skyline.staff.missions.v1", JSON.stringify([{ id: "demo1", title: "Mission de démonstration V1", description: "", assigneeId: "tom", creatorId: "tom", validatorId: "graw", dueDate: null, priority: "normal", status: "todo", createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T00:00:00Z", history: [] }])));
+    for (const path of ["/staff", "/staff/missions", "/staff/schedule", "/staff/comms", "/staff/team"]) {
+      await p.goto(B + path); await p.waitForTimeout(1000);
+      ok(`SUPABASE + local ${path} : bandeau « Données locales · non partagées » visible`, (await p.getByTestId("local-data-banner").count()) === 1 && /ne sont ni partagées avec l'équipe ni enregistrées dans la base/.test(await p.getByTestId("local-data-banner").innerText()));
+    }
+    await p.goto(B + "/staff/missions"); await p.waitForTimeout(1200);
+    ok("SUPABASE + local : la page MISSIONS le dit clairement (compte uniquement, ni équipe ni base)", (await p.getByText(/Données locales de démonstration, enregistrées sur cet appareil pour votre compte uniquement/).count()) === 1);
+    ok("SUPABASE + local : les missions de démonstration V1 ne sont PAS affichées (stockage séparé), aucun chargeur d'exemples", (await p.getByText("Mission de démonstration V1").count()) === 0 && (await p.getByText(/Charger 4 missions/).count()) === 0 && (await p.getByText("Aucune mission pour le moment.").count()) === 1);
+    await p.getByRole("button", { name: /Nouvelle mission/ }).first().click(); await p.waitForTimeout(500);
+    await p.getByRole("dialog").getByLabel("Titre *").fill("Ma mission locale"); await p.getByRole("dialog").getByRole("button", { name: "Enregistrer" }).click(); await p.waitForTimeout(600); await p.keyboard.press("Escape"); await p.waitForTimeout(400);
+    const keys = await p.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith("skyline.staff.missions")).sort());
+    ok("SUPABASE + local : une mission créée est enregistrée sous une clé PAR COMPTE (…:db:tom), la clé de démonstration n'est pas touchée", keys.includes("skyline.staff.missions.v1:db:tom") && keys.includes("skyline.staff.missions.v1") && JSON.parse(await p.evaluate(() => localStorage.getItem("skyline.staff.missions.v1"))).length === 1 && JSON.parse(await p.evaluate(() => localStorage.getItem("skyline.staff.missions.v1"))).every((m) => m.id === "demo1"));
+    await ctx.close();
+    // autre compte sur le même appareil : ne voit pas les données locales de Tom
+    const c2 = await mkc(); await login(c2, "qafard"); await asSupabase(c2, { id: "qafard", name: "Qafard", roles: ["member"] });
+    const q = await c2.newPage(); await q.goto(B + "/staff/missions"); await q.waitForTimeout(800);
+    await q.evaluate(() => localStorage.setItem("skyline.staff.missions.v1:db:tom", JSON.stringify([{ id: "t1", title: "Locale de Tom", description: "", assigneeId: "tom", creatorId: "tom", validatorId: "graw", dueDate: null, priority: "normal", status: "todo", createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T00:00:00Z", history: [] }])));
+    await q.goto(B + "/staff/missions"); await q.waitForTimeout(1200);
+    ok("SUPABASE + local : un autre compte sur le même appareil ne voit pas les missions locales de Tom", (await q.getByText("Locale de Tom").count()) === 0 && (await q.getByText("Aucune mission pour le moment.").count()) === 1);
+    await c2.close();
+    // mode démonstration (sans simulation) : pas de bandeau « non partagées » (tout est démo), stockage historique
+    const c3 = await mkc(); await login(c3, "tom"); const d = await c3.newPage(); await d.goto(B + "/staff"); await d.waitForTimeout(1000);
+    ok("DÉMO : aucun bandeau « Données locales » (le mode démonstration est déjà explicite)", (await d.getByTestId("local-data-banner").count()) === 0);
+    await c3.close();
   }
   await browser.close(); console.log(fails ? `${fails} ÉCHEC(S)` : "TOUT PASSE"); process.exit(fails ? 1 : 0);
 })();

@@ -15,6 +15,7 @@ export function StaffProfile() {
             <form method="post" action={supa ? "/auth/signout" : "/api/demo-session"} className="mt-6">{!supa && <input type="hidden" name="account" value="logout" />}<button type="submit" className="inline-flex min-h-12 items-center rounded-full border border-silver/45 px-6 font-mono text-[0.78rem] uppercase tracking-[0.14em]">Fermer la session</button></form>
           </>
         ) : <p className="text-dim">Aucune session.</p>}
+        {supa && <p className="mt-5 max-w-[38ch] text-[0.88rem] leading-snug text-dim">Connexion individuelle active. Les écrans STAFF utilisent encore des données locales de démonstration, non partagées.</p>}
       </section>
     </>
   );

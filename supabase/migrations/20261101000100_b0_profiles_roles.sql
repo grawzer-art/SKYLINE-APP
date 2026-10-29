@@ -133,7 +133,13 @@ $$;
 
 -- ---------------------------------------------------------------- Droits d'exécution : jamais pour l'anonyme
 revoke execute on all functions in schema public from public, anon;
-grant execute on function public.current_roles(), public.has_role(public.app_role), public.is_active_member(), public.is_coordinator(),
-  public.is_super_admin(), public.is_active_user(uuid), public.is_validator_user(uuid), public.list_team(),
+-- Fonctions appelées DEPUIS les politiques RLS ou par l'interface : exécutables par les utilisateurs connectés.
+grant execute on function public.has_role(public.app_role), public.is_active_member(), public.is_coordinator(),
+  public.is_super_admin(), public.list_team(),
   public.manage_set_roles(uuid, public.app_role[]), public.manage_set_active(uuid, boolean), public.manage_update_profile(uuid, text, text)
   to authenticated;
+-- NON exécutables par les utilisateurs (usage interne par d'autres fonctions SECURITY DEFINER / déclencheurs uniquement) :
+--   current_roles(), is_active_user(uuid), is_validator_user(uuid)  → évite de laisser sonder les rôles d'un identifiant quelconque.
+-- (Supabase accorde par défaut EXECUTE à `authenticated` sur les nouvelles fonctions : il faut donc le retirer EXPLICITEMENT.)
+revoke execute on function public.current_roles(), public.is_active_user(uuid), public.is_validator_user(uuid),
+  public.handle_new_user(), public.touch_updated_at() from authenticated;

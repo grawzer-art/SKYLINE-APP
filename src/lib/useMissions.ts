@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useMemo } from "react";
 import { useLocalStorage } from "@/lib/useLocalStorage";
+import { useDemoStatus } from "@/components/staff/SpaceSwitcher";
 import { activeMembers, validatorIds } from "@/data/staff";
 import { archiveMission, assignMission, canDelete, changeStatus as changeStatusRule, createMission, normalizeMission, resolveAssignment, updateMission, type Actor, type Mission, type MissionInput, type MissionStatus } from "@/domain/missions";
 
@@ -15,7 +16,12 @@ const nowISO = () => new Date().toISOString();
 const newId = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `m-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`);
 
 export function useMissions() {
-  const [stored, set, latestStored] = useLocalStorage<Mission[]>(MISSIONS_KEY, EMPTY);
+  // Mode démonstration : stockage historique (partagé entre les comptes de démo d'un même appareil, comme en V1).
+  // Mode Supabase : stockage LOCAL séparé PAR COMPTE (clé distincte) — jamais mélangé aux données de démonstration ni à un autre compte ;
+  // en attendant de lire la session, une clé « pending » (jamais écrite).
+  const st = useDemoStatus();
+  const key = st === undefined || (st.mode === "supabase" && !st.session?.memberId) ? `${MISSIONS_KEY}:pending` : st.mode === "supabase" ? `${MISSIONS_KEY}:db:${st.session?.memberId}` : MISSIONS_KEY;
+  const [stored, set, latestStored] = useLocalStorage<Mission[]>(key, EMPTY);
   // Missions V1 (sans proposition ni archive) : champs complétés à la lecture, rien n'est supprimé.
   const missions = useMemo(() => stored.map(normalizeMission), [stored]);
   const latest = useCallback(() => latestStored().map(normalizeMission), [latestStored]);

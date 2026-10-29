@@ -40,4 +40,4 @@ create policy mission_comments_select on public.mission_comments for select to a
 
 -- Filet de sécurité : les FUTURES fonctions du schéma public ne sont jamais exécutables par l'anonyme par défaut.
 revoke execute on all functions in schema public from public, anon;
-alter default privileges in schema public revoke execute on functions from public, anon;
+alter default privileges in schema public revoke execute on functions from public, anon, authenticated; -- futures fonctions : droits à accorder explicitement

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { createBrowserSupabase } from "@/lib/supabase/client";
-import { safeStaffNext } from "@/lib/staff/paths";
+import { LOGIN_NEXT_COOKIE, safeStaffNext } from "@/lib/staff/paths";
 import { rememberSpace } from "@/lib/space";
 import { cn } from "@/lib/cn";
 
@@ -30,7 +30,9 @@ export function LoginScreen() {
     const addr = email.trim().toLowerCase(); if (!/^\S+@\S+\.\S+$/.test(addr)) { setErr("Saisissez une adresse e-mail valide."); return; }
     setBusy(true);
     try {
-      const { error } = await createBrowserSupabase().auth.signInWithOtp({ email: addr, options: { shouldCreateUser: false, emailRedirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(next)}` } });
+      // Destination mémorisée dans un cookie court : l'URL de retour reste EXACTE (`…/auth/callback`, sans paramètre).
+      document.cookie = `${LOGIN_NEXT_COOKIE}=${encodeURIComponent(next)}; Path=/; Max-Age=900; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
+      const { error } = await createBrowserSupabase().auth.signInWithOtp({ email: addr, options: { shouldCreateUser: false, emailRedirectTo: `${location.origin}/auth/callback` } });
       if (error && (error.status === 429 || /rate|too many|seconds/i.test(error.message))) { setErr("Trop de tentatives. Réessayez dans quelques minutes."); }
       else { setStep("code"); setMsg("Si ce compte existe, un code vient d'être envoyé par e-mail."); setCool(60); }
     } catch { setErr("Connexion impossible pour le moment. Réessayez."); }

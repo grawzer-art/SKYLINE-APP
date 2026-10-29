@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { CalendarClock, LayoutGrid, MessageSquare, Users } from "lucide-react";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { cn } from "@/lib/cn";
+import { useDemoStatus } from "./SpaceSwitcher";
 
 const tabs = [
   { label: "HQ", href: "/staff", Icon: LayoutGrid },
@@ -18,6 +19,7 @@ const tabs = [
  */
 export function StaffShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const st = useDemoStatus();
   if (pathname === "/staff/access" || pathname === "/staff/login") return <>{children}</>;
   const active = (href: string) => (href === "/staff" ? pathname === "/staff" || pathname.startsWith("/staff/missions") : pathname.startsWith(href)); // MISSIONS vit sous l'onglet HQ
   return (
@@ -33,7 +35,15 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
         <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-sky/70 to-transparent" />
       </header>
 
-      <div className="min-h-dvh pb-[calc(var(--nav-h)+var(--safe-bottom)+2.5rem)] pt-[calc(var(--safe-top)+3.5rem)]">{children}</div>
+      <div className="min-h-dvh pb-[calc(var(--nav-h)+var(--safe-bottom)+2.5rem)] pt-[calc(var(--safe-top)+3.5rem)]">
+        {/* Compte connecté (Supabase) mais écrans encore locaux : jamais de confusion entre données partagées et données locales. */}
+        {st?.mode === "supabase" && (
+          <p role="note" data-testid="local-data-banner" className="mx-5 mt-4 rounded-[8px] border border-sunset/60 px-4 py-3 text-[0.85rem] leading-snug text-cloud/90">
+            <span className="font-mono text-[0.75rem] uppercase tracking-[0.14em] text-sunset">Données locales · non partagées</span><br />Vous êtes connecté, mais les missions, plannings, messages et annonces de cet écran restent des données de démonstration enregistrées sur cet appareil. Elles ne sont ni partagées avec l&apos;équipe ni enregistrées dans la base.
+          </p>
+        )}
+        {children}
+      </div>
 
       <nav aria-label="Navigation STAFF HQ" className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[480px] border-t border-cloud/10 bg-jet/90 pb-[var(--safe-bottom)] backdrop-blur-2xl">
         <ul className="grid h-[var(--nav-h)] grid-cols-4">

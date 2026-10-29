@@ -248,6 +248,16 @@ await t("DÉSACTIVATION : un compte désactivé perd immédiatement tout accès 
   await q("graw", `select public.manage_set_active($1, true)`, [ids.qafard]);
   assert.equal((await q("qafard", `select * from public.missions`)).length > 0, true);
 });
+await t("DROITS : les fonctions internes (current_roles, is_active_user, is_validator_user) ne sont pas appelables par les utilisateurs", async () => {
+  await fails("tom", `select public.is_active_user($1)`, /permission denied/i, [ids.qafard]);
+  await fails("qafard", `select public.is_validator_user($1)`, /permission denied/i, [ids.tom]);
+  await fails("graw", `select public.current_roles()`, /permission denied/i);
+  assert.equal((await q("qafard", `select public.is_coordinator() as c`))[0].c, false);
+});
+await t("DROITS : la liste des fonctions exécutables par un utilisateur connecté est EXACTEMENT la liste prévue", async () => {
+  const rows = (await db.query<any>(`select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prokind = 'f' and has_function_privilege('authenticated', p.oid, 'execute') order by 1`)).rows.map((r) => r.proname);
+  assert.deepEqual(rows, ["add_mission_comment", "archive_mission", "assign_mission", "can_view_mission", "create_mission", "delete_mission", "has_role", "is_active_member", "is_coordinator", "is_project_member", "is_super_admin", "list_team", "manage_set_active", "manage_set_roles", "manage_update_profile", "resolve_assignment", "set_mission_status", "update_mission"]);
+});
 await t("DROITS : aucune fonction exécutable par l'anonyme ; aucune table avec écriture directe pour authenticated", async () => {
   const fn = (await db.query<any>(`select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prokind = 'f' and has_function_privilege('anon', p.oid, 'execute')`)).rows;
   assert.deepEqual(fn.map((r) => r.proname), [], "fonctions exécutables par anon");

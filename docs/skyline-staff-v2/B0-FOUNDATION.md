@@ -1,49 +1,71 @@
 # STAFF HQ V2 — B0 : fondation (Supabase, authentification, rôles, migrations, RLS)
 
-Branche `feat/staff-v2-b0-foundation` (depuis `feat/staff-hq-v2`). **Aucune migration n'a été exécutée sur Supabase.** Rien n'est fusionné dans `main`. MEMBERS et SKYLINE SOUND ne sont pas modifiés.
+Branche `feat/staff-v2-b0-foundation`. **Aucune migration n'a été exécutée sur Supabase.** Rien n'est fusionné dans `main`. MEMBERS et SKYLINE SOUND ne sont pas modifiés. Revue SQL complète : `B0-SQL-REVIEW.md`.
 
 ## 1. Décisions appliquées
 | Décision | Où c'est appliqué |
 |---|---|
 | GRAW `super_admin` : seul à gérer comptes, invitations, désactivations, rôles | fonctions `manage_*` (super admin uniquement) · `canManageAccounts` · RLS `user_roles` |
 | TOM `admin` : missions, projets, plannings, validations ; pas les comptes ni les permissions | `is_coordinator()` · tests : Tom refusé sur `manage_*` |
-| QAFARD `member` : crée ses missions, gère les siennes, **propose** une mission pour un autre (attribution validée par un admin) | `create_mission` / `assign_mission` (proposition) · `resolve_assignment` (admin) |
-| Validateur désigné par mission, GRAW ou TOM ; GRAW garde un droit global | `validator_id` (doit être admin / super_admin, jamais le responsable) ; super admin = coordinateur |
+| QAFARD `member` : crée ses missions, gère les siennes, **propose** une mission pour un autre | `create_mission` / `assign_mission` (proposition) · `resolve_assignment` (admin) |
+| Validateur désigné par mission, GRAW ou TOM ; GRAW garde un droit global | `validator_id` (admin / super admin, jamais le responsable) |
 | STAFF HQ privé, authentification obligatoire, RLS en base | proxy + `getUser()` + profil actif + rôle ; RLS refus par défaut |
-| Données de démonstration non supprimées | rien n'est supprimé : missions locales, `src/data/staff.ts` et comptes démo conservés (mode démonstration par défaut) |
+| Données de démonstration non supprimées | rien n'est supprimé ; elles restent dans leur stockage historique (voir §6) |
 
 ## 2. Ce qui est dans le code
-- **Clients Supabase** (`src/lib/supabase/`) : `client.ts` (navigateur, clé publique seulement), `server.ts` (cookies httpOnly, `getUser()`), `proxy.ts` (rafraîchissement de session). Aucune clé secrète, `service_role` jamais utilisée.
-- **Mode** (`src/lib/staff/mode.ts`) : `STAFF_AUTH_MODE=supabase` **et** les deux variables publiques ⇒ mode Supabase. Sinon **mode démonstration** (comportement actuel). Les deux variables seules ne changent rien : l'activation est explicite.
-- **Authentification par e-mail** : `/staff/login` (code à 6 chiffres, aussi valable dans la PWA iPhone ; lien magique en secours), `/auth/callback` (échange du code, redirection STAFF interne uniquement), `/auth/signout` (POST), `/api/staff/session` (identité pour l'interface). `shouldCreateUser: false` : personne ne peut créer de compte ; messages neutres (n'indiquent pas si une adresse existe).
-- **Isolation** (`src/proxy.ts`) : en mode Supabase, chaque requête `/staff/**` exige une session vérifiée auprès de Supabase, un profil **actif** et un **rôle** ; sinon redirection vers la connexion. Le mode démo (cookie signé) est **fermé** en mode Supabase.
-- **Rôles** (`src/lib/auth/roles.ts`) : `super_admin`, `admin`, `member` (+ `participant` pour la démo) ; fonctions professionnelles séparées (`src/data/staff.ts`).
-- **Règles métier** (`src/domain/missions.ts`) : propositions d'attribution, validateurs administrateurs, archivage, normalisation des missions V1 (sans perte). L'interface MISSIONS reste inchangée (stockage local) ; le branchement sur la base est la Phase B.
+- **Clients Supabase** (`src/lib/supabase/`) : navigateur (clé publique seulement), serveur (cookies httpOnly, `getUser()`), rafraîchissement de session dans le proxy. `service_role` jamais utilisée.
+- **Mode** (`src/lib/staff/mode.ts`) : `STAFF_AUTH_MODE=supabase` **et** URL + clé publique ⇒ mode Supabase ; sinon **mode démonstration** (inchangé).
+- **Connexion** : `/staff/login` (code à 6 chiffres, valable aussi dans la PWA iPhone ; lien magique en secours), `/auth/callback`, `/auth/signout` (POST), `/api/staff/session`.
+- **Isolation** (`src/proxy.ts`) : en mode Supabase, session vérifiée auprès de Supabase + profil **actif** + **rôle**, sinon redirection ; le mode démo est fermé.
+- **Rôles** : `super_admin`, `admin`, `member` (+ `participant`, démo) ; fonctions professionnelles à part.
 
-## 3. Migrations SQL (non exécutées) — `supabase/migrations/`
-1. `20261101000100_b0_profiles_roles.sql` — type `app_role`, tables `profiles` et `user_roles`, invitation → profil **inactif sans rôle**, fonctions d'aide (`has_role`, `is_coordinator`, …), gestion des comptes **super admin seulement** (`manage_set_roles`, `manage_set_active`, `manage_update_profile`, protection du dernier super admin), annuaire `list_team()`.
-2. `20261101000200_b0_missions.sql` — `projects`, `project_members`, `missions` (contraintes : validateur ≠ responsable, proposition valide, longueurs), `mission_events` (historique, ajout seulement), `mission_comments`, et les **seules fonctions d'écriture** : `create_mission`, `update_mission` (verrou de version), `set_mission_status`, `assign_mission`, `resolve_assignment`, `add_mission_comment`, `archive_mission`, `delete_mission` (admins).
-3. `20261101000300_b0_rls_policies.sql` — privilèges et politiques : `anon` sans aucun droit ; `authenticated` en **lecture seule** selon les politiques (aucun INSERT/UPDATE/DELETE direct sur missions, historique, commentaires, rôles) ; chacun ne modifie que `display_name`, `email_pro`, `phone_pro` de son profil ; filet pour les futures fonctions.
-Toutes sont **non destructives** (création uniquement : aucun `drop`, `truncate`, `delete`, aucune donnée insérée). `supabase/bootstrap/B0_roles_template.sql` (manuel, jamais automatique) attribue les rôles initiaux **avec des adresses à remplacer** : rien n'est inventé.
+## 3. Connexion : redirections et mots de passe (vérifié)
+**Redirections.** L'application n'utilise qu'**une seule URL de retour : `https://<site>/auth/callback`, exacte, sans paramètre** (la destination demandée est mémorisée 15 min dans un cookie, validée côté serveur : jamais d'URL externe). Le **code à 6 chiffres** n'a besoin d'aucune redirection ; seul le lien magique en utilise une. Un lien ouvert depuis un autre domaine que ceux autorisés retombe sur *Site URL* (le code reste utilisable). Je n'ai pas pu consulter la documentation Supabase en ligne : le comportement exact des motifs de redirection est celui que je connais ; **vérifiez-le dans Authentication → URL Configuration**.
+**Configuration minimale pour une Preview stable** (à choisir ensemble, voir §7) :
+- un **seul** projet Vercel retenu (il y en a deux : `skyline-app` et `skyline-ap`) et **une adresse stable** : l'alias de branche `https://<projet>-git-<branche>-jarvis-1348.vercel.app` (ne change pas à chaque déploiement), de préférence d'une branche dédiée `staff-preview` ;
+- *Site URL* = cette adresse ;
+- *Redirect URLs* = **une seule entrée exacte** : `https://<cette adresse>/auth/callback` — **pas de joker**, pas de `localhost`, pas d'autre projet, pas de déploiements à adresse aléatoire. La production sera ajoutée **plus tard**, en entrée exacte, après validation.
+**Mots de passe.** L'application ne propose, n'appelle et ne contient **aucune connexion par mot de passe, inscription ni API d'administration** (garde-fou automatique `tests/no-password.test.mts`). Limite connue : à ma connaissance, Supabase ne permet pas de désactiver séparément l'API « mot de passe » tant que le fournisseur E-mail est actif ; la protection est donc de **ne créer aucun mot de passe** :
+- les comptes se créent par **« Invite user »** (aucun mot de passe) ; le formulaire « Create new user » du tableau de bord exige un mot de passe : **à éviter** ;
+- le script d'attribution des rôles **refuse** tout compte qui possède un mot de passe ;
+- une requête de contrôle en lecture seule est fournie (étape 8).
+*Point à vérifier lors du premier essai* : la connexion par code d'un compte invité mais jamais connecté. Le plan prévoit que chaque personne ouvre une fois le lien d'invitation (cela confirme l'adresse) ; si ce n'est pas suffisant, le script le signalera (« adresse non confirmée »), sans rien modifier.
 
-## 4. Étapes manuelles dans Supabase — dans cet ordre exact
-> Projet `SKYLINE-APP` (organisation SKYLINE, région Irlande). **Ne rien exécuter avant d'avoir validé le contenu des 3 migrations.**
-1. **Authentication → Sign In / Providers → Email** : activer le fournisseur E-mail, garder « Confirm email » activé, **désactiver « Allow new users to sign up »**. Régler l'expiration du code à 900 s et la longueur à 6 si l'option est proposée.
-2. **Authentication → URL Configuration** : *Site URL* = l'adresse stable du site (prévisualisation pour l'instant ; production à confirmer). *Redirect URLs* : `https://skyline-app-git-*-jarvis-1348.vercel.app/**`, `https://skyline-ap-git-*-jarvis-1348.vercel.app/**`, `http://localhost:3100/**`, `http://localhost:3000/**`.
-3. **Authentication → Emails → Templates → « Magic Link »** : objet « Votre code de connexion SKYLINE STAFF HQ » ; corps `<p>Votre code de connexion : <strong style="font-size:24px">{{ .Token }}</strong></p><p>Il expire dans 15 minutes. Vous pouvez aussi <a href="{{ .ConfirmationURL }}">ouvrir ce lien</a>.</p>` (le code est indispensable pour la PWA iPhone).
-4. **Authentication → SMTP Settings** : configurer un expéditeur personnalisé (l'envoi intégré est limité à quelques e-mails par heure, insuffisant ; plusieurs offres SMTP gratuites existent — **aucun service payant sans votre accord**).
-5. **SQL Editor** : exécuter, **dans cet ordre et un fichier à la fois**, `…0100_b0_profiles_roles.sql`, puis `…0200_b0_missions.sql`, puis `…0300_b0_rls_policies.sql`. Vérifier : *Database → Tables* : 7 tables toutes avec « RLS enabled » ; *Advisors → Security* : aucune erreur « RLS disabled ».
-6. **Authentication → Users** : créer les trois comptes avec leurs vraies adresses : *Add user → Create new user*, cocher **Auto Confirm User** (un mot de passe aléatoire est exigé par le formulaire : le générer avec un gestionnaire de mots de passe et **ne jamais l'utiliser ni le conserver** — la connexion se fait uniquement par code e-mail). Chaque création crée un profil **inactif sans rôle**.
-7. **SQL Editor** : ouvrir `supabase/bootstrap/B0_roles_template.sql`, **remplacer les trois adresses**, exécuter. La requête de contrôle doit afficher exactement 3 lignes : `graw` (super_admin), `tom` (admin), `qafard` (member). Sinon exécuter `rollback;` et corriger.
-8. **Vercel → Settings → Environment Variables → Preview uniquement** : ajouter `STAFF_AUTH_MODE` = `supabase`. Ne rien ajouter en Production. Redéployer la prévisualisation de la branche.
-9. **Test sur la prévisualisation** : ouvrir `/staff` → connexion → code reçu par e-mail → HQ. Contrôles : un compte inconnu ne reçoit rien et aucun message ne le révèle ; Qafard n'a aucun accès aux comptes ; un compte désactivé (par GRAW) est refusé immédiatement.
-10. (Plus tard) Plan gratuit : un projet inactif est mis en pause après environ une semaine ; prévoir une surveillance ou un passage payant **après validation**.
+## 4. Migrations SQL (non exécutées) — détail et revue dans `B0-SQL-REVIEW.md`
+`20261101000100_b0_profiles_roles.sql` · `20261101000200_b0_missions.sql` · `20261101000300_b0_rls_policies.sql`. Non destructives (création uniquement). Script manuel `supabase/bootstrap/B0_roles_template.sql` : **un seul bloc atomique** ; vérifie les trois comptes (existence unique, adresse confirmée, ni supprimé ni suspendu, **sans mot de passe**), l'absence de doublons ou de conflits (slug, rôles, autre compte actif, autre super admin), refuse de s'exécuter tant qu'une adresse porte « REMPLACER », puis attribue les rôles et contrôle le résultat : en cas d'échec, tout est **annulé automatiquement** (aucun COMMIT/ROLLBACK manuel).
 
-## 5. Tests exécutés
-- `npm run test:rls` : **24 tests** des migrations et de la RLS sur un vrai Postgres (PGlite, hors réseau) : refus par défaut, anonyme sans aucun accès, invité inactif sans accès, rôles (GRAW seul gère les comptes ; Tom et Qafard refusés), dernier super admin protégé, profil limité aux champs autorisés, aucune écriture directe, création/proposition/approbation, validateurs, statuts (le responsable ne termine jamais), visibilité (membre / projet / coordinateurs), verrou de version, commentaires, archivage, suppression, historique non modifiable, désactivation immédiate, aucune fonction exécutable par l'anonyme. Ils ont révélé **3 bugs SQL corrigés** (slug majuscules, concaténation de tableau, annuaire).
-- `npm run test:auth` : **mode Supabase** construit avec une URL factice : redirections, falsification (cookies, jetons de démo, JWT inventé), formulaire de connexion avec réponses Supabase simulées, mobiles 375/390/430.
-- Unitaires (règles, rôles, redirections), e2e MEMBERS / SKYLINE SOUND / STAFF / MISSIONS : tous verts.
-**Limites** : PGlite simule Supabase (rôles, `auth.uid()`), il n'est pas Supabase lui-même ; aucune connexion réelle à votre projet n'a été testée (mon environnement n'y accède pas) ; l'envoi réel des e-mails et le comportement iPhone/PWA restent à vérifier sur la prévisualisation après les étapes 1 à 9.
+## 5. Étapes manuelles dans Supabase — dans cet ordre exact
+> Projet `SKYLINE-APP`. **Ne rien exécuter avant la validation finale de la revue SQL.**
+1. **Décider** du projet Vercel retenu et de l'adresse stable (§3, §7).
+2. **Authentication → Sign In / Providers → Email** : fournisseur activé, « Confirm email » activé, **« Allow new users to sign up » désactivé** ; expiration du code 900 s, longueur 6.
+3. **Authentication → URL Configuration** : *Site URL* = adresse stable ; *Redirect URLs* = l'unique entrée exacte `…/auth/callback` (aucun joker).
+4. **Authentication → Emails → Templates → « Magic Link »** : objet « Votre code de connexion SKYLINE STAFF HQ » ; corps `<p>Votre code de connexion : <strong style="font-size:24px">{{ .Token }}</strong></p><p>Il expire dans 15 minutes. Vous pouvez aussi <a href="{{ .ConfirmationURL }}">ouvrir ce lien</a>.</p>`. Même ajout du code dans « Confirm signup » et « Invite user ».
+5. **Authentication → SMTP Settings** : expéditeur personnalisé (l'envoi intégré est limité à quelques e-mails par heure ; offres gratuites possibles ; aucun service payant sans votre accord).
+6. **SQL Editor** : exécuter `…0100`, puis `…0200`, puis `…0300`, un fichier à la fois. Contrôler : *Database → Tables* : 7 tables « RLS enabled » ; *Advisors → Security* : aucune erreur « RLS disabled » (des avertissements « SECURITY DEFINER exécutable » sont attendus, voir la revue).
+7. **Authentication → Users → Invite user** : inviter les trois adresses (sans mot de passe). Chaque personne ouvre **une fois** l'e-mail d'invitation (confirme l'adresse ; la page atteinte ensuite peut être ignorée).
+8. **SQL Editor (lecture seule)** : `select email, email_confirmed_at is not null as confirme, coalesce(encrypted_password,'') <> '' as a_un_mot_de_passe from auth.users order by email;` → **3 lignes, confirme = true, a_un_mot_de_passe = false**. Sinon s'arrêter.
+9. **SQL Editor** : ouvrir `supabase/bootstrap/B0_roles_template.sql`, remplacer les trois adresses, exécuter. Résultat attendu : `BOOTSTRAP OK` puis 3 lignes (`graw`, `qafard`, `tom`). Toute erreur « BOOTSTRAP ANNULÉ : … » signifie qu'**aucune** modification n'a été faite : corriger la cause et relancer.
+10. **Vercel → Environment Variables → Preview uniquement** : `STAFF_AUTH_MODE=supabase`. Rien en Production. Redéployer.
+11. **Essai** (adresse stable) : `/staff` → saisie de l'e-mail → code → HQ. Vérifier : bandeau « Données locales · non partagées » ; compte inconnu : aucun e-mail et aucun indice ; compte désactivé par GRAW : refus immédiat.
+12. (Plus tard) Plan gratuit : pause après environ une semaine d'inactivité → surveillance ou passage payant **après validation**.
 
-## 6. Ce qui n'est PAS fait (Phase B et suivantes)
-Branchement des écrans MISSIONS / HQ / PLANNING / COMMS sur la base (les écrans utilisent encore les données locales et le message « enregistré sur cet appareil »), invitations depuis l'application (exigerait une clé serveur secrète, volontairement absente), projets, planning, messagerie, fichiers.
+## 6. STAFF HQ en mode Supabase tant que les écrans sont locaux (comportement confirmé)
+| Élément | Réel (base / serveur) | Local (cet appareil) |
+|---|---|---|
+| Connexion, identité, rôles, accès à `/staff/**` | **oui** | — |
+| Missions, planning (Schedule), messages (Comms), annonces, équipe affichée | non | **oui — données de démonstration** |
+Garde-fous contre toute confusion (testés) :
+- **Bandeau permanent** en haut de chaque écran STAFF : « Données locales · non partagées — … ni partagées avec l'équipe ni enregistrées dans la base » ; la page MISSIONS le répète (« pour votre compte uniquement »).
+- **Stockage local séparé par compte** en mode Supabase (clé `…:db:<membre>`) : un autre compte sur le même appareil **ne voit pas** les missions locales d'un autre ; elles ne sont jamais mélangées aux données de démonstration.
+- **Les données de démonstration existantes ne sont ni supprimées ni modifiées** ; elles restent dans leur clé historique, invisibles en mode Supabase.
+- **Aucun chargeur d'exemples** en mode Supabase (aucune donnée fictive injectée sous un compte réel).
+- Se déconnecter n'efface pas les données locales (elles restent sur l'appareil, non chiffrées) : bouton « Effacer mes missions locales ».
+En mode démonstration (sans variable d'activation), rien ne change.
+
+## 7. Décisions attendues
+1. **Projet Vercel et adresse stable** : `skyline-app` ou `skyline-ap` ? Créer une branche dédiée `staff-preview` (adresse stable) ou utiliser l'alias de `feat/staff-v2-b0-foundation` ?
+2. Créer les comptes par **« Invite user »** (recommandé) : confirmé ?
+3. Validation finale de la revue SQL (`B0-SQL-REVIEW.md`).
+
+## 8. Tests exécutés
+`npm run test:rls` : **26 tests** de migrations / RLS + **14 tests** du script d'attribution (PGlite, hors réseau) · `npm run test:auth` : mode Supabase (URL factice) : isolation, falsification, formulaire, bandeau et stockage local séparé · unitaires (dont garde-fou « sans mot de passe », redirections) · e2e MEMBERS / SKYLINE SOUND / STAFF / MISSIONS. **Limites** : PGlite simule Supabase ; aucune connexion à votre projet réel n'a été testée ; l'envoi des e-mails et l'iPhone/PWA restent à vérifier sur la Preview.
