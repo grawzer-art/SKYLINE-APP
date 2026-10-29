@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { DEMO_ACCOUNTS } from "@/lib/auth/roles";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { useDemoStatus } from "./SpaceSwitcher";
+import { rememberSpace } from "@/lib/space";
 
 /** Page d'accès DÉMONSTRATION : choisir un compte fictif. L'autorisation est vérifiée côté serveur (proxy), pas ici. */
 export function AccessScreen() {
@@ -36,7 +37,7 @@ export function AccessScreen() {
         ))}
       </ul>}
       {!disabled && <form method="post" action="/api/demo-session" className="mt-4"><input type="hidden" name="account" value="logout" /><button type="submit" className="min-h-11 font-mono text-[0.75rem] uppercase tracking-[0.16em] text-dim underline underline-offset-4">Fermer la session démo</button></form>}
-      <Link href="/" className="mt-6 inline-flex min-h-11 items-center font-mono text-[0.78rem] uppercase tracking-[0.16em] text-sky">Retour à Members →</Link>
+      <Link href="/" onClick={() => rememberSpace("members")} className="mt-6 inline-flex min-h-11 items-center font-mono text-[0.78rem] uppercase tracking-[0.16em] text-sky">Retour à Members →</Link>
       <p className="mt-10 text-[0.82rem] leading-relaxed text-dim">Authentification de démonstration (cookie signé, vérifié côté serveur). Elle sera remplacée par une vraie authentification avant toute mise en production. Aucune donnée réelle.</p>
     </main>
   );

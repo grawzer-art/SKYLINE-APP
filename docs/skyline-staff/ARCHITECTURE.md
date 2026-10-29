@@ -36,3 +36,9 @@ Branche `feat/staff-hq` (depuis `main`). Non fusionnée. SKYLINE SOUND, son lect
 ## 5. Tests exécutés
 tsc ✔ · lint ✔ · build ✔ · unitaires ✔ · e2e v3 / v3.2 / sound / pass ✔ (aucune régression SKYLINE SOUND) · **`tests/e2e-staff.cjs`** ✔ : redirections serveur sans session (7 pages), falsification (cookie inventé, charge utile modifiée, 3 segments, localStorage), rôles (participant refusé ; staff, staff+participant, admin acceptés), navigation 4 onglets, canaux (saisie inactive), annuaire/filtre/fiches (coordonnées seulement si autorisées), 404 sur identifiants inconnus, sélecteur d'espace (session conservée, invisible pour un participant), 375/390/430 px sans débordement, texte ≥ 11 px, cibles ≥ 40 px, et mode « production » (démo désactivée).
 **Non testé** : iPhone réel, authentification réelle (inexistante).
+
+## 6. Choix de l'espace à l'ouverture (ajout)
+- Écran `/start` : deux entrées, **Members** et **Staff HQ**. Au premier lancement (aucun choix mémorisé), un vrai chargement de `/` (ouverture de l'app, PWA, rafraîchissement) redirige vers `/start` ; le choix est mémorisé dans un cookie `sk_space` et les ouvertures suivantes vont directement dans l'espace choisi. Les navigations internes (liens, onglets) ne sont jamais redirigées.
+- **C'est une préférence de confort, pas une sécurité** : choisir « Staff » sans compte autorisé mène à la page d'accès (démo) puis à un refus ; l'accès reste contrôlé par `src/proxy.ts`.
+- « Changer d'espace » dans les profils (Members production, Members V3, Staff) ramène à `/start`. Le sélecteur Members / Staff HQ des comptes autorisés met aussi la préférence à jour.
+- Impact sur les installations PWA existantes : la prochaine ouverture affiche le choix une fois.

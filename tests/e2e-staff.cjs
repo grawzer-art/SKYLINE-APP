@@ -7,9 +7,40 @@ const STAFF_PATHS = ["/staff", "/staff/schedule", "/staff/comms", "/staff/comms/
 const b64u = (s) => Buffer.from(s).toString("base64url");
 (async () => {
   const browser = await chromium.launch();
-  const mk = async (o = {}) => { const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, ...o }); const p = await ctx.newPage(); const errs = []; p.on("pageerror", (e) => errs.push(e.message)); return { ctx, p, errs }; };
+  const mk = async (o = {}) => { const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, ...o }); await ctx.addCookies([{ name: "sk_space", value: "members", url: B }]); const p = await ctx.newPage(); const errs = []; p.on("pageerror", (e) => errs.push(e.message)); return { ctx, p, errs }; };
   const login = async (ctx, account) => { const r = await ctx.request.post(B + "/api/demo-session", { form: { account, next: "/staff" }, maxRedirects: 0 }); return r; };
   const hit = async (ctx, path) => { const r = await ctx.request.get(B + path, { maxRedirects: 0 }); return { status: r.status(), loc: r.headers()["location"] || "" }; };
+
+  /* 0. Choix de l'espace à l'ouverture */
+  {
+    const fresh = async () => { const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }); return { ctx, p: await ctx.newPage() }; };
+    let { ctx, p } = await fresh(); await p.goto(B + "/"); await p.waitForTimeout(1000);
+    ok("OUVERTURE : premier lancement → écran de choix de l'espace", new URL(p.url()).pathname === "/start" && (await p.getByRole("heading", { level: 1, name: "Choisissez votre espace" }).count()) === 1);
+    ok("OUVERTURE : deux choix Members et Staff HQ, sans barre de navigation", (await p.getByRole("link", { name: /Members/ }).count()) === 1 && (await p.getByRole("link", { name: /Staff HQ/ }).count()) === 1 && (await p.getByRole("navigation").count()) === 0);
+    await p.getByRole("link", { name: /Members/ }).click(); await p.waitForURL(B + "/"); await p.waitForTimeout(800);
+    ok("OUVERTURE : choisir Members ouvre l'app participant", (await p.getByRole("heading", { level: 1 }).first().innerText()).toLowerCase().includes("la fête"));
+    await p.goto(B + "/"); await p.waitForTimeout(800); ok("OUVERTURE : choix mémorisé (réouverture directe sur Members)", new URL(p.url()).pathname === "/");
+    await p.goto(B + "/start"); await p.waitForTimeout(600);
+    await p.getByRole("link", { name: /Staff HQ/ }).click(); await p.waitForURL("**/staff/access**"); await p.waitForTimeout(600);
+    ok("OUVERTURE : choisir Staff sans session → accès (démo) vérifié par le serveur", (await p.getByRole("button", { name: /^Staff\s+Accès STAFF HQ/ }).count()) === 1);
+    await p.getByRole("button", { name: /^Participant/ }).click(); await p.waitForTimeout(900);
+    ok("OUVERTURE : compte participant refusé malgré le choix Staff", new URL(p.url()).search.includes("denied=1"));
+    await p.goto(B + "/"); await p.waitForTimeout(900);
+    ok("OUVERTURE : choix Staff mémorisé → ouverture directe côté STAFF (puis refus serveur)", new URL(p.url()).pathname === "/staff/access");
+    await p.getByRole("link", { name: /Retour à Members/ }).click(); await p.waitForURL(B + "/"); await p.waitForTimeout(600);
+    await p.goto(B + "/"); await p.waitForTimeout(600); ok("OUVERTURE : « Retour à Members » remet Members comme choix", new URL(p.url()).pathname === "/");
+    await ctx.close();
+    ({ ctx, p } = await fresh()); await login(ctx, "staff-participant"); await p.goto(B + "/start"); await p.waitForTimeout(600);
+    await p.getByRole("link", { name: /Staff HQ/ }).click(); await p.waitForURL(B + "/staff"); await p.waitForTimeout(800);
+    ok("OUVERTURE : compte staff → STAFF HQ directement", (await p.getByRole("heading", { level: 1, name: "HQ" }).count()) === 1);
+    await p.goto(B + "/"); await p.waitForTimeout(800); ok("OUVERTURE : réouverture → STAFF HQ", new URL(p.url()).pathname === "/staff");
+    await p.getByRole("link", { name: "Profil et espaces" }).click(); await p.waitForURL("**/staff/profile"); await p.waitForTimeout(700);
+    await p.getByRole("link", { name: /Changer d'espace/ }).click(); await p.waitForURL("**/start"); await p.waitForTimeout(500);
+    ok("PROFIL : « Changer d'espace » ramène à l'écran de choix", (await p.getByRole("heading", { level: 1, name: "Choisissez votre espace" }).count()) === 1);
+    const soft = await (async () => { await p.getByRole("link", { name: /Members/ }).click(); await p.waitForURL(B + "/"); await p.waitForTimeout(500); await p.getByRole("link", { name: "Club" }).first().click().catch(() => {}); await p.waitForTimeout(800); return new URL(p.url()).pathname; })();
+    ok("OUVERTURE : les navigations internes ne sont jamais redirigées vers le choix", !soft.startsWith("/start") && !soft.startsWith("/staff"), soft);
+    await ctx.close();
+  }
 
   /* 1. Serveur : sans session */
   {

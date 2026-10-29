@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ScreenTitle, Block, Switch, Initials } from "./ui";
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
-import { SpaceSwitcher } from "@/components/staff/SpaceSwitcher";
+import { ChangeSpaceLink, SpaceSwitcher } from "@/components/staff/SpaceSwitcher";
 import { locales } from "@/i18n";
 import { useCommunity } from "@/lib/useCommunity";
 import { cn } from "@/lib/cn";
@@ -57,7 +57,7 @@ export function V3Profile() {
           {(["export", "delete", "help"] as const).map((k) => <li key={k}><button type="button" onClick={() => setInfo(k)} aria-haspopup="dialog" className="flex min-h-14 w-full items-center justify-between text-left text-[0.95rem]">{texts[k].t}<span aria-hidden className="text-silver">→</span></button></li>)}
         </ul>
       </Block>
-      <Block label="Espace"><SpaceSwitcher /><Link href="/staff/access" className="mt-3 inline-flex min-h-11 items-center font-mono text-[0.75rem] uppercase tracking-[0.14em] text-sky">Accès organisation (démo) →</Link></Block>
+      <Block label="Espace"><SpaceSwitcher /><ChangeSpaceLink className="mt-3" /></Block>
       <Block label="Prototype"><Button variant="ghost" onClick={reset} className="w-full">Réinitialiser le prototype</Button><p className="mt-2 text-[0.72rem] text-dim">Efface l&apos;état local de démonstration sur cet appareil.</p></Block>
       <Sheet open={!!info} onClose={() => setInfo(null)} eyebrow="Prototype" title={info ? texts[info].t : ""}><p className="leading-relaxed text-cloud/80">{info ? texts[info].p : ""}</p><Button variant="ghost" onClick={() => setInfo(null)} className="mt-5 w-full">{t("common.close")}</Button></Sheet>
     </>

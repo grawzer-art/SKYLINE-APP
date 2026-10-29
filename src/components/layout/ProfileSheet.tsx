@@ -5,7 +5,7 @@ import { crew, practicalInfo, profileLinks, user } from "@/data/demo";
 import { Emblem } from "@/components/ui/Emblem";
 import { Sheet } from "@/components/ui/Sheet";
 import { Icon } from "@/components/ui/Icon";
-import { SpaceSwitcher } from "@/components/staff/SpaceSwitcher";
+import { ChangeSpaceLink, SpaceSwitcher } from "@/components/staff/SpaceSwitcher";
 
 function Row({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -43,7 +43,7 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
       </div>
 
       {/* Sélecteur d'espace : visible seulement pour un compte staff/admin ; la session est conservée. */}
-      <div className="pb-5" onClick={(e) => { const a = (e.target as HTMLElement).closest("a"); if (a) { e.preventDefault(); goTo(a.getAttribute("href") ?? "/"); } }}><SpaceSwitcher /></div>
+      <div className="pb-5" onClick={(e) => { const a = (e.target as HTMLElement).closest("a"); if (a) { e.preventDefault(); goTo(a.getAttribute("href") ?? "/"); } }}><SpaceSwitcher /><ChangeSpaceLink className="mt-2" /></div>
 
       <Row title="Informations légales et pratiques">
         <ul className="space-y-3">

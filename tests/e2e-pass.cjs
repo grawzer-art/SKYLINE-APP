@@ -7,7 +7,7 @@ const vars = (p) => p.getByRole("group", { name: /Pass SKYLINE/ }).evaluate((e) 
 const orient = (p, gamma, beta) => p.evaluate(([g, b]) => window.dispatchEvent(Object.assign(new Event("deviceorientation"), { gamma: g, beta: b })), [gamma, beta]);
 (async () => {
   const b = await chromium.launch();
-  const mk = async (o = {}, init) => { const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, ...o }); if (init) await ctx.addInitScript(init); const p = await ctx.newPage(); const errs = []; p.on("pageerror", (e) => errs.push(e.message)); return { ctx, p, errs }; };
+  const mk = async (o = {}, init) => { const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, ...o }); await ctx.addCookies([{ name: "sk_space", value: "members", url: B }]); if (init) await ctx.addInitScript(init); const p = await ctx.newPage(); const errs = []; p.on("pageerror", (e) => errs.push(e.message)); return { ctx, p, errs }; };
 
   /* Android / capteurs libres : actif sans permission */
   {

@@ -4,6 +4,7 @@ import { getSignalBySlug } from "@/data/signals";
 import { canEnterStaff } from "@/lib/auth/roles";
 import { SESSION_COOKIE, verifySession } from "@/lib/auth/token";
 import { getChannel, getStaffMember } from "@/data/staff";
+import { SPACE_COOKIE } from "@/lib/space";
 
 /**
  * 1) SIGNAL : un brouillon ou un slug inconnu doit répondre par un VRAI 404 dès la première requête
@@ -14,6 +15,17 @@ import { getChannel, getStaffMember } from "@/data/staff";
  */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // 0) Ouverture de l'application (vrai chargement de page de « / », pas une navigation interne) : choix de l'espace.
+  //    Aucun choix mémorisé → écran de choix ; STAFF mémorisé → STAFF HQ (accès vérifié ci-dessous). La préférence ne donne aucun droit.
+  if (pathname === "/") {
+    const isPageLoad = request.headers.get("sec-fetch-dest") === "document" && !request.headers.get("rsc");
+    if (!isPageLoad) return NextResponse.next();
+    const space = request.cookies.get(SPACE_COOKIE)?.value;
+    if (!space) return NextResponse.redirect(new URL("/start", request.url), { status: 307, headers: { "Cache-Control": "no-store" } });
+    if (space === "staff") return NextResponse.redirect(new URL("/staff", request.url), { status: 307, headers: { "Cache-Control": "no-store" } });
+    return NextResponse.next();
+  }
 
   if (pathname.startsWith("/staff")) {
     if (pathname === "/staff/access") return NextResponse.next();
@@ -34,4 +46,4 @@ export async function proxy(request: NextRequest) {
   return NextResponse.next();
 }
 
-export const config = { matcher: ["/signal/:slug", "/staff", "/staff/:path*"] };
+export const config = { matcher: ["/", "/signal/:slug", "/staff", "/staff/:path*"] };

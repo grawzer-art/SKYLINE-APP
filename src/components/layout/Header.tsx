@@ -26,7 +26,7 @@ export function Header() {
     return () => window.removeEventListener("scroll", on);
   }, []);
 
-  if (pathname.startsWith("/signal/") || pathname.startsWith("/v3") || pathname.startsWith("/staff")) return null; // l'expérience SIGNAL a son propre en-tête
+  if (pathname.startsWith("/signal/") || pathname.startsWith("/v3") || pathname.startsWith("/staff") || pathname === "/start") return null; // l'expérience SIGNAL a son propre en-tête
   return (
     <>
       <header

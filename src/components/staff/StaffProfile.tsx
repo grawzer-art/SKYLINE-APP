@@ -1,11 +1,11 @@
 "use client";
-import { SpaceSwitcher, useSessionInfo } from "./SpaceSwitcher";
+import { ChangeSpaceLink, SpaceSwitcher, useSessionInfo } from "./SpaceSwitcher";
 
 export function StaffProfile() {
   const s = useSessionInfo();
   return (
     <>
-      <section className="px-5 pt-10"><h2 className="mb-3 font-mono text-[0.75rem] uppercase tracking-[0.22em] text-cloud/72">Espace</h2><SpaceSwitcher /></section>
+      <section className="px-5 pt-10"><h2 className="mb-3 font-mono text-[0.75rem] uppercase tracking-[0.22em] text-cloud/72">Espace</h2><SpaceSwitcher /><ChangeSpaceLink className="mt-3" /></section>
       <section className="px-5 pt-10">
         <h2 className="mb-3 font-mono text-[0.75rem] uppercase tracking-[0.22em] text-cloud/72">Session démonstration</h2>
         {s === undefined ? <p className="text-dim">Chargement…</p> : s ? (

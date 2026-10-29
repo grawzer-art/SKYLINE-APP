@@ -11,7 +11,7 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
 
 (async () => {
   const b = await chromium.launch(); const errs = [];
-  const mk = async (opts = {}) => { const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, ...opts }); const p = await ctx.newPage(); p.on("console", (m) => m.type() === "error" && !/status of 404/.test(m.text()) && errs.push(m.text())); p.on("pageerror", (e) => errs.push("pageerror: " + e.message)); return { ctx, p }; };
+  const mk = async (opts = {}) => { const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, ...opts }); await ctx.addCookies([{ name: "sk_space", value: "members", url: B }]); const p = await ctx.newPage(); p.on("console", (m) => m.type() === "error" && !/status of 404/.test(m.text()) && errs.push(m.text())); p.on("pageerror", (e) => errs.push("pageerror: " + e.message)); return { ctx, p }; };
   const seed = (p, patch) => p.addInitScript(([k, v]) => { if (!localStorage.getItem(k)) localStorage.setItem(k, JSON.stringify(v)); }, [KEY, patch]);
   const eligible = { community: { adult: true, charter: true, consent: true } };
 
