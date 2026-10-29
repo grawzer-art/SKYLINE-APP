@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { DEMO_ACCOUNTS } from "@/lib/auth/roles";
+import { DEMO_ACCOUNTS, accessLabels } from "@/lib/auth/roles";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { useDemoStatus } from "./SpaceSwitcher";
 import { rememberSpace } from "@/lib/space";
@@ -20,7 +20,7 @@ export function AccessScreen() {
 
       {denied && <p role="alert" className="mt-6 rounded-[8px] border border-sunset/60 p-4 text-[0.95rem] leading-snug">Ce compte n&apos;a pas accès à STAFF HQ. Seuls les rôles « staff » et « admin » y entrent.</p>}
       {error && <p role="alert" className="mt-6 rounded-[8px] border border-sunset/60 p-4 text-[0.95rem]">Compte inconnu.</p>}
-      {s && !denied && <p role="status" className="mt-6 text-[0.9rem] text-cloud/75">Session démo ouverte : {s.name} · {s.roles.join(", ")}</p>}
+      {s && !denied && <p role="status" className="mt-6 text-[0.9rem] text-cloud/75">Session démo ouverte : {s.name} · {accessLabels(s.access).join(", ") || "MEMBERS"}</p>}
 
       {disabled && <p role="status" className="mt-8 border-l border-sky pl-4 text-[1rem] font-light leading-snug text-cloud/85">La démonstration d&apos;accès est désactivée sur cet environnement. STAFF HQ sera disponible avec l&apos;authentification officielle.</p>}
       {!disabled && <ul className="mt-8 divide-y divide-line border-y border-line">
@@ -29,7 +29,7 @@ export function AccessScreen() {
             <form method="post" action="/api/demo-session">
               <input type="hidden" name="account" value={a.id} /><input type="hidden" name="next" value={next} />
               <button type="submit" className="flex min-h-[4.5rem] w-full items-center justify-between gap-4 py-3 text-left">
-                <span><span className="font-display block text-[1.1rem]">{a.label}</span><span className="mt-1 block text-[0.88rem] text-dim">{a.hint} · {a.roles.join(" + ")}</span></span>
+                <span><span className="font-display block text-[1.1rem]">{a.label}</span><span className="mt-1 block text-[0.88rem] text-dim">{a.hint}</span></span>
                 <span aria-hidden className="text-silver">→</span>
               </button>
             </form>

@@ -25,15 +25,25 @@ await db.exec(`
 for (const f of readdirSync("supabase/migrations").filter((x) => x.endsWith(".sql")).sort()) await db.exec(readFileSync(`supabase/migrations/${f}`, "utf8"));
 
 const ids: Record<string, string> = {};
-const provision = async (slug: string, roles: string[], active = true) => {
+type Prov = { platform?: string[]; spaces?: string[]; staff?: string[]; active?: boolean; profile?: boolean };
+const provision = async (slug: string, o: Prov = {}) => {
   const r = await db.query<{ id: string }>(`insert into auth.users (email) values ($1) returning id`, [`${slug}@example.test`]);
   ids[slug] = r.rows[0].id;
-  if (active) await db.query(`update public.profiles set slug = $1, display_name = $2, active = true where id = $3`, [slug, slug[0].toUpperCase() + slug.slice(1), ids[slug]]);
-  for (const role of roles) await db.query(`insert into public.user_roles (user_id, role) values ($1, $2)`, [ids[slug], role]);
+  await db.query(`update public.accounts set display_name = $1, active = $2 where id = $3`, [slug[0].toUpperCase() + slug.slice(1), o.active ?? true, ids[slug]]);
+  for (const sp of o.spaces ?? []) await db.query(`insert into public.space_access (user_id, space) values ($1, $2)`, [ids[slug], sp]);
+  for (const r of o.platform ?? []) await db.query(`insert into public.platform_roles (user_id, role) values ($1, $2)`, [ids[slug], r]);
+  for (const r of o.staff ?? []) await db.query(`insert into public.staff_roles (user_id, role) values ($1, $2)`, [ids[slug], r]);
+  if (o.profile ?? (o.spaces ?? []).includes("staff")) await db.query(`insert into public.staff_profiles (user_id, slug, function_title) values ($1, $2, $3)`, [ids[slug], slug, `Fonction ${slug}`]);
 };
-await provision("graw", ["super_admin"]); await provision("tom", ["admin"]); await provision("qafard", ["member"]);
-await provision("ghost", [], false);          // invité, jamais activé
-await provision("norole", [], true);          // profil actif mais SANS rôle
+await provision("graw", { platform: ["super_admin"], spaces: ["staff", "members"] });   // super admin GLOBAL, accès STAFF + MEMBERS, aucune permission STAFF explicite
+await provision("tom", { spaces: ["staff"], staff: ["admin"] });
+await provision("qafard", { spaces: ["staff"], staff: ["member"] });
+await provision("ghost", { active: false });                                           // invité, jamais activé
+await provision("norole", { active: true });                                           // compte actif sans aucun accès
+await provision("participant", { spaces: ["members"] });                               // futur participant MEMBERS
+await provision("participant2", { spaces: ["members"] });
+await provision("cumul", { spaces: ["staff", "members"], staff: ["member"] });         // cumule STAFF + MEMBERS
+await provision("owner", { platform: ["super_admin"], active: true });                 // super admin SANS accès STAFF
 
 /** Exécute `fn` sous un rôle Postgres + un JWT simulé, puis remet le rôle initial. */
 const as = async <T,>(who: string | "anon", fn: () => Promise<T>): Promise<T> => {
@@ -46,66 +56,118 @@ const fails = async (who: string, sql: string, re: RegExp, p: unknown[] = []) =>
 const mission = async (who: string, title: string, assignee: string, validator: string, extra: { status?: string; project?: string | null } = {}) =>
   (await q(who, `select * from public.create_mission($1, '', $2, $3, null, 'normal', $4, $5)`, [title, ids[assignee], ids[validator], extra.status ?? "todo", extra.project ?? null]))[0];
 
-await t("invitation : le profil est créé INACTIF, sans rôle, avec un slug dérivé de l'e-mail", async () => {
+
+await t("invitation : le compte global est créé INACTIF, sans rôle global, sans aucun accès (ni STAFF ni MEMBERS)", async () => {
   const r = (await db.query<any>(`insert into auth.users (email) values ('Nouvelle.Personne+x@example.test') returning id`)).rows[0];
-  const p = (await db.query<any>(`select * from public.profiles where id = $1`, [r.id])).rows[0];
-  assert.equal(p.active, false); assert.match(p.slug, /^nouvelle-personne-x/); assert.equal((await db.query(`select 1 from public.user_roles where user_id = $1`, [r.id])).rows.length, 0);
-  const again = (await db.query<any>(`insert into auth.users (email) values ('nouvelle.personne+x@other.test') returning id`)).rows[0];
-  assert.notEqual((await db.query<any>(`select slug from public.profiles where id = $1`, [again.id])).rows[0].slug, p.slug);
+  const a = (await db.query<any>(`select * from public.accounts where id = $1`, [r.id])).rows[0];
+  assert.equal(a.active, false); assert.equal(a.display_name, "Nouvelle.Personne+x");
+  for (const tbl of ["platform_roles", "space_access", "staff_roles", "staff_profiles"]) assert.equal((await db.query(`select 1 from public.${tbl} where user_id = $1`, [r.id])).rows.length, 0, tbl);
 });
 await t("ANONYME : aucune table, aucune fonction", async () => {
-  for (const tbl of ["profiles", "user_roles", "missions", "mission_events", "mission_comments", "projects", "project_members"]) await fails("anon", `select * from public.${tbl}`, /permission denied/i);
-  await fails("anon", `select public.has_role('admin')`, /permission denied/i);
+  for (const tbl of ["accounts", "platform_roles", "space_access", "staff_roles", "staff_profiles", "missions", "mission_events", "mission_comments", "projects", "project_members"]) await fails("anon", `select * from public.${tbl}`, /permission denied/i);
+  await fails("anon", `select public.is_super_admin()`, /permission denied/i);
   await fails("anon", `select * from public.create_mission('x','',gen_random_uuid(),gen_random_uuid(),null)`, /permission denied/i);
   await fails("anon", `select * from public.list_team()`, /permission denied/i);
 });
-await t("compte invité non activé / sans rôle : ne voit que son propre profil, aucune mission, aucune action", async () => {
-  assert.equal((await q("ghost", `select * from public.profiles`)).length, 1);
-  assert.equal((await q("norole", `select * from public.profiles where id <> $1`, [ids.norole])).length, 0);
+await t("compte invité non activé / sans accès : ne voit que son propre compte, aucune mission, aucune action", async () => {
   for (const u of ["ghost", "norole"]) {
+    assert.equal((await q(u, `select * from public.accounts`)).length, 1);
     assert.equal((await q(u, `select * from public.missions`)).length, 0);
     assert.equal((await q(u, `select * from public.list_team()`)).length, 0);
+    assert.equal((await q(u, `select * from public.staff_profiles`)).length, 0);
     await fails(u, `select * from public.create_mission('x','',$1,$2,null)`, /forbidden/, [ids.qafard, ids.tom]);
   }
 });
-await t("équipe : les membres actifs voient les profils actifs et l'annuaire (3 membres, rôles inclus)", async () => {
-  const team = await q("qafard", `select slug, roles from public.list_team()`);
-  assert.deepEqual(team.map((r) => r.slug).sort(), ["graw", "qafard", "tom"]);
-  assert.equal(String(team.find((r) => r.slug === "graw")!.roles).replace(/[{}]/g, ""), "super_admin");
-  assert.equal((await q("qafard", `select * from public.profiles where slug = 'ghost'`)).length, 0);
-  assert.equal((await q("graw", `select * from public.profiles where slug = 'ghost'`)).length, 1);
-});
-await t("RÔLES : seul le super admin (GRAW) gère comptes, rôles et activations — pas Tom, pas Qafard", async () => {
-  for (const u of ["tom", "qafard"]) {
-    await fails(u, `select public.manage_set_roles($1, array['member']::public.app_role[])`, /forbidden/, [ids.ghost]);
-    await fails(u, `select public.manage_set_active($1, true)`, /forbidden/, [ids.ghost]);
-    await fails(u, `select public.manage_update_profile($1, 'X', 'Y')`, /forbidden/, [ids.ghost]);
+await t("PARTICIPANT MEMBERS (accès members seul, ACTIF) : ne reçoit AUCUNE donnée STAFF — annuaire, fiches, comptes, accès, missions, projets", async () => {
+  for (const u of ["participant", "participant2"]) {
+    assert.equal((await q(u, `select * from public.list_team()`)).length, 0, "annuaire");
+    assert.equal((await q(u, `select * from public.staff_profiles`)).length, 0, "fiches STAFF");
+    assert.deepEqual((await q(u, `select id from public.accounts`)).map((r) => r.id), [ids[u]], "comptes des autres");
+    assert.equal((await q(u, `select * from public.space_access`)).length, 1, "accès des autres"); assert.equal((await q(u, `select * from public.platform_roles`)).length, 0); assert.equal((await q(u, `select * from public.staff_roles`)).length, 0);
+    for (const tbl of ["missions", "mission_events", "mission_comments", "projects", "project_members"]) assert.equal((await q(u, `select * from public.${tbl}`)).length, 0, tbl);
+    assert.equal((await q(u, `select public.is_staff_member() as v`))[0].v, false); assert.equal((await q(u, `select public.is_staff_coordinator() as v`))[0].v, false);
+    assert.equal((await q(u, `select public.has_space('members') as v`))[0].v, true); assert.equal((await q(u, `select public.has_space('staff') as v`))[0].v, false);
+    await fails(u, `select * from public.create_mission('x','',$1,$2,null)`, /forbidden/, [ids[u], ids.tom]);
+    await fails(u, `select public.manage_set_spaces($1, array['staff']::public.app_space[])`, /forbidden/, [ids[u]]);
+    assert.equal((await q(u, `update public.staff_profiles set email_pro = 'x@y.z' returning user_id`)).length, 0, "aucune fiche STAFF modifiable par un participant");
   }
-  await q("graw", `select public.manage_set_roles($1, array['member']::public.app_role[])`, [ids.ghost]); await q("graw", `select public.manage_set_active($1, true)`, [ids.ghost]);
-  assert.deepEqual((await q("graw", `select role from public.user_roles where user_id = $1`, [ids.ghost])).map((r) => r.role), ["member"]);
-  await q("graw", `select public.manage_set_active($1, false)`, [ids.ghost]); await db.query(`delete from public.user_roles where user_id = $1`, [ids.ghost]);
 });
-await t("RÔLES : écriture directe impossible ; chacun ne lit que ses rôles (le super admin lit tout)", async () => {
-  await fails("tom", `insert into public.user_roles (user_id, role) values ($1, 'super_admin')`, /permission denied/i, [ids.tom]);
-  await fails("graw", `update public.user_roles set role = 'admin' where user_id = $1`, /permission denied/i, [ids.tom]);
-  assert.equal((await q("qafard", `select * from public.user_roles`)).length, 1);
-  assert.equal((await q("graw", `select * from public.user_roles`)).length >= 3, true);
+await t("ÉQUIPE STAFF : annuaire (3 membres + le compte cumulé) via list_team ; un membre ne lit pas directement les accès des autres", async () => {
+  const team = await q("qafard", `select slug, platform_roles::text as pr, staff_roles::text as sr from public.list_team()`);
+  assert.deepEqual(team.map((r) => r.slug).sort(), ["cumul", "graw", "qafard", "tom"]);
+  assert.equal(team.find((r) => r.slug === "graw")!.pr, "{super_admin}"); assert.equal(team.find((r) => r.slug === "tom")!.sr, "{admin}");
+  assert.equal((await q("qafard", `select * from public.space_access`)).length, 1); assert.equal((await q("qafard", `select * from public.staff_roles`)).length, 1); assert.equal((await q("qafard", `select * from public.platform_roles`)).length, 0);
+  assert.equal((await q("qafard", `select * from public.accounts`)).length, 1);
+  assert.equal((await q("qafard", `select * from public.staff_profiles`)).length, 4);
+  assert.equal((await q("qafard", `select * from public.staff_profiles where slug = 'owner'`)).length, 0, "pas de fiche pour un compte sans accès STAFF");
 });
-await t("RÔLES : le dernier super admin ne peut être ni retiré ni désactivé", async () => {
-  await fails("graw", `select public.manage_set_roles($1, array['admin']::public.app_role[])`, /last_super_admin/, [ids.graw]);
-  await fails("graw", `select public.manage_set_active($1, false)`, /last_super_admin/, [ids.graw]);
+await t("RÔLE GLOBAL : seul le super admin gère comptes, accès, spaces et permissions — pas Tom (admin STAFF), pas Qafard, pas un participant", async () => {
+  for (const u of ["tom", "qafard", "participant", "cumul"]) {
+    await fails(u, `select public.manage_set_account_active($1, true)`, /forbidden/, [ids.ghost]);
+    await fails(u, `select public.manage_set_platform_roles($1, array['super_admin']::public.platform_role[])`, /forbidden/, [u === "tom" ? ids.tom : ids.ghost]);
+    await fails(u, `select public.manage_set_spaces($1, array['staff','members']::public.app_space[])`, /forbidden/, [ids.ghost]);
+    await fails(u, `select public.manage_set_staff_roles($1, array['admin']::public.staff_role[])`, /forbidden/, [ids.ghost]);
+    await fails(u, `select public.manage_upsert_staff_profile($1, 'x-y', 'F')`, /forbidden/, [ids.ghost]);
+    await fails(u, `select public.manage_update_account($1, 'Pirate')`, /forbidden/, [ids.ghost]);
+  }
+  assert.equal((await q("owner", `select count(*)::int as n from public.accounts`))[0].n >= 9, true, "le super admin global voit tous les comptes, même sans accès STAFF");
 });
-await t("PROFIL : chacun modifie ses informations personnelles, jamais active / slug / fonction ni celles des autres", async () => {
-  await q("qafard", `update public.profiles set display_name = 'Qafard P.', email_pro = 'q@example.test', phone_pro = '0600000000' where id = $1`, [ids.qafard]);
-  assert.equal((await q("qafard", `select display_name from public.profiles where id = $1`, [ids.qafard]))[0].display_name, "Qafard P.");
-  await fails("qafard", `update public.profiles set active = false where id = $1`, /permission denied/i, [ids.qafard]);
-  await fails("qafard", `update public.profiles set slug = 'tom2' where id = $1`, /permission denied/i, [ids.qafard]);
-  await fails("qafard", `update public.profiles set function_title = 'Fondateur' where id = $1`, /permission denied/i, [ids.qafard]);
-  assert.equal((await q("qafard", `update public.profiles set display_name = 'Pirate' where id = $1 returning id`, [ids.tom])).length, 0);
-  await q("qafard", `update public.profiles set display_name = 'Qafard' where id = $1`, [ids.qafard]);
+await t("RÔLE GLOBAL : GRAW attribue accès et permissions ; les permissions STAFF exigent l'accès staff ; retirer staff supprime les permissions", async () => {
+  await q("graw", `select public.manage_update_account($1, 'Ghost Renommé')`, [ids.ghost]);
+  await fails("graw", `select public.manage_set_staff_roles($1, array['member']::public.staff_role[])`, /no_staff_access/, [ids.ghost]);
+  await fails("graw", `select public.manage_upsert_staff_profile($1, 'ghost', 'F')`, /no_staff_access/, [ids.ghost]);
+  await q("graw", `select public.manage_set_spaces($1, array['members']::public.app_space[])`, [ids.ghost]); await q("graw", `select public.manage_set_account_active($1, true)`, [ids.ghost]);
+  assert.equal((await q("ghost", `select public.has_space('members') as v`))[0].v, true); assert.equal((await q("ghost", `select public.is_staff_member() as v`))[0].v, false);
+  await q("graw", `select public.manage_set_spaces($1, array['staff','members']::public.app_space[])`, [ids.ghost]);
+  await q("graw", `select public.manage_set_staff_roles($1, array['member']::public.staff_role[])`, [ids.ghost]); await q("graw", `select public.manage_upsert_staff_profile($1, 'ghost', 'Fonction ghost')`, [ids.ghost]);
+  assert.equal((await q("ghost", `select public.is_staff_member() as v`))[0].v, true);
+  await q("graw", `select public.manage_set_spaces($1, array['members']::public.app_space[])`, [ids.ghost]);
+  assert.equal((await db.query(`select 1 from public.staff_roles where user_id = $1`, [ids.ghost])).rows.length, 0, "cascade : permissions STAFF retirées avec l'accès staff");
+  assert.equal((await q("ghost", `select public.is_staff_member() as v`))[0].v, false); assert.equal((await q("ghost", `select public.has_space('members') as v`))[0].v, true);
+  await q("graw", `select public.manage_set_account_active($1, false)`, [ids.ghost]); await db.query(`delete from public.space_access where user_id = $1`, [ids.ghost]); await db.query(`delete from public.staff_profiles where user_id = $1`, [ids.ghost]);
 });
-await t("MISSIONS : aucune écriture directe (INSERT / UPDATE / DELETE refusés à tous, super admin compris)", async () => {
-  for (const u of ["qafard", "tom", "graw"]) {
+await t("RÔLE GLOBAL : le dernier super admin actif ne peut être ni retiré ni désactivé", async () => {
+  await q("graw", `select public.manage_set_platform_roles($1, array['super_admin']::public.platform_role[])`, [ids.tom]); // 3 super admins : graw, owner, tom
+  await q("graw", `select public.manage_set_platform_roles($1, array[]::public.platform_role[])`, [ids.tom]);
+  await db.query(`update public.accounts set active = false where id = $1`, [ids.owner]);
+  await fails("graw", `select public.manage_set_platform_roles($1, array[]::public.platform_role[])`, /last_super_admin/, [ids.graw]);
+  await fails("graw", `select public.manage_set_account_active($1, false)`, /last_super_admin/, [ids.graw]);
+  await db.query(`update public.accounts set active = true where id = $1`, [ids.owner]);
+});
+await t("SUPER ADMIN SANS ACCÈS STAFF : administre les comptes mais n'est PAS membre STAFF (rôle global ≠ permission STAFF)", async () => {
+  assert.equal((await q("owner", `select public.is_super_admin() as v`))[0].v, true); assert.equal((await q("owner", `select public.is_staff_member() as v`))[0].v, false); assert.equal((await q("owner", `select public.is_staff_coordinator() as v`))[0].v, false);
+  assert.equal((await q("owner", `select * from public.list_team()`)).length, 0); assert.equal((await q("owner", `select * from public.missions`)).length, 0);
+  await fails("owner", `select * from public.create_mission('x','',$1,$2,null)`, /forbidden/, [ids.qafard, ids.tom]);
+  await q("owner", `select public.manage_set_spaces($1, array['staff']::public.app_space[])`, [ids.owner]);                 // il peut s'accorder l'accès (administration globale)
+  assert.equal((await q("owner", `select public.is_staff_coordinator() as v`))[0].v, true);
+  await q("owner", `select public.manage_set_spaces($1, array[]::public.app_space[])`, [ids.owner]);
+});
+await t("CUMUL D'ACCÈS : un même compte STAFF + MEMBERS (permission member) ; GRAW cumule rôle global + STAFF + MEMBERS", async () => {
+  assert.equal((await q("cumul", `select public.has_space('staff') as a, public.has_space('members') as b, public.is_staff_member() as c, public.is_staff_coordinator() as d`))[0].c, true);
+  const r = (await q("cumul", `select public.has_space('staff') as a, public.has_space('members') as b, public.is_staff_member() as c, public.is_staff_coordinator() as d`))[0];
+  assert.deepEqual([r.a, r.b, r.c, r.d], [true, true, true, false]);
+  const g = (await q("graw", `select public.is_super_admin() as a, public.has_space('staff') as b, public.has_space('members') as c, public.is_staff_coordinator() as d`))[0];
+  assert.deepEqual([g.a, g.b, g.c, g.d], [true, true, true, true]);
+});
+await t("PROFIL : chacun modifie son nom ; son e-mail et son téléphone pro (STAFF) ; jamais active / accès / rôles / slug / fonction ni ceux des autres", async () => {
+  await q("qafard", `update public.accounts set display_name = 'Qafard P.' where id = $1`, [ids.qafard]);
+  assert.equal((await q("qafard", `select display_name from public.accounts where id = $1`, [ids.qafard]))[0].display_name, "Qafard P.");
+  await q("qafard", `update public.staff_profiles set email_pro = 'q@example.test', phone_pro = '0600000000' where user_id = $1`, [ids.qafard]);
+  assert.equal((await q("qafard", `select email_pro from public.staff_profiles where user_id = $1`, [ids.qafard]))[0].email_pro, "q@example.test");
+  await fails("qafard", `update public.accounts set active = false where id = $1`, /permission denied/i, [ids.qafard]);
+  await fails("qafard", `update public.staff_profiles set slug = 'tom2' where user_id = $1`, /permission denied/i, [ids.qafard]);
+  await fails("qafard", `update public.staff_profiles set function_title = 'Fondateur' where user_id = $1`, /permission denied/i, [ids.qafard]);
+  assert.equal((await q("qafard", `update public.accounts set display_name = 'Pirate' where id = $1 returning id`, [ids.tom])).length, 0);
+  assert.equal((await q("qafard", `update public.staff_profiles set email_pro = 'x@y.z' where user_id = $1 returning user_id`, [ids.tom])).length, 0);
+  await q("qafard", `update public.accounts set display_name = 'Qafard' where id = $1`, [ids.qafard]);
+});
+await t("ÉCRITURE DIRECTE : impossible pour tous (super admin compris) sur comptes, accès, rôles, fiches, missions, historique, commentaires", async () => {
+  for (const u of ["qafard", "tom", "graw", "participant"]) {
+    await fails(u, `insert into public.platform_roles (user_id, role) values ($1, 'super_admin')`, /permission denied/i, [ids[u]]);
+    await fails(u, `insert into public.space_access (user_id, space) values ($1, 'staff')`, /permission denied/i, [ids[u]]);
+    await fails(u, `insert into public.staff_roles (user_id, role) values ($1, 'admin')`, /permission denied/i, [ids[u]]);
+    await fails(u, `delete from public.space_access`, /permission denied/i); await fails(u, `update public.platform_roles set role = 'super_admin'`, /permission denied/i);
+    await fails(u, `insert into public.staff_profiles (user_id, slug) values ($1, 'zz-zz')`, /permission denied/i, [ids[u]]);
     await fails(u, `insert into public.missions (title, creator_id, assignee_id, validator_id) values ('x', $1, $1, $2)`, /permission denied/i, [ids[u], ids.graw === ids[u] ? ids.tom : ids.graw]);
     await fails(u, `update public.missions set status = 'done'`, /permission denied/i);
     await fails(u, `delete from public.missions`, /permission denied/i);
@@ -115,46 +177,52 @@ await t("MISSIONS : aucune écriture directe (INSERT / UPDATE / DELETE refusés 
 });
 
 let mSelf: any, mProp: any, mTom: any;
-await t("CRÉATION : un membre crée pour lui-même ; pour un autre = PROPOSITION (il reste responsable) ; un admin attribue directement", async () => {
+await t("CRÉATION : un membre crée pour lui-même ; pour un autre = PROPOSITION ; un coordinateur attribue directement", async () => {
   mSelf = await mission("qafard", "Repérage photo", "qafard", "tom");
   assert.equal(mSelf.assignee_id, ids.qafard); assert.equal(mSelf.creator_id, ids.qafard); assert.equal(mSelf.proposed_assignee_id, null); assert.equal(mSelf.version, 1);
   mProp = await mission("qafard", "Maquette pour Graw", "graw", "tom");
   assert.equal(mProp.assignee_id, ids.qafard); assert.equal(mProp.proposed_assignee_id, ids.graw);
   mTom = await mission("tom", "Brief identité", "qafard", "graw");
   assert.equal(mTom.assignee_id, ids.qafard); assert.equal(mTom.proposed_assignee_id, null);
-  const ev = await q("qafard", `select kind from public.mission_events where mission_id = $1 order by id`, [mProp.id]);
-  assert.deepEqual(ev.map((e) => e.kind), ["created", "assignment_proposed"]);
+  assert.deepEqual((await q("qafard", `select kind from public.mission_events where mission_id = $1 order by id`, [mProp.id])).map((e) => e.kind), ["created", "assignment_proposed"]);
 });
-await t("CRÉATION : validateur obligatoirement admin / super admin, jamais le responsable ; statut « terminée » interdit à un membre", async () => {
+await t("CRÉATION : validateur = coordinateur STAFF (GRAW super admin avec accès STAFF, ou TOM), jamais le responsable ; participants exclus ; « terminée » interdit à un membre", async () => {
   await fails("qafard", `select * from public.create_mission('x','',$1,$1,null)`, /invalid_validator/, [ids.qafard]);
   await fails("tom", `select * from public.create_mission('x','',$1,$2,null)`, /invalid_validator/, [ids.tom, ids.qafard]);
   await fails("tom", `select * from public.create_mission('x','',$1,$1,null)`, /validator_conflict/, [ids.tom]);
   await fails("qafard", `select * from public.create_mission('x','',$1,$2,null,'normal','done')`, /forbidden_status/, [ids.qafard, ids.tom]);
   await fails("qafard", `select * from public.create_mission('   ','',$1,$2,null)`, /invalid_title/, [ids.qafard, ids.tom]);
   await fails("qafard", `select * from public.create_mission('x','',gen_random_uuid(),$1,null)`, /invalid_assignee/, [ids.tom]);
-  await fails("qafard", `select * from public.create_mission('x','',$1,$2,null)`, /validator_conflict/, [ids.tom, ids.tom]);
+  await fails("tom", `select * from public.create_mission('x','',$1,$2,null)`, /invalid_assignee/, [ids.participant, ids.graw]);
+  await fails("tom", `select * from public.create_mission('x','',$1,$2,null)`, /invalid_validator/, [ids.qafard, ids.participant]);
+  await fails("tom", `select * from public.create_mission('x','',$1,$2,null)`, /invalid_validator/, [ids.qafard, ids.owner]);
   assert.equal((await q("tom", `select * from public.create_mission('Déjà terminée','',$1,$2,null,'normal','done')`, [ids.qafard, ids.graw])).length, 1);
 });
-await t("VISIBILITÉ : un membre ne voit que ses missions ; Tom et Graw voient tout", async () => {
+await t("VISIBILITÉ : un membre ne voit que ses missions ; Tom et Graw voient tout ; un participant rien", async () => {
   const secret = (await q("tom", `select * from public.create_mission('Secrète','',$1,$2,null)`, [ids.graw, ids.tom]))[0];
   assert.equal((await q("qafard", `select id from public.missions where id = $1`, [secret.id])).length, 0);
   assert.equal((await q("qafard", `select id from public.missions where id = $1`, [mSelf.id])).length, 1);
   assert.equal((await q("graw", `select id from public.missions where id = $1`, [secret.id])).length, 1);
   assert.equal((await q("tom", `select id from public.missions where id = $1`, [mSelf.id])).length, 1);
+  assert.equal((await q("participant", `select id from public.missions where id = $1`, [secret.id])).length, 0);
   assert.equal((await q("qafard", `select * from public.mission_events where mission_id = $1`, [secret.id])).length, 0);
   await fails("qafard", `select public.set_mission_status($1, 'in_progress')`, /not_found/, [secret.id]);
-});
-await t("VISIBILITÉ : le proposé (Graw) voit la proposition ; les membres d'un projet voient ses missions", async () => {
   assert.equal((await q("graw", `select id from public.missions where id = $1`, [mProp.id])).length, 1);
+});
+await t("VISIBILITÉ : les membres d'un projet voient ses missions ; un participant jamais", async () => {
   const proj = (await db.query<any>(`insert into public.projects (name, owner_id) values ('Shooting plage', $1) returning id`, [ids.tom])).rows[0];
   const inProj = (await q("tom", `select * from public.create_mission('Dans le projet','',$1,$2,null,'normal','todo',$3)`, [ids.graw, ids.tom, proj.id]))[0];
   assert.equal((await q("qafard", `select id from public.missions where id = $1`, [inProj.id])).length, 0);
   await db.query(`insert into public.project_members (project_id, user_id) values ($1, $2)`, [proj.id, ids.qafard]);
   assert.equal((await q("qafard", `select id from public.missions where id = $1`, [inProj.id])).length, 1);
   assert.equal((await q("qafard", `select id from public.projects`)).length, 1);
+  await db.query(`insert into public.project_members (project_id, user_id) values ($1, $2)`, [proj.id, ids.participant]);   // même ajouté par erreur à un projet, un participant n'est pas membre STAFF
+  assert.equal((await q("participant", `select id from public.missions where id = $1`, [inProj.id])).length, 0);
+  assert.equal((await q("participant", `select id from public.projects`)).length, 0);
+  await db.query(`delete from public.project_members where user_id = $1`, [ids.participant]);
   await fails("qafard", `select * from public.create_mission('Hors projet','',$1,$2,null,'normal','todo',gen_random_uuid())`, /forbidden_project|violates foreign key/, [ids.qafard, ids.tom]);
 });
-await t("STATUT : le responsable avance (todo → en cours → en validation) mais ne termine JAMAIS ; le validateur valide ou renvoie", async () => {
+await t("STATUT : le responsable avance mais ne termine JAMAIS ; le validateur valide ou renvoie", async () => {
   await q("qafard", `select public.set_mission_status($1, 'in_progress')`, [mSelf.id]);
   await fails("qafard", `select public.set_mission_status($1, 'done')`, /forbidden_transition/, [mSelf.id]);
   await q("qafard", `select public.set_mission_status($1, 'review', 'Prêt')`, [mSelf.id]);
@@ -169,14 +237,14 @@ await t("STATUT : le responsable avance (todo → en cours → en validation) ma
   assert.equal(ev.at(-1)!.note, "Parfait"); assert.equal(ev.at(-1)!.from_status, "review"); assert.equal(ev.at(-1)!.to_status, "done");
   await fails("qafard", `select public.set_mission_status($1, 'in_progress')`, /forbidden_transition/, [mSelf.id]);
 });
-await t("STATUT : un tiers qui n'est ni responsable, ni validateur, ni admin ne peut rien changer ; Graw (super admin) intervient partout", async () => {
+await t("STATUT : un tiers ne peut rien changer ; GRAW (super admin avec accès STAFF) intervient partout", async () => {
   const other = await mission("tom", "Pour Graw seul", "graw", "tom");
   await fails("qafard", `select public.set_mission_status($1, 'in_progress')`, /not_found/, [other.id]);
   const mg = await mission("tom", "Pour Graw", "graw", "tom");
   await q("graw", `select public.set_mission_status($1, 'done')`, [mg.id]);
   assert.equal((await q("tom", `select status from public.missions where id = $1`, [mg.id]))[0].status, "done");
 });
-await t("ATTRIBUTION : un admin approuve ou refuse une proposition ; un membre ne peut pas", async () => {
+await t("ATTRIBUTION : un coordinateur approuve ou refuse une proposition ; un membre ne peut pas", async () => {
   await fails("qafard", `select public.resolve_assignment($1, true)`, /forbidden/, [mProp.id]);
   const approved = (await q("tom", `select * from public.resolve_assignment($1, true, 'OK')`, [mProp.id]))[0];
   assert.equal(approved.assignee_id, ids.graw); assert.equal(approved.proposed_assignee_id, null);
@@ -184,27 +252,25 @@ await t("ATTRIBUTION : un admin approuve ou refuse une proposition ; un membre n
   const p2 = await mission("qafard", "Proposition refusée", "graw", "tom");
   const rej = (await q("graw", `select * from public.resolve_assignment($1, false)`, [p2.id]))[0];
   assert.equal(rej.assignee_id, ids.qafard); assert.equal(rej.proposed_assignee_id, null);
-  const ev = await q("tom", `select kind from public.mission_events where mission_id = $1 order by id`, [p2.id]);
-  assert.deepEqual(ev.map((e) => e.kind), ["created", "assignment_proposed", "assignment_rejected"]);
+  assert.deepEqual((await q("tom", `select kind from public.mission_events where mission_id = $1 order by id`, [p2.id])).map((e) => e.kind), ["created", "assignment_proposed", "assignment_rejected"]);
 });
-await t("ATTRIBUTION : réattribution immédiate par un admin ; proposition seulement pour le créateur / responsable membre", async () => {
+await t("ATTRIBUTION : réattribution immédiate par un coordinateur ; proposition seulement pour le créateur / responsable membre", async () => {
   const m = await mission("tom", "À réattribuer", "qafard", "graw");
-  const re = (await q("tom", `select * from public.assign_mission($1, $2)`, [m.id, ids.tom]))[0];
-  assert.equal(re.assignee_id, ids.tom);
+  assert.equal((await q("tom", `select * from public.assign_mission($1, $2)`, [m.id, ids.tom]))[0].assignee_id, ids.tom);
   await fails("tom", `select public.assign_mission($1, $2)`, /same_assignee/, [m.id, ids.tom]);
   await fails("tom", `select public.assign_mission($1, $2)`, /validator_conflict/, [m.id, ids.graw]);
+  await fails("tom", `select public.assign_mission($1, $2)`, /invalid_assignee/, [m.id, ids.participant]);
   const own = await mission("qafard", "À proposer", "qafard", "tom");
   const prop = (await q("qafard", `select * from public.assign_mission($1, $2)`, [own.id, ids.graw]))[0];
   assert.equal(prop.assignee_id, ids.qafard); assert.equal(prop.proposed_assignee_id, ids.graw);
   await fails("qafard", `select public.assign_mission($1, $2)`, /not_found/, [m.id, ids.qafard]);
 });
-await t("MODIFICATION : créateur ou admin ; verrou de version ; historique « edited »", async () => {
+await t("MODIFICATION : créateur ou coordinateur ; verrou de version ; historique « edited »", async () => {
   const m = await mission("qafard", "À modifier", "qafard", "tom");
   await fails("qafard", `select * from public.update_mission($1, 99, 'T', '', $2, null, 'normal')`, /version_conflict/, [m.id, ids.tom]);
   const u = (await q("qafard", `select * from public.update_mission($1, 1, 'Nouveau titre', 'desc', $2, '2099-01-01', 'urgent')`, [m.id, ids.graw]))[0];
   assert.equal(u.title, "Nouveau titre"); assert.equal(u.version, 2); assert.equal(u.priority, "urgent"); assert.equal(u.validator_id, ids.graw);
-  const same = (await q("qafard", `select * from public.update_mission($1, 2, 'Nouveau titre', 'desc', $2, '2099-01-01', 'urgent')`, [m.id, ids.graw]))[0];
-  assert.equal(same.version, 2);
+  assert.equal((await q("qafard", `select * from public.update_mission($1, 2, 'Nouveau titre', 'desc', $2, '2099-01-01', 'urgent')`, [m.id, ids.graw]))[0].version, 2);
   const ev = await q("qafard", `select kind, note from public.mission_events where mission_id = $1 order by id`, [m.id]);
   assert.deepEqual(ev.map((e) => e.kind), ["created", "edited"]); assert.match(ev[1].note, /title/);
   const byTom = await mission("tom", "Créée par Tom", "qafard", "graw");
@@ -216,21 +282,22 @@ await t("MODIFICATION : créateur ou admin ; verrou de version ; historique « e
 await t("COMMENTAIRES : seuls ceux qui voient la mission peuvent commenter et lire", async () => {
   const secret = (await q("tom", `select * from public.create_mission('Privée','',$1,$2,null)`, [ids.graw, ids.tom]))[0];
   await fails("qafard", `select * from public.add_mission_comment($1, 'Coucou')`, /forbidden/, [secret.id]);
+  await fails("participant", `select * from public.add_mission_comment($1, 'Coucou')`, /forbidden/, [secret.id]);
   const c = (await q("graw", `select * from public.add_mission_comment($1, 'Bien reçu')`, [secret.id]))[0];
   assert.equal(c.author_id, ids.graw);
   assert.equal((await q("qafard", `select * from public.mission_comments where mission_id = $1`, [secret.id])).length, 0);
   assert.equal((await q("tom", `select * from public.mission_comments where mission_id = $1`, [secret.id])).length, 1);
   await fails("graw", `select * from public.add_mission_comment($1, '   ')`, /invalid_comment/, [secret.id]);
 });
-await t("ARCHIVAGE : créateur ou admin ; ensuite plus aucun changement ; l'historique reste", async () => {
+await t("ARCHIVAGE : créateur ou coordinateur ; ensuite plus aucun changement ; l'historique reste", async () => {
   const m = await mission("qafard", "À archiver", "qafard", "tom");
   await fails("qafard", `select public.archive_mission($1)`, /forbidden|not_found/, [mTom.id]);
-  const a = (await q("qafard", `select * from public.archive_mission($1)`, [m.id]))[0]; assert.ok(a.archived_at);
+  assert.ok((await q("qafard", `select * from public.archive_mission($1)`, [m.id]))[0].archived_at);
   await fails("qafard", `select public.set_mission_status($1, 'in_progress')`, /archived/, [m.id]);
   await fails("tom", `select public.archive_mission($1)`, /archived/, [m.id]);
   assert.equal((await q("qafard", `select kind from public.mission_events where mission_id = $1 order by id desc limit 1`, [m.id]))[0].kind, "archived");
 });
-await t("SUPPRESSION : réservée aux admins ; supprime l'historique et les commentaires associés", async () => {
+await t("SUPPRESSION : réservée aux coordinateurs ; supprime l'historique et les commentaires associés", async () => {
   const m = await mission("qafard", "À supprimer", "qafard", "tom");
   await fails("qafard", `select public.delete_mission($1)`, /forbidden/, [m.id]);
   await q("tom", `select public.delete_mission($1)`, [m.id]);
@@ -240,29 +307,31 @@ await t("SUPPRESSION : réservée aux admins ; supprime l'historique et les comm
 await t("HISTORIQUE : ajout seulement (aucune modification ni suppression, même pour le super admin)", async () => {
   for (const u of ["graw", "tom", "qafard"]) { await fails(u, `update public.mission_events set note = 'x'`, /permission denied/i); await fails(u, `delete from public.mission_events`, /permission denied/i); }
 });
-await t("DÉSACTIVATION : un compte désactivé perd immédiatement tout accès aux missions et aux fonctions", async () => {
-  await q("graw", `select public.manage_set_active($1, false)`, [ids.qafard]);
-  assert.equal((await q("qafard", `select * from public.missions`)).length, 0);
-  await fails("qafard", `select * from public.create_mission('x','',$1,$2,null)`, /forbidden/, [ids.qafard, ids.tom]);
-  assert.equal((await q("qafard", `select * from public.list_team()`)).length, 0);
-  await q("graw", `select public.manage_set_active($1, true)`, [ids.qafard]);
-  assert.equal((await q("qafard", `select * from public.missions`)).length > 0, true);
+await t("DÉSACTIVATION GLOBALE : un compte désactivé perd immédiatement STAFF, MEMBERS et toutes les fonctions", async () => {
+  await q("graw", `select public.manage_set_account_active($1, false)`, [ids.cumul]);
+  assert.equal((await q("cumul", `select * from public.missions`)).length, 0);
+  assert.equal((await q("cumul", `select public.has_space('members') as v`))[0].v, false); assert.equal((await q("cumul", `select public.is_staff_member() as v`))[0].v, false);
+  await fails("cumul", `select * from public.create_mission('x','',$1,$2,null)`, /forbidden/, [ids.cumul, ids.tom]);
+  assert.equal((await q("cumul", `select * from public.list_team()`)).length, 0);
+  await q("graw", `select public.manage_set_account_active($1, true)`, [ids.cumul]);
+  assert.equal((await q("cumul", `select public.is_staff_member() as v`))[0].v, true);
 });
-await t("DROITS : les fonctions internes (current_roles, is_active_user, is_validator_user) ne sont pas appelables par les utilisateurs", async () => {
-  await fails("tom", `select public.is_active_user($1)`, /permission denied/i, [ids.qafard]);
+await t("DROITS : les fonctions internes ne sont pas appelables par les utilisateurs", async () => {
+  await fails("tom", `select public.is_staff_user($1)`, /permission denied/i, [ids.qafard]);
   await fails("qafard", `select public.is_validator_user($1)`, /permission denied/i, [ids.tom]);
-  await fails("graw", `select public.current_roles()`, /permission denied/i);
-  assert.equal((await q("qafard", `select public.is_coordinator() as c`))[0].c, false);
+  assert.equal((await q("qafard", `select public.is_staff_coordinator() as c`))[0].c, false);
 });
 await t("DROITS : la liste des fonctions exécutables par un utilisateur connecté est EXACTEMENT la liste prévue", async () => {
   const rows = (await db.query<any>(`select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prokind = 'f' and has_function_privilege('authenticated', p.oid, 'execute') order by 1`)).rows.map((r) => r.proname);
-  assert.deepEqual(rows, ["add_mission_comment", "archive_mission", "assign_mission", "can_view_mission", "create_mission", "delete_mission", "has_role", "is_active_member", "is_coordinator", "is_project_member", "is_super_admin", "list_team", "manage_set_active", "manage_set_roles", "manage_update_profile", "resolve_assignment", "set_mission_status", "update_mission"]);
+  assert.deepEqual(rows, ["add_mission_comment", "archive_mission", "assign_mission", "can_view_mission", "can_view_staff_profile", "create_mission", "delete_mission", "has_space", "is_account_active", "is_project_member", "is_staff_coordinator", "is_staff_member", "is_super_admin", "list_team", "manage_set_account_active", "manage_set_platform_roles", "manage_set_spaces", "manage_set_staff_roles", "manage_update_account", "manage_upsert_staff_profile", "resolve_assignment", "set_mission_status", "update_mission"]);
 });
-await t("DROITS : aucune fonction exécutable par l'anonyme ; aucune table avec écriture directe pour authenticated", async () => {
+await t("DROITS : aucune fonction exécutable par l'anonyme ; aucune table avec écriture directe pour authenticated ; RLS partout", async () => {
   const fn = (await db.query<any>(`select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prokind = 'f' and has_function_privilege('anon', p.oid, 'execute')`)).rows;
   assert.deepEqual(fn.map((r) => r.proname), [], "fonctions exécutables par anon");
   const tbl = (await db.query<any>(`select table_name, privilege_type from information_schema.role_table_grants where grantee = 'authenticated' and table_schema = 'public' and privilege_type in ('INSERT','DELETE','TRUNCATE')`)).rows;
   assert.deepEqual(tbl, [], "écritures directes ouvertes");
+  const upd = (await db.query<any>(`select table_name, column_name from information_schema.column_privileges where grantee = 'authenticated' and table_schema = 'public' and privilege_type = 'UPDATE' order by 1, 2`)).rows;
+  assert.deepEqual(upd, [{ table_name: "accounts", column_name: "display_name" }, { table_name: "staff_profiles", column_name: "email_pro" }, { table_name: "staff_profiles", column_name: "phone_pro" }], "colonnes modifiables");
   const rls = (await db.query<any>(`select relname from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity`)).rows;
   assert.deepEqual(rls, [], "tables sans RLS");
 });

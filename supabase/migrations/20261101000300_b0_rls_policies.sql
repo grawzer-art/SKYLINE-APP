@@ -6,32 +6,41 @@
 --  - Aucune politique INSERT / UPDATE / DELETE sur missions, historique, commentaires, rôles.
 -- ============================================================================
 
-revoke all on public.profiles, public.user_roles, public.projects, public.project_members,
-              public.missions, public.mission_events, public.mission_comments from anon, authenticated;
-grant select on public.profiles, public.user_roles, public.projects, public.project_members,
-                public.missions, public.mission_events, public.mission_comments to authenticated;
--- Chacun ne peut modifier que SES informations personnelles (jamais `active`, `slug`, la fonction ni les rôles).
-grant update (display_name, email_pro, phone_pro) on public.profiles to authenticated;
+revoke all on public.accounts, public.platform_roles, public.space_access, public.staff_roles, public.staff_profiles,
+              public.projects, public.project_members, public.missions, public.mission_events, public.mission_comments from anon, authenticated;
+grant select on public.accounts, public.platform_roles, public.space_access, public.staff_roles, public.staff_profiles,
+                public.projects, public.project_members, public.missions, public.mission_events, public.mission_comments to authenticated;
+-- Chacun ne peut modifier que SES informations personnelles (jamais `active`, ni accès, ni rôles, ni slug, ni fonction).
+grant update (display_name) on public.accounts to authenticated;
+grant update (email_pro, phone_pro) on public.staff_profiles to authenticated;
 
--- profiles
-create policy profiles_select on public.profiles for select to authenticated
-  using (id = auth.uid() or (active and public.is_active_member()) or public.is_super_admin());
-create policy profiles_update_own on public.profiles for update to authenticated
+-- accounts : IDENTITÉ GLOBALE. Chacun ne lit que son propre compte ; le super admin lit tout. Un participant ne voit AUCUN autre compte.
+create policy accounts_select on public.accounts for select to authenticated
+  using (id = auth.uid() or public.is_super_admin());
+create policy accounts_update_own on public.accounts for update to authenticated
   using (id = auth.uid() and active) with check (id = auth.uid());
 
--- user_roles : chacun lit ses propres rôles ; le super admin lit tout. Aucune écriture directe (voir manage_set_roles).
-create policy user_roles_select on public.user_roles for select to authenticated
-  using (user_id = auth.uid() or public.is_super_admin());
+-- platform_roles / space_access / staff_roles : chacun lit ses propres lignes ; le super admin lit tout. Aucune écriture directe (fonctions manage_*).
+-- L'annuaire des rôles passe par list_team() (réservé aux membres STAFF) : un membre STAFF ne lit pas directement les accès des autres.
+create policy platform_roles_select on public.platform_roles for select to authenticated using (user_id = auth.uid() or public.is_super_admin());
+create policy space_access_select   on public.space_access   for select to authenticated using (user_id = auth.uid() or public.is_super_admin());
+create policy staff_roles_select    on public.staff_roles    for select to authenticated using (user_id = auth.uid() or public.is_super_admin());
 
--- projects / project_members : coordinateurs, propriétaire et membres du projet.
+-- staff_profiles : DONNÉES STAFF (fonction, coordonnées pro). Lisibles par les membres STAFF et le super admin ; JAMAIS par un participant.
+create policy staff_profiles_select on public.staff_profiles for select to authenticated
+  using (user_id = auth.uid() or public.is_super_admin() or public.can_view_staff_profile(user_id));
+create policy staff_profiles_update_own on public.staff_profiles for update to authenticated
+  using (user_id = auth.uid() and public.is_staff_member()) with check (user_id = auth.uid());
+
+-- projects / project_members : coordinateurs STAFF, propriétaire et membres du projet.
 create policy projects_select on public.projects for select to authenticated
-  using (public.is_active_member() and (public.is_coordinator() or owner_id = auth.uid() or public.is_project_member(id)));
+  using (public.is_staff_member() and (public.is_staff_coordinator() or owner_id = auth.uid() or public.is_project_member(id)));
 create policy project_members_select on public.project_members for select to authenticated
-  using (public.is_active_member() and (public.is_coordinator() or user_id = auth.uid() or public.is_project_member(project_id)));
+  using (public.is_staff_member() and (public.is_staff_coordinator() or user_id = auth.uid() or public.is_project_member(project_id)));
 
--- missions : coordinateurs (admin, super_admin) = tout ; sinon créateur, responsable, validateur, proposé ou membre du projet.
+-- missions : coordinateurs STAFF (admin, super admin) = tout ; sinon créateur, responsable, validateur, proposé ou membre du projet.
 create policy missions_select on public.missions for select to authenticated
-  using (public.is_active_member() and (public.is_coordinator()
+  using (public.is_staff_member() and (public.is_staff_coordinator()
          or auth.uid() in (creator_id, assignee_id, validator_id) or proposed_assignee_id = auth.uid()
          or (project_id is not null and public.is_project_member(project_id))));
 

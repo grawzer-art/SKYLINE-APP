@@ -1,12 +1,15 @@
-# STAFF HQ V2 — B0 : fondation (Supabase, authentification, rôles, migrations, RLS)
+# SKYLINE APP — B0 : fondation (Supabase, authentification, modèle d'accès GLOBAL, migrations, RLS)
 
 Branche `feat/staff-v2-b0-foundation`. **Aucune migration n'a été exécutée sur Supabase.** Rien n'est fusionné dans `main`. MEMBERS et SKYLINE SOUND ne sont pas modifiés. Revue SQL complète : `B0-SQL-REVIEW.md`.
+
+## 0. Modèle d'accès (mise à jour : GRAW super admin GLOBAL de SKYLINE APP)
+Trois notions distinctes et cumulables (détail : `B0-SQL-REVIEW.md` §1) : **rôle global** (`super_admin` = GRAW, administre les comptes de tous les espaces) · **accès par espace** (`staff`, `members`, cumulables) · **permissions STAFF HQ** (`admin` = TOM, `member` = QAFARD, uniquement avec l'accès `staff`). La base contient désormais : `accounts` (identité globale), `platform_roles`, `space_access`, `staff_roles`, `staff_profiles` (annuaire STAFF). Un futur participant MEMBERS = un compte avec l'accès `members` : **aucune** donnée STAFF (annuaire, fiches, comptes, missions, projets) ne lui est accessible (testé). Les écrans MEMBERS actuels ne sont pas modifiés ; l'administration globale n'est pas développée.
 
 ## 1. Décisions appliquées
 | Décision | Où c'est appliqué |
 |---|---|
-| GRAW `super_admin` : seul à gérer comptes, invitations, désactivations, rôles | fonctions `manage_*` (super admin uniquement) · `canManageAccounts` · RLS `user_roles` |
-| TOM `admin` : missions, projets, plannings, validations ; pas les comptes ni les permissions | `is_coordinator()` · tests : Tom refusé sur `manage_*` |
+| GRAW `super_admin` GLOBAL : seul à gérer comptes, invitations, désactivations, accès et rôles (tous espaces) | fonctions `manage_*` · `canManageAccounts` · RLS `platform_roles` |
+| TOM `admin` STAFF : missions, projets, plannings, validations ; pas les comptes ni les permissions | `is_staff_coordinator()` · tests : Tom refusé sur `manage_*` |
 | QAFARD `member` : crée ses missions, gère les siennes, **propose** une mission pour un autre | `create_mission` / `assign_mission` (proposition) · `resolve_assignment` (admin) |
 | Validateur désigné par mission, GRAW ou TOM ; GRAW garde un droit global | `validator_id` (admin / super admin, jamais le responsable) |
 | STAFF HQ privé, authentification obligatoire, RLS en base | proxy + `getUser()` + profil actif + rôle ; RLS refus par défaut |
@@ -36,7 +39,7 @@ Branche `feat/staff-v2-b0-foundation`. **Aucune migration n'a été exécutée s
 
 ## 5. Étapes manuelles dans Supabase — dans cet ordre exact
 > Projet `SKYLINE-APP`. **Ne rien exécuter avant la validation finale de la revue SQL.**
-1. **Décider** du projet Vercel retenu et de l'adresse stable (§3, §7).
+1. **Projet Vercel `skyline-app`, adresse stable de la branche `staff-preview`** : `https://skyline-app-git-staff-preview-jarvis-1348.vercel.app` (décidé).
 2. **Authentication → Sign In / Providers → Email** : fournisseur activé, « Confirm email » activé, **« Allow new users to sign up » désactivé** ; expiration du code 900 s, longueur 6.
 3. **Authentication → URL Configuration** : *Site URL* = adresse stable ; *Redirect URLs* = l'unique entrée exacte `…/auth/callback` (aucun joker).
 4. **Authentication → Emails → Templates → « Magic Link »** : objet « Votre code de connexion SKYLINE STAFF HQ » ; corps `<p>Votre code de connexion : <strong style="font-size:24px">{{ .Token }}</strong></p><p>Il expire dans 15 minutes. Vous pouvez aussi <a href="{{ .ConfirmationURL }}">ouvrir ce lien</a>.</p>`. Même ajout du code dans « Confirm signup » et « Invite user ».
@@ -44,7 +47,7 @@ Branche `feat/staff-v2-b0-foundation`. **Aucune migration n'a été exécutée s
 6. **SQL Editor** : exécuter `…0100`, puis `…0200`, puis `…0300`, un fichier à la fois. Contrôler : *Database → Tables* : 7 tables « RLS enabled » ; *Advisors → Security* : aucune erreur « RLS disabled » (des avertissements « SECURITY DEFINER exécutable » sont attendus, voir la revue).
 7. **Authentication → Users → Invite user** : inviter les trois adresses (sans mot de passe). Chaque personne ouvre **une fois** l'e-mail d'invitation (confirme l'adresse ; la page atteinte ensuite peut être ignorée).
 8. **SQL Editor (lecture seule)** : `select email, email_confirmed_at is not null as confirme, coalesce(encrypted_password,'') <> '' as a_un_mot_de_passe from auth.users order by email;` → **3 lignes, confirme = true, a_un_mot_de_passe = false**. Sinon s'arrêter.
-9. **SQL Editor** : ouvrir `supabase/bootstrap/B0_roles_template.sql`, remplacer les trois adresses, exécuter. Résultat attendu : `BOOTSTRAP OK` puis 3 lignes (`graw`, `qafard`, `tom`). Toute erreur « BOOTSTRAP ANNULÉ : … » signifie qu'**aucune** modification n'a été faite : corriger la cause et relancer.
+9. **SQL Editor** : ouvrir `supabase/bootstrap/B0_roles_template.sql`, remplacer les trois adresses, exécuter. Résultat attendu : `BOOTSTRAP OK` puis 3 lignes (`graw` : rôle global super_admin + accès staff ; `qafard` : member ; `tom` : admin). Toute erreur « BOOTSTRAP ANNULÉ : … » signifie qu'**aucune** modification n'a été faite : corriger la cause et relancer.
 10. **Vercel → Environment Variables → Preview uniquement** : `STAFF_AUTH_MODE=supabase`. Rien en Production. Redéployer.
 11. **Essai** (adresse stable) : `/staff` → saisie de l'e-mail → code → HQ. Vérifier : bandeau « Données locales · non partagées » ; compte inconnu : aucun e-mail et aucun indice ; compte désactivé par GRAW : refus immédiat.
 12. (Plus tard) Plan gratuit : pause après environ une semaine d'inactivité → surveillance ou passage payant **après validation**.
@@ -68,4 +71,4 @@ En mode démonstration (sans variable d'activation), rien ne change.
 3. Validation finale de la revue SQL (`B0-SQL-REVIEW.md`).
 
 ## 8. Tests exécutés
-`npm run test:rls` : **26 tests** de migrations / RLS + **14 tests** du script d'attribution (PGlite, hors réseau) · `npm run test:auth` : mode Supabase (URL factice) : isolation, falsification, formulaire, bandeau et stockage local séparé · unitaires (dont garde-fou « sans mot de passe », redirections) · e2e MEMBERS / SKYLINE SOUND / STAFF / MISSIONS. **Limites** : PGlite simule Supabase ; aucune connexion à votre projet réel n'a été testée ; l'envoi des e-mails et l'iPhone/PWA restent à vérifier sur la Preview.
+`npm run test:rls` : **29 tests** de migrations / RLS (dont participants, cumul d'accès, super admin sans accès STAFF) + **15 tests** du script d'attribution (PGlite, hors réseau) · `npm run test:auth` : mode Supabase (URL factice) : isolation, falsification, formulaire, bandeau et stockage local séparé · unitaires (dont garde-fou « sans mot de passe », redirections) · e2e MEMBERS / SKYLINE SOUND / STAFF / MISSIONS. **Limites** : PGlite simule Supabase ; aucune connexion à votre projet réel n'a été testée ; l'envoi des e-mails et l'iPhone/PWA restent à vérifier sur la Preview.

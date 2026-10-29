@@ -2,11 +2,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { canEnterStaff, type Role } from "@/lib/auth/roles";
+import { canEnterStaff, type Access } from "@/lib/auth/roles";
 import { rememberSpace } from "@/lib/space";
 import { cn } from "@/lib/cn";
 
-export type SessionInfo = { name: string; roles: Role[]; memberId?: string; demo: boolean } | null;
+export type SessionInfo = { name: string; access: Access; memberId?: string; demo: boolean } | null;
 /** État de la démonstration + session (informative : l'autorisation réelle est faite côté serveur par le proxy). `undefined` = lecture en cours. */
 export function useDemoStatus() {
   const [st, setSt] = useState<{ enabled: boolean; mode: "demo" | "supabase"; session: SessionInfo } | undefined>(undefined);
@@ -25,7 +25,7 @@ export function ChangeSpaceLink({ className }: { className?: string }) {
 
 export function SpaceSwitcher({ className }: { className?: string }) {
   const s = useSessionInfo(); const pathname = usePathname();
-  if (!s || !canEnterStaff(s.roles)) return null;
+  if (!s || !canEnterStaff(s.access)) return null;
   const inStaff = pathname.startsWith("/staff");
   const item = (href: string, label: string, on: boolean) => (
     <Link href={href} onClick={() => rememberSpace(href === "/" ? "members" : "staff")} aria-current={on ? "true" : undefined} className={cn("flex min-h-12 flex-1 items-center justify-center rounded-full font-mono text-[0.8rem] uppercase tracking-[0.16em] transition", on ? "bg-cloud text-jet" : "text-cloud/80")}>{label}</Link>

@@ -15,6 +15,6 @@ export function useActor(): { status: "loading" | "none"; actor: null; name: "" 
     if (st === undefined) return { status: "loading" as const, actor: null, name: "" as const };
     const s = st.session; const m = s?.memberId ? getStaffMember(s.memberId) : undefined;
     if (!s || !m) return { status: "none" as const, actor: null, name: "" as const };
-    return { status: "ok" as const, actor: { memberId: m.id, coordinator: isCoordinator(s.roles) }, name: m.name };
+    return { status: "ok" as const, actor: { memberId: m.id, coordinator: isCoordinator(s.access) }, name: m.name };
   }, [st]);
 }

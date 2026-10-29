@@ -73,10 +73,10 @@ const PATHS = ["/staff", "/staff/missions", "/staff/schedule", "/staff/comms", "
   /* 3. Compte connecté (Supabase) + écrans encore LOCAUX : aucune confusion données partagées / locales.
         (Serveur de démonstration + cookie de démo pour passer le proxy ; la réponse de /api/staff/session est SIMULÉE en mode supabase.) */
   {
-    const asSupabase = async (ctx, who) => { await ctx.route("**/api/staff/session", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ mode: "supabase", enabled: true, session: { name: who.name, roles: who.roles, memberId: who.id, demo: false } }) })); };
+    const asSupabase = async (ctx, who) => { await ctx.route("**/api/staff/session", (r) => r.fulfill({ contentType: "application/json", body: JSON.stringify({ mode: "supabase", enabled: true, session: { name: who.name, access: who.access, memberId: who.id, demo: false } }) })); };
     const login = (ctx, a) => ctx.request.post(B + "/api/demo-session", { form: { account: a }, maxRedirects: 0 });
     const mkc = async () => { const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true }); await ctx.addCookies([{ name: "sk_space", value: "staff", url: B }]); return ctx; };
-    const ctx = await mkc(); await login(ctx, "tom"); await asSupabase(ctx, { id: "tom", name: "Tom", roles: ["admin"] });
+    const ctx = await mkc(); await login(ctx, "tom"); await asSupabase(ctx, { id: "tom", name: "Tom", access: { platform: [], spaces: ["staff"], staff: ["admin"] } });
     const p = await ctx.newPage();
     // données de démonstration préexistantes (V1) : doivent rester INTACTES et invisibles en mode supabase
     await p.goto(B + "/staff/missions"); await p.waitForTimeout(800);
@@ -94,7 +94,7 @@ const PATHS = ["/staff", "/staff/missions", "/staff/schedule", "/staff/comms", "
     ok("SUPABASE + local : une mission créée est enregistrée sous une clé PAR COMPTE (…:db:tom), la clé de démonstration n'est pas touchée", keys.includes("skyline.staff.missions.v1:db:tom") && keys.includes("skyline.staff.missions.v1") && JSON.parse(await p.evaluate(() => localStorage.getItem("skyline.staff.missions.v1"))).length === 1 && JSON.parse(await p.evaluate(() => localStorage.getItem("skyline.staff.missions.v1"))).every((m) => m.id === "demo1"));
     await ctx.close();
     // autre compte sur le même appareil : ne voit pas les données locales de Tom
-    const c2 = await mkc(); await login(c2, "qafard"); await asSupabase(c2, { id: "qafard", name: "Qafard", roles: ["member"] });
+    const c2 = await mkc(); await login(c2, "qafard"); await asSupabase(c2, { id: "qafard", name: "Qafard", access: { platform: [], spaces: ["staff"], staff: ["member"] } });
     const q = await c2.newPage(); await q.goto(B + "/staff/missions"); await q.waitForTimeout(800);
     await q.evaluate(() => localStorage.setItem("skyline.staff.missions.v1:db:tom", JSON.stringify([{ id: "t1", title: "Locale de Tom", description: "", assigneeId: "tom", creatorId: "tom", validatorId: "graw", dueDate: null, priority: "normal", status: "todo", createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-01-01T00:00:00Z", history: [] }])));
     await q.goto(B + "/staff/missions"); await q.waitForTimeout(1200);

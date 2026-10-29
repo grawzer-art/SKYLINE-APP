@@ -45,7 +45,7 @@ export async function proxy(request: NextRequest) {
       const { response, supabase, user } = await updateSession(request);
       if (!user || !supabase) return redirect("/staff/login", `?next=${encodeURIComponent(pathname)}`);
       const identity = await loadStaffIdentity(supabase, user.id, user.email ?? "");
-      if (!identity || !canEnterStaff(identity.roles)) return redirect("/staff/login", "?denied=1");
+      if (!identity || !canEnterStaff(identity.access)) return redirect("/staff/login", "?denied=1");
       if (unknown) return NextResponse.rewrite(new URL("/signal-introuvable", request.url));
       return guarded(response());
     }
@@ -55,7 +55,7 @@ export async function proxy(request: NextRequest) {
     if (pathname === "/staff/access") return NextResponse.next();
     const session = await verifySession(request.cookies.get(SESSION_COOKIE)?.value);
     if (!session) return redirect("/staff/access", `?next=${encodeURIComponent(pathname)}`);
-    if (!canEnterStaff(session.roles)) return redirect("/staff/access", "?denied=1");
+    if (!canEnterStaff(session.access)) return redirect("/staff/access", "?denied=1");
     if (unknown) return NextResponse.rewrite(new URL("/signal-introuvable", request.url));
     return guarded(NextResponse.next());
   }

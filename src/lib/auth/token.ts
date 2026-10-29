@@ -1,5 +1,5 @@
-import type { DemoSession, Role } from "./roles";
-import { ROLES } from "./roles";
+import type { DemoSession } from "./roles";
+import { PLATFORM_ROLES, SPACES, STAFF_ROLES } from "./roles";
 import { staffAuthMode } from "@/lib/staff/mode";
 
 /**
@@ -38,7 +38,9 @@ export async function verifySession(token: string | undefined | null): Promise<D
     if (!ok) return null;
     const s = JSON.parse(new TextDecoder().decode(fromB64u(payload))) as DemoSession;
     if (s.demo !== true || typeof s.exp !== "number" || s.exp < Math.floor(Date.now() / 1000)) return null;
-    if (!Array.isArray(s.roles) || !s.roles.every((r): r is Role => (ROLES as readonly string[]).includes(r))) return null;
+    const a = s.access;
+    const all = (arr: unknown, allowed: readonly string[]) => Array.isArray(arr) && arr.every((x) => typeof x === "string" && allowed.includes(x));
+    if (!a || !all(a.platform, PLATFORM_ROLES) || !all(a.spaces, SPACES) || !all(a.staff, STAFF_ROLES)) return null;
     return s;
   } catch { return null; }
 }

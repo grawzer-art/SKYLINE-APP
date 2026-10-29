@@ -1,4 +1,4 @@
-import type { Role } from "@/lib/auth/roles";
+import { isCoordinator, type Access } from "@/lib/auth/roles";
 
 /**
  * STAFF HQ — DONNÉES DE DÉMONSTRATION. Tout est fictif : aucun nom, horaire, coordonnée ou message réel.
@@ -6,14 +6,14 @@ import type { Role } from "@/lib/auth/roles";
  */
 export const STAFF_DEMO_NOTICE = "Données de démonstration — contenus fictifs";
 
-/** FONCTION (métier) : ne donne AUCUN droit. Les droits viennent des rôles de sécurité (`accessRoles`). */
+/** FONCTION (métier) : ne donne AUCUN droit. Les droits viennent des accès et rôles (`access`). */
 export type StaffFunction = "Fondateur" | "Direction artistique & digital" | "Photographe";
 export const staffFunctions: StaffFunction[] = ["Fondateur", "Direction artistique & digital", "Photographe"];
 
 export type StaffMember = {
   id: string; name: string; functions: StaffFunction[]; responsibilities: string[];
-  /** Rôles de sécurité du compte (affichés séparément des fonctions). */
-  accessRoles: Role[];
+  /** Accès du compte : rôle global, espaces, permissions STAFF (affichés séparément de la fonction). */
+  access: Access;
   /** Coordonnées : affichées uniquement si la personne a donné son accord (`allowed`). */
   contact: { allowed: boolean; email?: string };
   /**
@@ -23,14 +23,14 @@ export type StaffMember = {
   active: boolean;
 };
 export const staffMembers: StaffMember[] = [
-  { id: "tom", name: "Tom", functions: ["Fondateur"], responsibilities: ["Vision et décisions", "Coordination de l'équipe"], accessRoles: ["admin"], contact: { allowed: false }, active: true },
-  { id: "graw", name: "Graw", functions: ["Direction artistique & digital"], responsibilities: ["Direction artistique", "Application et digital"], accessRoles: ["super_admin"], contact: { allowed: false }, active: true },
-  { id: "qafard", name: "Qafard", functions: ["Photographe"], responsibilities: ["Couverture photo", "Autorisations d'image"], accessRoles: ["member"], contact: { allowed: false }, active: true },
+  { id: "tom", name: "Tom", functions: ["Fondateur"], responsibilities: ["Vision et décisions", "Coordination de l'équipe"], access: { platform: [], spaces: ["staff"], staff: ["admin"] }, contact: { allowed: false }, active: true },
+  { id: "graw", name: "Graw", functions: ["Direction artistique & digital"], responsibilities: ["Direction artistique", "Application et digital"], access: { platform: ["super_admin"], spaces: ["staff", "members"], staff: [] }, contact: { allowed: false }, active: true },
+  { id: "qafard", name: "Qafard", functions: ["Photographe"], responsibilities: ["Couverture photo", "Autorisations d'image"], access: { platform: [], spaces: ["staff"], staff: ["member"] }, contact: { allowed: false }, active: true },
 ];
 /** Équipe active (source unique pour l'annuaire, les responsables de mission et les validateurs). */
 export const activeMembers = () => staffMembers.filter((m) => m.active);
-/** Validateurs possibles : administrateurs actifs (GRAW `super_admin`, TOM `admin`). */
-export const validatorIds = () => activeMembers().filter((m) => m.accessRoles.includes("admin") || m.accessRoles.includes("super_admin")).map((m) => m.id);
+/** Validateurs possibles : coordinateurs STAFF actifs (GRAW super admin global, TOM `admin` STAFF). */
+export const validatorIds = () => activeMembers().filter((m) => isCoordinator(m.access)).map((m) => m.id);
 export const getStaffMember = (id: string) => staffMembers.find((m) => m.id === id && m.active);
 export const initials = (n: string) => n.trim().slice(0, 1).toUpperCase();
 

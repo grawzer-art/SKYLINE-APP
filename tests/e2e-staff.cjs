@@ -53,13 +53,13 @@ const b64u = (s) => Buffer.from(s).toString("base64url");
   /* 2. Falsification : cookie inventé, charge utile modifiée, localStorage */
   {
     const { ctx, p } = await mk();
-    const payload = b64u(JSON.stringify({ sub: "x", name: "Pirate", roles: ["admin"], demo: true, iat: 1, exp: 9999999999 }));
-    for (const [n, v] of [["cookie aléatoire", "abc"], ["charge utile sans signature valide", `${payload}.AAAA`], ["jeton à 3 segments", `${payload}.AAAA.BBBB`], ["rôles inconnus", `${b64u("{}")}.AAAA`]]) {
+    const payload = b64u(JSON.stringify({ sub: "x", name: "Pirate", access: { platform: ["super_admin"], spaces: ["staff", "members"], staff: ["admin"] }, demo: true, iat: 1, exp: 9999999999 }));
+    for (const [n, v] of [["cookie aléatoire", "abc"], ["charge utile sans signature valide", `${payload}.AAAA`], ["jeton à 3 segments", `${payload}.AAAA.BBBB`], ["accès inconnus", `${b64u("{}")}.AAAA`], ["ancien format (roles) sans signature", `${b64u(JSON.stringify({ sub: "x", name: "Pirate", roles: ["admin"], demo: true, iat: 1, exp: 9999999999 }))}.AAAA`]]) {
       await ctx.addCookies([{ name: "sk_demo", value: v, url: B }]); const r = await hit(ctx, "/staff");
       ok(`FALSIFICATION : ${n} refusé`, r.status >= 300 && r.status < 400 && r.loc.includes("/staff/access"), JSON.stringify(r));
     }
     await ctx.clearCookies();
-    await p.addInitScript(() => { localStorage.setItem("role", "staff"); localStorage.setItem("skyline.role", "admin"); localStorage.setItem("skyline.v3.proto.v2", JSON.stringify({ roles: ["admin", "staff"] })); });
+    await p.addInitScript(() => { localStorage.setItem("role", "staff"); localStorage.setItem("skyline.role", "admin"); localStorage.setItem("skyline.v3.proto.v2", JSON.stringify({ roles: ["admin", "staff"], access: { platform: ["super_admin"], spaces: ["staff"], staff: ["admin"] } })); });
     await p.goto(B + "/staff"); await p.waitForTimeout(800);
     ok("FALSIFICATION : localStorage / état client ne donnent aucun accès", new URL(p.url()).pathname === "/staff/access");
     await ctx.close();
