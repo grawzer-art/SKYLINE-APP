@@ -12,7 +12,7 @@ export function BottomNav({ signalIds = [] }: { signalIds?: string[] }) {
   const { unseen } = useSignals(signalIds);
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
-  if (pathname.startsWith("/signal/") || pathname.startsWith("/v3")) return null;
+  if (pathname.startsWith("/signal/") || pathname.startsWith("/v3") || pathname.startsWith("/staff")) return null;
   return (
     <nav aria-label="Navigation principale"
       className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[480px] border-t border-cloud/10 bg-jet/80 pb-[var(--safe-bottom)] backdrop-blur-2xl">
