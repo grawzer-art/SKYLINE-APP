@@ -2,7 +2,7 @@
 import { useMemo } from "react";
 import { useDemoStatus } from "@/components/staff/SpaceSwitcher";
 import { getStaffMember } from "@/data/staff";
-import { hasRole } from "@/lib/auth/roles";
+import { isCoordinator } from "@/lib/auth/roles";
 import type { Actor } from "@/domain/missions";
 
 /**
@@ -15,6 +15,6 @@ export function useActor(): { status: "loading" | "none"; actor: null; name: "" 
     if (st === undefined) return { status: "loading" as const, actor: null, name: "" as const };
     const s = st.session; const m = s?.memberId ? getStaffMember(s.memberId) : undefined;
     if (!s || !m) return { status: "none" as const, actor: null, name: "" as const };
-    return { status: "ok" as const, actor: { memberId: m.id, coordinator: hasRole(s.roles, "admin") }, name: m.name };
+    return { status: "ok" as const, actor: { memberId: m.id, coordinator: isCoordinator(s.roles) }, name: m.name };
   }, [st]);
 }

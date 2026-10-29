@@ -5,6 +5,9 @@ import { canEnterStaff } from "@/lib/auth/roles";
 import { SESSION_COOKIE, verifySession } from "@/lib/auth/token";
 import { getChannel, getStaffMember } from "@/data/staff";
 import { SPACE_COOKIE } from "@/lib/space";
+import { staffAuthMode } from "@/lib/staff/mode";
+import { loadStaffIdentity } from "@/lib/staff/session";
+import { updateSession } from "@/lib/supabase/proxy";
 
 /**
  * 1) SIGNAL : un brouillon ou un slug inconnu doit répondre par un VRAI 404 dès la première requête
@@ -28,15 +31,33 @@ export async function proxy(request: NextRequest) {
   }
 
   if (pathname.startsWith("/staff")) {
-    if (pathname === "/staff/access") return NextResponse.next();
-    const session = await verifySession(request.cookies.get(SESSION_COOKIE)?.value);
-    const to = (q: string) => { const u = new URL("/staff/access", request.url); u.search = q; return NextResponse.redirect(u, { status: 307, headers: { "Cache-Control": "no-store" } }); };
-    if (!session) return to(`?next=${encodeURIComponent(pathname)}`);
-    if (!canEnterStaff(session.roles)) return to("?denied=1");
+    const mode = staffAuthMode();
+    const redirect = (path: string, q = "") => { const u = new URL(path, request.url); u.search = q; return NextResponse.redirect(u, { status: 307, headers: { "Cache-Control": "no-store" } }); };
     // Identifiants inconnus → vrai 404 dès la première requête (cf. SIGNAL), seulement une fois l'accès autorisé.
     const [, , section, id] = pathname.split("/");
-    if ((section === "team" && id && !getStaffMember(id)) || (section === "comms" && id && !getChannel(id))) return NextResponse.rewrite(new URL("/signal-introuvable", request.url));
-    const res = NextResponse.next(); res.headers.set("Cache-Control", "private, no-store"); res.headers.set("X-Robots-Tag", "noindex, nofollow"); return res;
+    const unknown = (section === "team" && id && !getStaffMember(id)) || (section === "comms" && id && !getChannel(id));
+    const guarded = (res: NextResponse) => { res.headers.set("Cache-Control", "private, no-store"); res.headers.set("X-Robots-Tag", "noindex, nofollow"); return res; };
+
+    if (mode === "supabase") {
+      // Authentification individuelle (Supabase) : session vérifiée auprès de Supabase + profil actif + rôle. Défaut : refus.
+      if (pathname === "/staff/access") return redirect("/staff/login");
+      if (pathname === "/staff/login") return guarded(NextResponse.next());
+      const { response, supabase, user } = await updateSession(request);
+      if (!user || !supabase) return redirect("/staff/login", `?next=${encodeURIComponent(pathname)}`);
+      const identity = await loadStaffIdentity(supabase, user.id, user.email ?? "");
+      if (!identity || !canEnterStaff(identity.roles)) return redirect("/staff/login", "?denied=1");
+      if (unknown) return NextResponse.rewrite(new URL("/signal-introuvable", request.url));
+      return guarded(response());
+    }
+
+    // Mode démonstration (cookie signé, comptes fictifs) — jamais en production réelle.
+    if (pathname === "/staff/login") return redirect("/staff/access");
+    if (pathname === "/staff/access") return NextResponse.next();
+    const session = await verifySession(request.cookies.get(SESSION_COOKIE)?.value);
+    if (!session) return redirect("/staff/access", `?next=${encodeURIComponent(pathname)}`);
+    if (!canEnterStaff(session.roles)) return redirect("/staff/access", "?denied=1");
+    if (unknown) return NextResponse.rewrite(new URL("/signal-introuvable", request.url));
+    return guarded(NextResponse.next());
   }
 
   const slug = pathname.split("/")[2] ?? "";

@@ -1,12 +1,12 @@
 // Tests unitaires MISSIONS : `node --experimental-strip-types tests/missions.test.mts`
 import assert from "node:assert/strict";
-import { allowedStatusTransitions, canCreateFor, canDelete, canEdit, canView, changeStatus, countByStatus, createMission, daysLate, filterMissions, isOverdue, sortMissions, updateMission, validateMissionInput, type Actor, type Mission, type MissionInput } from "../src/domain/missions.ts";
+import { allowedStatusTransitions, archiveMission, assignMission, canCreateFor, canDelete, canEdit, canView, changeStatus, countByStatus, createMission, daysLate, filterMissions, isOverdue, normalizeMission, resolveAssignment, sortMissions, updateMission, validateMissionInput, type Actor, type Mission, type MissionInput } from "../src/domain/missions.ts";
 
 let n = 0; const t = (name: string, fn: () => void) => { fn(); n++; console.log("PASS", name); };
-const IDS = ["tom", "graw", "qafard"];
+const IDS = ["tom", "graw", "qafard"]; const VIDS = ["tom", "graw"];
 const tom: Actor = { memberId: "tom", coordinator: true }, graw: Actor = { memberId: "graw", coordinator: true }, qafard: Actor = { memberId: "qafard", coordinator: false };
 const base: MissionInput = { title: "Shooting repérage", description: "", assigneeId: "qafard", validatorId: "tom", dueDate: "2027-01-10", priority: "normal", status: "todo" };
-const mk = (i: Partial<MissionInput> = {}, a: Actor = tom, id = "m1"): Mission => { const r = createMission({ ...base, ...i }, a, IDS, "2026-11-01T10:00:00Z", id); assert.ok(r.ok, JSON.stringify(r)); return r.value; };
+const mk = (i: Partial<MissionInput> = {}, a: Actor = tom, id = "m1"): Mission => { const r = createMission({ ...base, ...i }, a, IDS, "2026-11-01T10:00:00Z", id, VIDS); assert.ok(r.ok, JSON.stringify(r)); return r.value; };
 
 t("titre obligatoire", () => { const r = validateMissionInput({ ...base, title: "   " }, IDS); assert.ok(!r.ok && r.errors.title); });
 t("titre limité à 120 caractères", () => assert.ok(!validateMissionInput({ ...base, title: "x".repeat(121) }, IDS).ok));
@@ -16,7 +16,35 @@ t("validateur : membre actif et différent de l'assigné", () => { assert.ok(!va
 t("échéance facultative ; date invalide refusée", () => { assert.ok(validateMissionInput({ ...base, dueDate: null }, IDS).ok); assert.ok(!validateMissionInput({ ...base, dueDate: "2027-02-30" }, IDS).ok); assert.ok(!validateMissionInput({ ...base, dueDate: "demain" }, IDS).ok); });
 t("titre nettoyé (espaces)", () => { const r = validateMissionInput({ ...base, title: "  A  " }, IDS); assert.ok(r.ok && r.value.title === "A"); });
 t("création : historique « created », créateur et dates", () => { const m = mk(); assert.equal(m.history.length, 1); assert.equal(m.history[0].kind, "created"); assert.equal(m.creatorId, "tom"); });
-t("un non-coordinateur ne crée que pour lui-même", () => { assert.equal(canCreateFor(qafard, "qafard"), true); assert.equal(canCreateFor(qafard, "graw"), false); assert.ok(!createMission({ ...base, assigneeId: "graw", validatorId: "tom" }, qafard, IDS, "x", "m2").ok); });
+t("un membre ne s'attribue directement que ses propres missions", () => { assert.equal(canCreateFor(qafard, "qafard"), true); assert.equal(canCreateFor(qafard, "graw"), false); });
+t("un membre qui crée pour un autre fait une PROPOSITION (il reste responsable tant qu'un admin n'a pas approuvé)", () => {
+  const r = createMission({ ...base, assigneeId: "graw", validatorId: "tom" }, qafard, IDS, "t", "p1", VIDS); assert.ok(r.ok);
+  if (r.ok) { assert.equal(r.value.assigneeId, "qafard"); assert.equal(r.value.proposedAssigneeId, "graw"); assert.deepEqual(r.value.history.map((h) => h.kind), ["created", "assignment_proposed"]); assert.equal(canView(graw, r.value), true); }
+});
+t("proposition : le validateur ne peut pas être le proposé ni le créateur", () => { assert.ok(!createMission({ ...base, assigneeId: "tom", validatorId: "tom" }, qafard, IDS, "t", "p2", VIDS).ok); });
+t("validateur : uniquement un administrateur (Graw ou Tom)", () => { const r = validateMissionInput({ ...base, assigneeId: "tom", validatorId: "qafard" }, IDS, VIDS); assert.ok(!r.ok && r.errors.validatorId); assert.ok(validateMissionInput({ ...base, assigneeId: "qafard", validatorId: "graw" }, IDS, VIDS).ok); });
+t("un admin approuve une proposition : le proposé devient responsable", () => {
+  const p = createMission({ ...base, assigneeId: "graw", validatorId: "tom" }, qafard, IDS, "t", "p3", VIDS); assert.ok(p.ok); if (!p.ok) return;
+  const ok = resolveAssignment(p.value, true, tom, "t2"); assert.ok(ok.ok); if (ok.ok) { assert.equal(ok.value.assigneeId, "graw"); assert.equal(ok.value.proposedAssigneeId, null); assert.equal(ok.value.history.at(-1)?.kind, "assignment_approved"); }
+  const no = resolveAssignment(p.value, false, tom, "t2"); assert.ok(no.ok); if (no.ok) { assert.equal(no.value.assigneeId, "qafard"); assert.equal(no.value.proposedAssigneeId, null); assert.equal(no.value.history.at(-1)?.kind, "assignment_rejected"); }
+});
+t("seul un administrateur résout une proposition ; sans proposition rien à résoudre", () => {
+  const p = createMission({ ...base, assigneeId: "graw", validatorId: "tom" }, qafard, IDS, "t", "p4", VIDS); assert.ok(p.ok); if (!p.ok) return;
+  assert.ok(!resolveAssignment(p.value, true, qafard, "t").ok); assert.ok(!resolveAssignment(mk(), true, tom, "t").ok);
+});
+t("approuver échoue si le proposé est aussi le validateur", () => { const m = { ...mk({ assigneeId: "qafard", validatorId: "tom" }), proposedAssigneeId: "tom" }; assert.ok(!resolveAssignment(m, true, graw, "t").ok); });
+t("attribution : un admin réattribue immédiatement, un membre propose seulement", () => {
+  const m = mk({ assigneeId: "qafard", validatorId: "tom" }); const direct = assignMission(m, "graw", tom, IDS, "t"); assert.ok(direct.ok && direct.value.assigneeId === "graw" && direct.value.history.at(-1)?.kind === "reassigned");
+  const own = mk({ assigneeId: "qafard", validatorId: "tom" }, qafard, "own"); const prop = assignMission(own, "graw", qafard, IDS, "t"); assert.ok(prop.ok && prop.value.assigneeId === "qafard" && prop.value.proposedAssigneeId === "graw");
+  assert.ok(!assignMission(m, "tom", tom, IDS, "t").ok); assert.ok(!assignMission(m, "qafard", tom, IDS, "t").ok); assert.ok(!assignMission(m, "sarah", tom, IDS, "t").ok);
+  assert.ok(!assignMission(mk({ assigneeId: "graw", validatorId: "tom" }), "tom", qafard, IDS, "t").ok);
+});
+t("archivage : créateur ou admin, une seule fois ; plus aucun changement de statut ensuite", () => {
+  const m = mk({}, qafard, "arch"); const r = archiveMission(m, qafard, "t"); assert.ok(r.ok); if (!r.ok) return;
+  assert.equal(r.value.archivedAt, "t"); assert.equal(r.value.history.at(-1)?.kind, "archived"); assert.ok(!archiveMission(r.value, tom, "t2").ok); assert.deepEqual(allowedStatusTransitions(tom, r.value), []);
+  assert.ok(!archiveMission(mk({ assigneeId: "qafard" }, tom, "x"), qafard, "t").ok);
+});
+t("données V1 : normalisation sans perte (champs manquants complétés)", () => { const old = { id: "v1", title: "Ancienne mission", assigneeId: "qafard", creatorId: "tom", validatorId: "tom", status: "todo" } as unknown as Mission; const n = normalizeMission(old); assert.equal(n.title, "Ancienne mission"); assert.equal(n.proposedAssigneeId, null); assert.equal(n.archivedAt, null); assert.deepEqual(n.history, []); });
 t("un non-coordinateur ne crée pas une mission déjà terminée", () => assert.ok(!createMission({ ...base, status: "done" }, qafard, IDS, "x", "m3").ok));
 
 t("assigné : à faire → en cours → en validation, jamais « terminée »", () => {

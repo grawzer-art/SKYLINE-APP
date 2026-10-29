@@ -1,5 +1,6 @@
 import type { DemoSession, Role } from "./roles";
 import { ROLES } from "./roles";
+import { staffAuthMode } from "@/lib/staff/mode";
 
 /**
  * Jeton de session de DÉMONSTRATION : charge utile JSON + signature HMAC-SHA256 (Web Crypto, utilisable dans le proxy).
@@ -12,7 +13,7 @@ export const SESSION_TTL_SECONDS = 60 * 60 * 8;
  * L'authentification de démonstration est ACTIVE par défaut sur les prévisualisations et en local, et DÉSACTIVÉE par défaut
  * sur la production Vercel (sauf `DEMO_AUTH=on`). `DEMO_AUTH=off` la coupe partout. Désactivée : aucune session n'est valide.
  */
-export const demoAuthEnabled = () => process.env.DEMO_AUTH === "on" || (process.env.DEMO_AUTH !== "off" && process.env.VERCEL_ENV !== "production");
+export const demoAuthEnabled = () => staffAuthMode() === "demo" && (process.env.DEMO_AUTH === "on" || (process.env.DEMO_AUTH !== "off" && process.env.VERCEL_ENV !== "production"));
 const SECRET = () => process.env.DEMO_SESSION_SECRET || "skyline-demo-only-secret-not-for-production";
 
 const enc = new TextEncoder();

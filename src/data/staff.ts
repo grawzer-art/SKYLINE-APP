@@ -24,11 +24,13 @@ export type StaffMember = {
 };
 export const staffMembers: StaffMember[] = [
   { id: "tom", name: "Tom", functions: ["Fondateur"], responsibilities: ["Vision et décisions", "Coordination de l'équipe"], accessRoles: ["admin"], contact: { allowed: false }, active: true },
-  { id: "graw", name: "Graw", functions: ["Direction artistique & digital"], responsibilities: ["Direction artistique", "Application et digital"], accessRoles: ["participant", "admin"], contact: { allowed: false }, active: true },
-  { id: "qafard", name: "Qafard", functions: ["Photographe"], responsibilities: ["Couverture photo", "Autorisations d'image"], accessRoles: ["staff"], contact: { allowed: false }, active: true },
+  { id: "graw", name: "Graw", functions: ["Direction artistique & digital"], responsibilities: ["Direction artistique", "Application et digital"], accessRoles: ["super_admin"], contact: { allowed: false }, active: true },
+  { id: "qafard", name: "Qafard", functions: ["Photographe"], responsibilities: ["Couverture photo", "Autorisations d'image"], accessRoles: ["member"], contact: { allowed: false }, active: true },
 ];
 /** Équipe active (source unique pour l'annuaire, les responsables de mission et les validateurs). */
 export const activeMembers = () => staffMembers.filter((m) => m.active);
+/** Validateurs possibles : administrateurs actifs (GRAW `super_admin`, TOM `admin`). */
+export const validatorIds = () => activeMembers().filter((m) => m.accessRoles.includes("admin") || m.accessRoles.includes("super_admin")).map((m) => m.id);
 export const getStaffMember = (id: string) => staffMembers.find((m) => m.id === id && m.active);
 export const initials = (n: string) => n.trim().slice(0, 1).toUpperCase();
 

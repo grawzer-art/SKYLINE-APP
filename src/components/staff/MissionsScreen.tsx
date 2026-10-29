@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Sheet } from "@/components/ui/Sheet";
 import { Avatar, DemoLine, StaffSection, StaffTitle } from "./ui";
-import { activeMembers, getStaffMember } from "@/data/staff";
+import { activeMembers, getStaffMember, validatorIds } from "@/data/staff";
 import {
   MISSION_PRIORITIES, MISSION_STATUSES, PRIORITY_LABEL, STATUS_LABEL, LIMITS, allowedStatusTransitions, canDelete, canEdit, canView, canViewAll, countByStatus, createMission,
   daysLate, filterMissions, isOverdue, sortMissions, validateMissionInput, type Actor, type Mission, type MissionErrors, type MissionInput, type MissionPriority, type MissionStatus,
@@ -40,7 +40,7 @@ export function MissionsScreen() {
   const actor = who.actor;
   const effScope = canViewAll(actor) ? scope : "mine";
 
-  const visible = M.missions.filter((m) => canView(actor, m));
+  const visible = M.missions.filter((m) => !m.archivedAt && canView(actor, m));
   const pool = effScope === "all" ? visible : visible.filter((m) => m.assigneeId === actor.memberId);
   const counts = countByStatus(pool);
   const late = pool.filter((m) => isOverdue(m, today)).length;
@@ -56,7 +56,7 @@ export function MissionsScreen() {
       ["[Exemple] Préparer le brief équipe", "tom", "urgent", "todo", -2, "graw", "Mission d'exemple en retard."],
       ["[Exemple] Sélection des images", "qafard", "normal", "review", 3, "graw", "Mission d'exemple à valider."],
     ];
-    specs.forEach(([title, assigneeId, priority, status, d, validatorId, description], i) => { const r = createMission({ title, description, assigneeId, validatorId, dueDate: addDays(t, d), priority, status }, tom, ids, new Date().toISOString(), `ex-${Date.now().toString(36)}-${i}`); if (r.ok) out.push(r.value); });
+    specs.forEach(([title, assigneeId, priority, status, d, validatorId, description], i) => { const r = createMission({ title, description, assigneeId, validatorId, dueDate: addDays(t, d), priority, status }, tom, ids, new Date().toISOString(), `ex-${Date.now().toString(36)}-${i}`, validatorIds()); if (r.ok) out.push(r.value); });
     M.addMany(out);
   };
 
@@ -196,7 +196,8 @@ function Detail({ m, actor, today, M, onEdit, onDelete }: { m: Mission; actor: A
 
 function Form({ m, actor, M, onDone, onCancel }: { m: Mission | null; actor: Actor; M: ReturnType<typeof useMissions>; onDone: (id: string | null) => void; onCancel: () => void }) {
   const members = activeMembers(); const ids = members.map((x) => x.id);
-  const firstOther = (assignee: string) => members.find((x) => x.id !== assignee && (x.id === "tom" || x.id === "graw"))?.id ?? members.find((x) => x.id !== assignee)?.id ?? "";
+  const vids = validatorIds(); const validators = members.filter((x) => vids.includes(x.id));
+  const firstOther = (assignee: string) => validators.find((x) => x.id !== assignee)?.id ?? "";
   const [v, setV] = useState<MissionInput>(m ? { title: m.title, description: m.description, assigneeId: m.assigneeId, validatorId: m.validatorId, dueDate: m.dueDate, priority: m.priority, status: m.status } : { title: "", description: "", assigneeId: actor.memberId, validatorId: firstOther(actor.memberId), dueDate: null, priority: "normal", status: "todo" });
   const [errors, setErrors] = useState<MissionErrors>({}); const [fail, setFail] = useState<string | null>(null);
   const set = <K extends keyof MissionInput>(k: K, x: MissionInput[K]) => setV((p) => ({ ...p, [k]: x }));
@@ -205,7 +206,7 @@ function Form({ m, actor, M, onDone, onCancel }: { m: Mission | null; actor: Act
   const statusChoices = m ? [m.status, ...allowedStatusTransitions(actor, m)] : MISSION_STATUSES.filter((s) => actor.coordinator || s !== "done");
   const submit = (e: React.FormEvent) => {
     e.preventDefault(); setFail(null);
-    const chk = validateMissionInput(v, ids); if (!chk.ok) { setErrors(chk.errors); return; } setErrors({});
+    const chk = validateMissionInput(v, ids, vids); if (!chk.ok) { setErrors(chk.errors); return; } setErrors({});
     const r = m ? M.update(m.id, v, actor) : M.create(v, actor);
     if (!r.ok) { setFail(r.reason); return; } onDone(r.mission.id);
   };
@@ -215,7 +216,7 @@ function Form({ m, actor, M, onDone, onCancel }: { m: Mission | null; actor: Act
       <div><label htmlFor="f-title" className={label}>Titre *</label><input id="f-title" value={v.title} maxLength={LIMITS.title + 20} onChange={(e) => set("title", e.target.value)} aria-invalid={!!errors.title} aria-describedby={errors.title ? "e-title" : undefined} className={field} />{err("title")}</div>
       <div><label htmlFor="f-desc" className={label}>Description</label><textarea id="f-desc" value={v.description} onChange={(e) => set("description", e.target.value)} rows={3} aria-describedby={errors.description ? "e-description" : undefined} className={cn(field, "min-h-24 py-3")} />{err("description")}</div>
       <div><label htmlFor="f-assignee" className={label}>Responsable</label><select id="f-assignee" value={v.assigneeId} onChange={(e) => { const a = e.target.value; setV((p) => ({ ...p, assigneeId: a, validatorId: p.validatorId === a ? firstOther(a) : p.validatorId })); }} className={field}>{assignees.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>{err("assigneeId")}</div>
-      <div><label htmlFor="f-validator" className={label}>Validation par</label><select id="f-validator" value={v.validatorId} onChange={(e) => set("validatorId", e.target.value)} aria-describedby={errors.validatorId ? "e-validatorId" : undefined} className={field}>{members.filter((x) => x.id !== v.assigneeId).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>{err("validatorId")}</div>
+      <div><label htmlFor="f-validator" className={label}>Validation par</label><select id="f-validator" value={v.validatorId} onChange={(e) => set("validatorId", e.target.value)} aria-describedby={errors.validatorId ? "e-validatorId" : undefined} className={field}>{validators.filter((x) => x.id !== v.assigneeId).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>{err("validatorId")}</div>
       <div><label htmlFor="f-due" className={label}>Échéance</label><input id="f-due" type="date" value={v.dueDate ?? ""} onChange={(e) => set("dueDate", e.target.value || null)} className={field} />{err("dueDate")}</div>
       <fieldset><legend className={label}>Priorité</legend><div role="radiogroup" aria-label="Priorité" className="mt-2 grid grid-cols-3 gap-2">{MISSION_PRIORITIES.map((p) => <button key={p} type="button" role="radio" aria-checked={v.priority === p} onClick={() => set("priority", p)} className={cn("min-h-12 rounded-[8px] border px-2 text-[0.9rem] transition", v.priority === p ? "border-sky bg-sky text-jet" : "border-line bg-surface-1")}>{PRIORITY_LABEL[p]}</button>)}</div></fieldset>
       <div><label htmlFor="f-status" className={label}>Statut</label><select id="f-status" value={v.status} onChange={(e) => set("status", e.target.value as MissionStatus)} className={field}>{statusChoices.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}</select>{err("status")}</div>
