@@ -51,7 +51,7 @@
 | `create_mission`, `update_mission`, `set_mission_status`, `assign_mission`, `resolve_assignment`, `add_mission_comment`, `archive_mission`, `delete_mission` | connectés | seules voies d'écriture des missions (historique dans la même transaction) | compte actif + membre STAFF, règles de statut / validateur / attribution, verrou `for update`, verrou de version |
 | `is_staff_user(uuid)`, `is_validator_user(uuid)` | **personne** (interne) | aides sur d'autres identifiants | `EXECUTE` **retiré explicitement** à `authenticated` (Supabase l'accorde par défaut) |
 | `handle_new_user` (déclencheur sur `auth.users`) | système | créer le compte à l'invitation | compte **inactif, sans rôle ni accès** |
-`touch_updated_at` : déclencheur sans privilège particulier. **La liste des fonctions exécutables par `authenticated` est vérifiée par un test (22 fonctions)** ; aucune n'est exécutable par `anon` ; les futures fonctions n'auront aucun `EXECUTE` par défaut.
+`touch_updated_at` : déclencheur sans privilège particulier. **La liste des fonctions exécutables par `authenticated` est vérifiée par un test (23 fonctions)** ; aucune n'est exécutable par `anon` ; les futures fonctions n'auront aucun `EXECUTE` par défaut.
 *Constat des tests :* une première version appelait une fonction interne depuis une politique (exécutée avec les droits de l'appelant) : refus « permission denied ». Corrigé avec `can_view_staff_profile`, qui ne divulgue rien.
 
 ## 6. Droits par rôle (appliqués par la base)
