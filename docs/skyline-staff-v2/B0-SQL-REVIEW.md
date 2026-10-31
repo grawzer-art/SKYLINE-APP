@@ -67,7 +67,9 @@
 Le validateur d'une mission est un coordinateur STAFF (GRAW ou TOM), jamais le responsable.
 
 ## 7. Points d'attention connus
-- Les fonctions `SECURITY DEFINER` contournent la RLS : la sécurité repose sur leurs contrôles internes, relus et testés (29 tests RLS).
+- **Fonctions système Supabase préservées.** Le projet contient `public.rls_auto_enable()` (déclencheur d'événement `ensure_rls`, qui active la RLS sur toute nouvelle table de `public`). Nos migrations **ne la modifient pas** : les révocations d'exécution ne ciblent que les fonctions *non* déclencheurs d'événement (`prorettype <> event_trigger`). Elle reste exécutable par `anon`/`authenticated` au sens des ACL, mais un appel direct échoue (« trigger functions can only be called as triggers ») : l'avertissement du Security Advisor à son sujet est **attendu et inoffensif**. Nos vérifications l'excluent explicitement. Un test (`tests/privileges.test.mts`) prouve que son ACL, son code, son propriétaire et son déclencheur sont identiques avant/après.
+- **Privilèges par défaut du projet** (relevés en lecture seule) : `supabase_admin` accorde tout à `anon`/`authenticated`/`service_role` ; `postgres` accorde `TRUNCATE`, `REFERENCES`, `TRIGGER`, `MAINTAIN` sur les nouvelles tables (pas SELECT/INSERT/UPDATE/DELETE). La RLS ne protège **pas** TRUNCATE : la migration 0300 révoque donc `ALL` sur les 10 tables, ainsi que sur la séquence `mission_events_id_seq`. Vérifié dans les deux cas par la matrice 10 tables × 7 privilèges × 2 rôles. **Attention pour l'avenir** : toute table créée plus tard héritera de ces privilèges par défaut — révoquer explicitement dans sa migration.
+- Les fonctions `SECURITY DEFINER` contournent la RLS : la sécurité repose sur leurs contrôles internes, relus et testés (29 tests RLS + 20 vérifications de droits effectifs).
 - Le « Security Advisor » de Supabase signalera probablement des **avertissements** « fonction SECURITY DEFINER exécutable par authenticated » : **attendus** ici (chaque fonction vérifie l'appelant). Aucune erreur « RLS disabled » ne doit apparaître.
 - Un super admin **sans** accès `staff` administre les comptes mais n'est pas membre STAFF ; il peut s'accorder l'accès (administration globale). La connexion STAFF exige l'accès `staff` ET une fiche d'annuaire (slug).
 - Les fiches STAFF actives sont lisibles par tous les membres STAFF (y compris `email_pro` / `phone_pro`) : à ne renseigner que si cela convient.
@@ -277,7 +279,14 @@ language sql stable security definer set search_path = '' as $$
 $$;
 
 -- ---------------------------------------------------------------- Droits d'exécution : jamais pour l'anonyme
-revoke execute on all functions in schema public from public, anon;
+-- Ne touche QUE les fonctions du projet : les fonctions système Supabase (ex. déclencheur d'événement rls_auto_enable) restent INTACTES.
+do $revoke$
+declare f regprocedure;
+begin
+  for f in select p.oid::regprocedure from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname = 'public' and p.prokind = 'f' and p.prorettype <> 'pg_catalog.event_trigger'::regtype
+  loop execute format('revoke execute on function %s from public, anon', f); end loop;
+end $revoke$;
 grant execute on function public.is_account_active(), public.is_super_admin(), public.has_space(public.app_space),
   public.is_staff_member(), public.is_staff_coordinator(), public.can_view_staff_profile(uuid), public.list_team(),
   public.manage_set_account_active(uuid, boolean), public.manage_set_platform_roles(uuid, public.platform_role[]),
@@ -562,7 +571,14 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------- Droits d'exécution : jamais pour l'anonyme
-revoke execute on all functions in schema public from public, anon;
+-- Ne touche QUE les fonctions du projet : les fonctions système Supabase (ex. déclencheur d'événement rls_auto_enable) restent INTACTES.
+do $revoke$
+declare f regprocedure;
+begin
+  for f in select p.oid::regprocedure from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname = 'public' and p.prokind = 'f' and p.prorettype <> 'pg_catalog.event_trigger'::regtype
+  loop execute format('revoke execute on function %s from public, anon', f); end loop;
+end $revoke$;
 grant execute on function
   public.is_project_member(uuid), public.can_view_mission(uuid),
   public.create_mission(text, text, uuid, uuid, date, public.mission_priority, public.mission_status, uuid),
@@ -588,6 +604,8 @@ revoke all on public.accounts, public.platform_roles, public.space_access, publi
               public.projects, public.project_members, public.missions, public.mission_events, public.mission_comments from anon, authenticated;
 grant select on public.accounts, public.platform_roles, public.space_access, public.staff_roles, public.staff_profiles,
                 public.projects, public.project_members, public.missions, public.mission_events, public.mission_comments to authenticated;
+-- Séquence d'identité de l'historique : les privilèges par défaut de Supabase l'ouvrent à anon / authenticated → retirés (seules les fonctions SECURITY DEFINER l'utilisent).
+revoke all on sequence public.mission_events_id_seq from anon, authenticated;
 -- Chacun ne peut modifier que SES informations personnelles (jamais `active`, ni accès, ni rôles, ni slug, ni fonction).
 grant update (display_name) on public.accounts to authenticated;
 grant update (email_pro, phone_pro) on public.staff_profiles to authenticated;
@@ -625,8 +643,16 @@ create policy missions_select on public.missions for select to authenticated
 create policy mission_events_select on public.mission_events for select to authenticated using (public.can_view_mission(mission_id));
 create policy mission_comments_select on public.mission_comments for select to authenticated using (public.can_view_mission(mission_id));
 
--- Filet de sécurité : les FUTURES fonctions du schéma public ne sont jamais exécutables par l'anonyme par défaut.
-revoke execute on all functions in schema public from public, anon;
+-- Filet de sécurité : les FUTURES fonctions créées par le rôle qui exécute cette migration ne sont jamais exécutables par défaut.
+-- (N'affecte pas les fonctions système existantes, ni les privilèges par défaut des rôles supabase_*.)
+-- Ne touche QUE les fonctions du projet : les fonctions système Supabase (ex. déclencheur d'événement rls_auto_enable) restent INTACTES.
+do $revoke$
+declare f regprocedure;
+begin
+  for f in select p.oid::regprocedure from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname = 'public' and p.prokind = 'f' and p.prorettype <> 'pg_catalog.event_trigger'::regtype
+  loop execute format('revoke execute on function %s from public, anon', f); end loop;
+end $revoke$;
 alter default privileges in schema public revoke execute on functions from public, anon, authenticated; -- futures fonctions : droits à accorder explicitement
 ```
 

@@ -196,7 +196,14 @@ language sql stable security definer set search_path = '' as $$
 $$;
 
 -- ---------------------------------------------------------------- Droits d'exécution : jamais pour l'anonyme
-revoke execute on all functions in schema public from public, anon;
+-- Ne touche QUE les fonctions du projet : les fonctions système Supabase (ex. déclencheur d'événement rls_auto_enable) restent INTACTES.
+do $revoke$
+declare f regprocedure;
+begin
+  for f in select p.oid::regprocedure from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname = 'public' and p.prokind = 'f' and p.prorettype <> 'pg_catalog.event_trigger'::regtype
+  loop execute format('revoke execute on function %s from public, anon', f); end loop;
+end $revoke$;
 grant execute on function public.is_account_active(), public.is_super_admin(), public.has_space(public.app_space),
   public.is_staff_member(), public.is_staff_coordinator(), public.can_view_staff_profile(uuid), public.list_team(),
   public.manage_set_account_active(uuid, boolean), public.manage_set_platform_roles(uuid, public.platform_role[]),

@@ -10,6 +10,8 @@ revoke all on public.accounts, public.platform_roles, public.space_access, publi
               public.projects, public.project_members, public.missions, public.mission_events, public.mission_comments from anon, authenticated;
 grant select on public.accounts, public.platform_roles, public.space_access, public.staff_roles, public.staff_profiles,
                 public.projects, public.project_members, public.missions, public.mission_events, public.mission_comments to authenticated;
+-- Séquence d'identité de l'historique : les privilèges par défaut de Supabase l'ouvrent à anon / authenticated → retirés (seules les fonctions SECURITY DEFINER l'utilisent).
+revoke all on sequence public.mission_events_id_seq from anon, authenticated;
 -- Chacun ne peut modifier que SES informations personnelles (jamais `active`, ni accès, ni rôles, ni slug, ni fonction).
 grant update (display_name) on public.accounts to authenticated;
 grant update (email_pro, phone_pro) on public.staff_profiles to authenticated;
@@ -47,6 +49,14 @@ create policy missions_select on public.missions for select to authenticated
 create policy mission_events_select on public.mission_events for select to authenticated using (public.can_view_mission(mission_id));
 create policy mission_comments_select on public.mission_comments for select to authenticated using (public.can_view_mission(mission_id));
 
--- Filet de sécurité : les FUTURES fonctions du schéma public ne sont jamais exécutables par l'anonyme par défaut.
-revoke execute on all functions in schema public from public, anon;
+-- Filet de sécurité : les FUTURES fonctions créées par le rôle qui exécute cette migration ne sont jamais exécutables par défaut.
+-- (N'affecte pas les fonctions système existantes, ni les privilèges par défaut des rôles supabase_*.)
+-- Ne touche QUE les fonctions du projet : les fonctions système Supabase (ex. déclencheur d'événement rls_auto_enable) restent INTACTES.
+do $revoke$
+declare f regprocedure;
+begin
+  for f in select p.oid::regprocedure from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname = 'public' and p.prokind = 'f' and p.prorettype <> 'pg_catalog.event_trigger'::regtype
+  loop execute format('revoke execute on function %s from public, anon', f); end loop;
+end $revoke$;
 alter default privileges in schema public revoke execute on functions from public, anon, authenticated; -- futures fonctions : droits à accorder explicitement

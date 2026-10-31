@@ -267,7 +267,14 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------- Droits d'exécution : jamais pour l'anonyme
-revoke execute on all functions in schema public from public, anon;
+-- Ne touche QUE les fonctions du projet : les fonctions système Supabase (ex. déclencheur d'événement rls_auto_enable) restent INTACTES.
+do $revoke$
+declare f regprocedure;
+begin
+  for f in select p.oid::regprocedure from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname = 'public' and p.prokind = 'f' and p.prorettype <> 'pg_catalog.event_trigger'::regtype
+  loop execute format('revoke execute on function %s from public, anon', f); end loop;
+end $revoke$;
 grant execute on function
   public.is_project_member(uuid), public.can_view_mission(uuid),
   public.create_mission(text, text, uuid, uuid, date, public.mission_priority, public.mission_status, uuid),
