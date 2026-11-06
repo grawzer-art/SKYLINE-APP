@@ -8,6 +8,7 @@ import { Icon } from "@/components/ui/Icon";
 import { phaseLabels, type Phase } from "@/data/v3";
 import { useCommunity } from "@/lib/useCommunity";
 import { locales } from "@/i18n";
+import { Bell } from "lucide-react";
 import { Initials } from "./ui";
 import { cn } from "@/lib/cn";
 
@@ -41,6 +42,7 @@ export function V3Shell({ children }: { children: React.ReactNode }) {
               className="inline-flex h-11 items-center gap-1.5 rounded-full border border-cloud/25 px-3 font-mono text-[0.7rem] uppercase tracking-[0.14em] transition active:scale-95">
               <span aria-hidden className="size-1.5 rounded-full bg-sky" />{phaseLabels[state.phase]}
             </button>
+            <Link href="/v3/notifications" aria-label={t("notif.title")} className="grid size-11 place-items-center rounded-full transition active:scale-95"><Bell size={20} strokeWidth={1.5} aria-hidden /></Link>
             <Link href="/v3/profile" aria-label="Profil et paramètres" className="grid size-11 place-items-center"><Initials name={state.me.pseudo} size={30} /></Link>
           </div>
         </div>

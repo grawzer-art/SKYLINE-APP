@@ -1,14 +1,16 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarClock, LayoutGrid, MessageSquare, Users } from "lucide-react";
+import { Bell, CalendarClock, LayoutGrid, MessageSquare, Users } from "lucide-react";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { cn } from "@/lib/cn";
 import { useDemoStatus } from "./SpaceSwitcher";
+import { MissionsProvider } from "@/lib/missions/MissionsProvider";
+import { useStaffNotifications } from "@/lib/notifications/useStaffNotifications";
 
 const tabs = [
   { label: "HQ", href: "/staff", Icon: LayoutGrid },
-  { label: "Schedule", href: "/staff/schedule", Icon: CalendarClock },
+  { label: "Agenda", href: "/staff/schedule", Icon: CalendarClock },
   { label: "Comms", href: "/staff/comms", Icon: MessageSquare },
   { label: "Team", href: "/staff/team", Icon: Users },
 ];
@@ -23,14 +25,14 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
   if (pathname === "/staff/access" || pathname === "/staff/login") return <>{children}</>;
   const active = (href: string) => (href === "/staff" ? pathname === "/staff" || pathname.startsWith("/staff/missions") : pathname.startsWith(href)); // MISSIONS vit sous l'onglet HQ
   return (
-    <>
+    <MissionsProvider>
       <header className="fixed inset-x-0 top-0 z-50 mx-auto w-full max-w-[480px] border-b border-line bg-jet/90 px-5 pt-[var(--safe-top)] backdrop-blur-xl">
         <div className="flex h-14 items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/staff" aria-label="SKYLINE — STAFF HQ" className="flex min-h-11 items-center"><Wordmark /></Link>
             <span className="rounded-full border border-sky/60 px-2.5 py-1 font-mono text-[0.72rem] uppercase tracking-[0.18em] text-sky">Staff HQ</span>
           </div>
-          <Link href="/staff/profile" aria-label="Profil et espaces" className="grid size-11 place-items-center rounded-full border border-silver/40 font-mono text-[0.8rem] text-cloud">HQ</Link>
+          <div className="flex items-center gap-1"><NotificationsBell /><Link href="/staff/profile" aria-label="Profil et espaces" className="grid size-11 place-items-center rounded-full border border-silver/40 font-mono text-[0.8rem] text-cloud">HQ</Link></div>
         </div>
         <div aria-hidden className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-sky/70 to-transparent" />
       </header>
@@ -68,6 +70,17 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
           ))}
         </ul>
       </nav>
-    </>
+    </MissionsProvider>
+  );
+}
+
+/** Cloche de l'en-tête : nombre de notifications non lues (dérivé des missions réelles). Lien vers la boîte. */
+function NotificationsBell() {
+  const { unread, status } = useStaffNotifications(); const n = status === "ready" ? unread : 0;
+  return (
+    <Link href="/staff/notifications" aria-label={n > 0 ? `Notifications — ${n} non lue${n > 1 ? "s" : ""}` : "Notifications"} className="relative grid size-11 place-items-center rounded-full transition active:scale-95">
+      <Bell size={21} strokeWidth={1.5} aria-hidden />
+      {n > 0 && <span aria-hidden className="absolute right-1 top-1 grid min-w-[1.1rem] place-items-center rounded-full bg-sky px-1 font-mono text-[0.65rem] font-semibold leading-[1.1rem] text-jet ring-2 ring-jet">{n > 9 ? "9+" : n}</span>}
+    </Link>
   );
 }

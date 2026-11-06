@@ -106,6 +106,33 @@ const cookieFor = (who) => { const s = { access_token: "tok-" + who, refresh_tok
   /* 7. Aucune donnée de mission dans le stockage du navigateur (mode base de données) */
   for (const [n, p] of [["Tom", T], ["Qafard", Q]]) { const keys = await p.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith("skyline.staff.missions"))); const vals = await p.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith("skyline.staff.missions")).map((k) => localStorage.getItem(k))); ok(`STOCKAGE : ${n} — aucune mission écrite dans localStorage`, vals.every((v) => !v || v === "[]"), JSON.stringify(keys)); }
 
+
+  /* 9. B3 phase 1 — Agenda et notifications en mode base de données */
+  await ctl({ reset: true, delay: 0, fail: {} });
+  const sent = []; T.on("request", (r) => { if (/\/rpc\/(send_announcement|register_push|mark_notifications)/.test(r.url())) sent.push(r.url()); });
+  await T.goto(APP + "/staff/schedule", { waitUntil: "domcontentloaded" }); await vis(btn(T, /^Ajouter$/), 10000);
+  ok("DB · AGENDA : « Mon agenda » par défaut, lu depuis la base (missions B2)", (await btn(T, /^Mon agenda$/).getAttribute("aria-pressed")) === "true" && await vis(T.getByText("Brief équipe")));
+  await btn(T, /^Ajouter$/).click(); await vis(T.locator("#f-title"));
+  ok("DB · AGENDA : « Ajouter » ouvre directement la création de tâche (pas d'événements partagés sans table) ; heure non proposée", (await T.locator("#f-time").count()) === 0 && (await btn(T, /^Réunion/).count()) === 0 && (await T.locator("#f-due").inputValue()) !== "");
+  await T.locator("#f-title").fill("Tâche agenda en base"); await btn(T, /^Créer la mission$/).click(); await vis(T.getByRole("dialog").getByText("Tâche agenda en base")); await T.keyboard.press("Escape"); await T.waitForTimeout(600);
+  const st = await (await fetch(MOCK + "/__state")).json(); ok("DB · AGENDA : la tâche est bien une MISSION enregistrée via create_mission (même système)", st.missions.some((m) => m.title === "Tâche agenda en base" && m.due_date));
+  ok("DB · AGENDA : la tâche apparaît à sa date dans l'agenda", await vis(T.getByText("Tâche agenda en base")));
+  const keysT = await T.evaluate(() => Object.keys(localStorage).filter((k) => /agenda\.events|missions/.test(k))); const valsT = await T.evaluate(() => Object.keys(localStorage).filter((k) => /agenda\.events|missions/.test(k)).map((k) => localStorage.getItem(k)));
+  ok("DB · STOCKAGE : aucune mission ni événement écrits dans le navigateur", valsT.every((v) => !v || v === "[]"), JSON.stringify(keysT));
+  const Q2 = await mk("qafard"); const Qa = Q2.p; await Qa.goto(APP + "/staff/schedule", { waitUntil: "domcontentloaded" }); await vis(Qa.getByText("Repérage photo"), 10000);
+  ok("DB · AGENDA : Qafard voit ses missions (À planifier) et pas celles des autres", (await Qa.getByText("Mission privée de Tom").count()) === 0);
+  await btn(Qa, /^Équipe$/).click(); ok("DB · AGENDA : vue « Équipe » limitée par la base, avec mention explicite pour un membre", (await vis(Qa.getByText(/missions qui vous concernent/))) && (await Qa.getByText("Mission privée de Tom").count()) === 0);
+  await Qa.goto(APP + "/staff/notifications", { waitUntil: "domcontentloaded" }); await vis(Qa.getByText("Nouvelle mission"), 10000);
+  ok("DB · NOTIFICATIONS : « Nouvelle mission » dérivée de l'historique réel de la base ; pas d'exemples en mode base", (await Qa.getByText("Voir des exemples").count()) === 0 && (await Qa.getByText("Exemple", { exact: true }).count()) === 0);
+  // Tom commente la mission de Qafard (base) → notification de commentaire chez Qafard
+  await T.goto(APP + "/staff/missions", { waitUntil: "domcontentloaded" }); await btn(T, /^Toutes$/).click(); await text(T, /Repérage photo/).click(); await vis(T.getByPlaceholder("Ajouter un commentaire")); await T.getByPlaceholder("Ajouter un commentaire").fill("Pense aux autorisations."); await btn(T, /^Publier$/).click(); await vis(T.getByText("Commentaire publié.")); await T.keyboard.press("Escape"); await T.waitForTimeout(500);
+  await Qa.reload({ waitUntil: "domcontentloaded" }); ok("DB · NOTIFICATIONS : le commentaire de Tom arrive chez Qafard (lien vers la mission)", await vis(Qa.getByText("Commentaire de Tom"), 10000));
+  await Qa.getByText("Commentaire de Tom").first().click(); await Qa.waitForURL(/missions\?mission=/); ok("DB · LIEN PROFOND : la notification ouvre la fiche de la mission", await vis(Qa.getByRole("dialog").getByText("Repérage photo")));
+  ok("DB · PERMISSIONS : Qafard (membre) n'a pas l'envoi d'annonce ; Tom (admin) l'a", (await Qa.goto(APP + "/staff/notifications").then(() => vis(Qa.getByText(/non lue|Tout est lu/)))) && (await Qa.getByText("Écrire une annonce").count()) === 0);
+  await T.goto(APP + "/staff/notifications", { waitUntil: "domcontentloaded" }); await vis(T.getByText("Écrire une annonce")); await T.getByText("Écrire une annonce").click(); await T.getByRole("dialog").getByRole("radio", { name: /Tous les participants/ }).click(); await T.locator("#an-title").fill("Test"); await T.locator("#an-body").fill("Message"); await T.getByRole("dialog").getByRole("button", { name: /^Vérifier$/ }).click(); await T.getByRole("dialog").getByRole("checkbox").check(); await T.getByRole("dialog").getByRole("button", { name: /Confirmer/ }).click();
+  ok("DB · ANNONCE : aperçu seulement — aucune requête d'envoi vers la base (send_announcement / push)", (await vis(T.getByText(/Rien n.a été envoyé/))) && sent.length === 0, sent.join(","));
+  await Q2.ctx.close();
+
   /* 8. Ergonomie iPhone : zones tactiles ≥ 44 px, champs ≥ 16 px (pas de zoom iOS), aucun débordement horizontal — iPhone SE 1re gén. → Pro Max */
   const ergo = (p) => p.evaluate(() => {
     const root = document.querySelector("[role=dialog]") || document.body; const vis = (el) => { const r = el.getBoundingClientRect(); const cs = getComputedStyle(el); return r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && cs.display !== "none"; };

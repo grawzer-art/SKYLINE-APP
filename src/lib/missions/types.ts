@@ -24,7 +24,9 @@ export type MissionsApi = {
   archive: (id: string, a: Actor) => Promise<ActionResult>;
   remove: (id: string, a: Actor) => Promise<ActionResult>;
   /** Commentaires : mode base de données uniquement. */
-  comments: { supported: boolean; load: (id: string) => Promise<Result<MissionComment[]>>; add: (id: string, body: string) => Promise<Result<MissionComment>> };
+  comments: { supported: boolean; load: (id: string) => Promise<Result<MissionComment[]>>; recent: () => Promise<Result<MissionComment[]>>; add: (id: string, body: string) => Promise<Result<MissionComment>> };
+  /** Ce que la source de données sait enregistrer. `dueTime` : heure facultative d'une mission (mode local ; base = migration B3 proposée, non appliquée). */
+  capabilities: { dueTime: boolean; events: boolean };
   /** Outils de démonstration (mode local uniquement). */
   local: { clearAll: () => void; addMany: (list: Mission[]) => void } | null;
 };

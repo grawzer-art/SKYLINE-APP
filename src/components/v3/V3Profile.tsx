@@ -49,6 +49,7 @@ export function V3Profile() {
         )}
       </Block>
       <Block label="Notifications">
+        <Link href="/v3/notifications" className="flex min-h-14 items-center justify-between border-y border-line text-[0.95rem]">{t("notif.open")}<span aria-hidden className="text-silver">→</span></Link>
         <Switch on={s.notifMessages} onChange={(v) => setS({ notifMessages: v })} label="Messages et demandes de contact" />
         <Switch on={s.notifSignal} onChange={(v) => setS({ notifSignal: v })} label="SKYLINE SIGNAL" hint="Jamais de relance, jamais de compteur." />
       </Block>

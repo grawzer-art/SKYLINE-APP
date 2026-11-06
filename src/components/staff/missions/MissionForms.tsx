@@ -6,14 +6,17 @@ import type { MissionsApi } from "@/lib/missions/types";
 import { ActionNotice, btn, field, label, useAction } from "./kit";
 
 type Props = { actor: Actor; M: MissionsApi };
+/** Valeurs proposées à l'ouverture (ex. depuis l'agenda : la date du jour sélectionné). */
+export type CreatePresets = { dueDate?: string | null; dueTime?: string | null };
+
 const FieldError = ({ id, text }: { id: string; text?: string }) => (text ? <p id={`e-${id}`} role="alert" className="mt-1.5 text-[0.88rem] text-sunset">{text}</p> : null);
 
 /** CRÉATION : une seule action (create_mission). Un membre qui choisit une autre personne fait une PROPOSITION. */
-export function CreateForm({ actor, M, onDone, onCancel }: Props & { onDone: (id: string) => void; onCancel: () => void }) {
+export function CreateForm({ actor, M, presets, onDone, onCancel }: Props & { presets?: CreatePresets; onDone: (id: string) => void; onCancel: () => void }) {
   const { members, validatorIds, name } = M.directory; const ids = members.map((x) => x.id);
   const validators = members.filter((x) => validatorIds.includes(x.id));
   const firstOther = (avoid: string[]) => validators.find((x) => !avoid.includes(x.id))?.id ?? "";
-  const [v, setV] = useState<MissionInput>({ title: "", description: "", assigneeId: actor.memberId, validatorId: firstOther([actor.memberId]), dueDate: null, priority: "normal", status: "todo" });
+  const [v, setV] = useState<MissionInput>({ title: "", description: "", assigneeId: actor.memberId, validatorId: firstOther([actor.memberId]), dueDate: presets?.dueDate ?? null, dueTime: presets?.dueTime ?? null, priority: "normal", status: "todo" });
   const [errors, setErrors] = useState<MissionErrors>({});
   const act = useAction((i: MissionInput) => M.create(i, actor));
   const set = <K extends keyof MissionInput>(k: K, x: MissionInput[K]) => setV((p) => ({ ...p, [k]: x }));
@@ -33,13 +36,26 @@ export function CreateForm({ actor, M, onDone, onCancel }: Props & { onDone: (id
           <select id="f-assignee" value={v.assigneeId} onChange={(e) => { const a = e.target.value; setV((p) => ({ ...p, assigneeId: a, validatorId: p.validatorId === a ? firstOther([a]) : p.validatorId })); }} className={field}>{members.map((x) => <option key={x.id} value={x.id}>{x.name}{x.id === actor.memberId ? " (moi)" : ""}</option>)}</select>
           {proposal && <p role="note" className="mt-2 text-[0.88rem] leading-snug text-sky">Proposition : vous restez responsable jusqu&apos;à l&apos;approbation de {name(v.assigneeId)} par un administrateur.</p>}<FieldError id="assigneeId" text={errors.assigneeId} /></div>
         <div><label htmlFor="f-validator" className={label}>Validation par</label><select id="f-validator" value={v.validatorId} onChange={(e) => set("validatorId", e.target.value)} className={field}>{validators.filter((x) => !avoid.includes(x.id)).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select><FieldError id="validatorId" text={errors.validatorId} /></div>
-        <div><label htmlFor="f-due" className={label}>Échéance</label><input id="f-due" type="date" value={v.dueDate ?? ""} onChange={(e) => set("dueDate", e.target.value || null)} className={field} /><FieldError id="dueDate" text={errors.dueDate} /></div>
+        <DueFields date={v.dueDate} time={v.dueTime ?? null} timeSupported={M.capabilities.dueTime} onDate={(d) => set("dueDate", d)} onTime={(t) => set("dueTime", t)} errors={errors} />
         <PriorityPicker value={v.priority} onChange={(p) => set("priority", p)} />
         <div><label htmlFor="f-status" className={label}>Statut initial</label><select id="f-status" value={v.status} onChange={(e) => set("status", e.target.value as MissionStatus)} className={field}>{statusChoices.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}</select><FieldError id="status" text={errors.status} /></div>
       </fieldset>
       <ActionNotice pending={act.pending} result={act.result} doing="Création en cours…" onReload={M.refresh} />
       <div className="grid gap-3 pt-1"><button type="submit" disabled={act.pending} className={cn(btn, "bg-cloud text-jet")}>{act.pending ? "Création…" : "Créer la mission"}</button><button type="button" onClick={onCancel} disabled={act.pending} className={cn(btn, "border border-silver/45")}>Annuler</button></div>
     </form>
+  );
+}
+
+/** Échéance : date, et heure facultative quand la source de données sait l'enregistrer (mode local ; base : migration B3 proposée). */
+function DueFields({ date, time, timeSupported, onDate, onTime, errors }: { date: string | null; time: string | null; timeSupported: boolean; onDate: (d: string | null) => void; onTime: (t: string | null) => void; errors: MissionErrors }) {
+  return (
+    <div>
+      <div className={timeSupported ? "grid grid-cols-[1fr_8.5rem] gap-3" : ""}>
+        <div><label htmlFor="f-due" className={label}>Échéance</label><input id="f-due" type="date" value={date ?? ""} onChange={(e) => onDate(e.target.value || null)} className={field} /></div>
+        {timeSupported && <div><label htmlFor="f-time" className={label}>Heure</label><input id="f-time" type="time" value={time ?? ""} disabled={!date} onChange={(e) => onTime(e.target.value || null)} className={field} /></div>}
+      </div>
+      <FieldError id="dueDate" text={errors.dueDate} /><FieldError id="dueTime" text={errors.dueTime} />
+    </div>
   );
 }
 
@@ -55,7 +71,7 @@ function PriorityPicker({ value, onChange }: { value: MissionPriority; onChange:
 export function InfoForm({ m, actor, M, onDone, onCancel }: Props & { m: Mission; onDone: () => void; onCancel: () => void }) {
   const { members, validatorIds, name } = M.directory; const ids = members.map((x) => x.id);
   const validators = members.filter((x) => validatorIds.includes(x.id));
-  const pick = (x: Mission): MissionInfoInput => ({ title: x.title, description: x.description, validatorId: x.validatorId, dueDate: x.dueDate, priority: x.priority });
+  const pick = (x: Mission): MissionInfoInput => ({ title: x.title, description: x.description, validatorId: x.validatorId, dueDate: x.dueDate, dueTime: x.dueTime ?? null, priority: x.priority });
   const [openedVersion] = useState(m.version); const [v, setV] = useState<MissionInfoInput>(pick(m));
   const [errors, setErrors] = useState<MissionErrors>({});
   const act = useAction((i: MissionInfoInput) => M.editInfo(m.id, i, actor));
@@ -63,7 +79,7 @@ export function InfoForm({ m, actor, M, onDone, onCancel }: Props & { m: Mission
   const changedMeanwhile = m.version !== undefined && openedVersion !== undefined && m.version !== openedVersion;
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); const chk = validateMissionInput({ ...v, assigneeId: m.assigneeId, status: m.status }, ids, validatorIds); if (!chk.ok) { setErrors(chk.errors); return; } setErrors({});
-    const r = await act.run({ title: chk.value.title, description: chk.value.description, validatorId: chk.value.validatorId, dueDate: chk.value.dueDate, priority: chk.value.priority }); if (r?.ok) onDone();
+    const r = await act.run({ title: chk.value.title, description: chk.value.description, validatorId: chk.value.validatorId, dueDate: chk.value.dueDate, dueTime: chk.value.dueTime ?? null, priority: chk.value.priority }); if (r?.ok) onDone();
   };
   return (
     <form onSubmit={submit} noValidate className="space-y-5" aria-busy={act.pending}>
@@ -79,7 +95,7 @@ export function InfoForm({ m, actor, M, onDone, onCancel }: Props & { m: Mission
         <div><label htmlFor="f-title" className={label}>Titre *</label><input id="f-title" value={v.title} maxLength={LIMITS.title + 20} onChange={(e) => set("title", e.target.value)} aria-invalid={!!errors.title} aria-describedby={errors.title ? "e-title" : undefined} className={field} /><FieldError id="title" text={errors.title} /></div>
         <div><label htmlFor="f-desc" className={label}>Description</label><textarea id="f-desc" value={v.description} onChange={(e) => set("description", e.target.value)} rows={3} className={cn(field, "min-h-24 py-3")} /><FieldError id="description" text={errors.description} /></div>
         <div><label htmlFor="f-validator" className={label}>Validation par</label><select id="f-validator" value={v.validatorId} onChange={(e) => set("validatorId", e.target.value)} className={field}>{validators.filter((x) => x.id !== m.assigneeId && x.id !== m.proposedAssigneeId).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select><FieldError id="validatorId" text={errors.validatorId} /></div>
-        <div><label htmlFor="f-due" className={label}>Échéance</label><input id="f-due" type="date" value={v.dueDate ?? ""} onChange={(e) => set("dueDate", e.target.value || null)} className={field} /><FieldError id="dueDate" text={errors.dueDate} /></div>
+        <DueFields date={v.dueDate} time={v.dueTime ?? null} timeSupported={M.capabilities.dueTime} onDate={(d) => set("dueDate", d)} onTime={(t) => set("dueTime", t)} errors={errors} />
         <PriorityPicker value={v.priority} onChange={(p) => set("priority", p)} />
       </fieldset>
       <ActionNotice pending={act.pending} result={act.result} doing="Enregistrement des informations…" onReload={M.refresh} />

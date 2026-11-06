@@ -70,9 +70,12 @@ export function useDbMissions(enabled: boolean): MissionsApi {
     },
     comments: {
       supported: true,
+      recent: () => (service ? service.loadRecentComments() : Promise.resolve({ ok: false, error: { kind: "invalid", message: "Base de données indisponible." } })),
       load: (id) => (service ? service.loadComments(id) : Promise.resolve({ ok: false, error: { kind: "invalid", message: "Base de données indisponible." } })),
       add: (id, body) => (service ? service.addComment(id, body) : Promise.resolve({ ok: false, error: { kind: "invalid", message: "Base de données indisponible." } })),
     },
+    // Heure et événements : pas de colonne / table en base tant que la migration B3 (proposée) n'est pas validée et appliquée.
+    capabilities: { dueTime: false, events: false },
     local: null,
   };
 }

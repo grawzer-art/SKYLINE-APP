@@ -109,6 +109,18 @@ export const fr = {
   "space.contacts.see": "Voir les conversations", "space.privacy": "Confidentialité",
   "messages.search": "Rechercher", "messages.search.placeholder": "Rechercher une conversation", "messages.search.none": "Aucune conversation ne correspond.",
   "radio.featured.label": "Sélection à la une", "radio.by": "Par {name}", "radio.time.empty": "—:——", "radio.djs.sub": "Profil à venir", "radio.cover.note": "Visuels d'ambiance : découpes de photographies de la première édition.", "radio.listen.cta": "Écouter",
+  "notif.back": "Profil", "notif.eyebrow": "Compte", "notif.title": "Notifications", "notif.allRead": "Tout est lu", "notif.unread_one": "{count} non lue", "notif.unread_other": "{count} non lues", "notif.markAll": "Tout lire",
+  "notif.filter": "Filtre", "notif.filter.all": "Toutes", "notif.filter.unread": "Non lues", "notif.prefs": "Préférences", "notif.open": "Ouvrir mes notifications",
+  "notif.empty.title": "Rien pour le moment.", "notif.empty.text": "Vous retrouverez ici les annonces d'artistes, les informations de vol, les changements de programme, les rappels avant le départ et les communications importantes.",
+  "notif.upToDate": "Vous êtes à jour.", "notif.samples": "Voir des exemples (démonstration)", "notif.samples.hide": "Masquer les exemples", "notif.sample": "Exemple", "notif.urgent": "Urgent",
+  "notif.prefs.hint": "Choisissez ce que vous voulez recevoir. Enregistré sur cet appareil. Les communications officielles urgentes s'affichent toujours.",
+  "notif.cat.artists": "Annonces d'artistes", "notif.cat.artists.hint": "Nouveaux noms et sets annoncés", "notif.cat.flight": "Informations de vol", "notif.cat.flight.hint": "Horaires, embarquement, consignes de voyage",
+  "notif.cat.program": "Programme", "notif.cat.program.hint": "Modifications du programme", "notif.cat.departure": "Rappels avant le départ", "notif.cat.departure.hint": "Documents, bagages, rendez-vous",
+  "notif.cat.official": "Communications officielles", "notif.cat.official.hint": "Messages importants de l'organisation",
+  "notif.push.region": "Notifications sur cet appareil", "notif.push.title": "Sur cet appareil", "notif.push.context": "Recevez les messages importants sur l'écran verrouillé de votre iPhone, en plus de cette boîte.", "notif.push.checking": "Vérification de l'appareil…",
+  "notif.push.button": "Activer les notifications · bientôt", "notif.push.foot": "Vous restez maître de l'activation : aucune autorisation n'est demandée tant que vous ne la lancez pas vous-même, et vous pourrez désactiver cet appareil à tout moment.",
+  "notif.push.unsupported": "Ce navigateur ne permet pas les notifications push.", "notif.push.needs_install": "Sur iPhone, ajoutez d'abord SKYLINE à l'écran d'accueil (Partager → Sur l'écran d'accueil).",
+  "notif.push.blocked": "Les notifications sont bloquées dans les réglages de l'appareil.", "notif.push.coming_soon": "Disponible prochainement. Aucune autorisation n'est demandée pour l'instant.", "notif.push.ready": "Vous pouvez activer les notifications sur cet appareil.",
 } as const;
 
 export type Key = keyof typeof fr;

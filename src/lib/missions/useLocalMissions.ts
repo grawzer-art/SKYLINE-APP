@@ -49,7 +49,8 @@ export function useLocalMissions(storageKey: string, active: boolean): MissionsA
       if (!canDelete(a, m)) return { ok: false, kind: "local", message: "Vous ne pouvez pas supprimer cette mission." };
       set(latest().filter((x) => x.id !== id)); return { ok: true, mission: null };
     },
-    comments: { supported: false, load: async () => ({ ok: true, value: [] }), add: async () => ({ ok: false, error: { kind: "invalid", message: "Commentaires indisponibles en mode local." } }) },
+    comments: { supported: false, load: async () => ({ ok: true, value: [] }), recent: async () => ({ ok: true, value: [] }), add: async () => ({ ok: false, error: { kind: "invalid", message: "Commentaires indisponibles en mode local." } }) },
+    capabilities: { dueTime: true, events: true },
     local: active ? { clearAll: () => set(EMPTY), addMany: (list) => set([...latest(), ...list]) } : null,
   };
 }

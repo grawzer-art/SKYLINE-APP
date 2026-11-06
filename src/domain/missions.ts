@@ -29,16 +29,19 @@ export type Mission = {
   createdAt: string; updatedAt: string; history: HistoryEntry[];
   /** Mode base de données uniquement : numéro de version (verrou optimiste) et projet. Absents en mode local. */
   version?: number; projectId?: string | null;
+  /** Heure facultative (HH:MM) de l'échéance. Mode local uniquement tant que la colonne n'existe pas en base (migration B3 proposée, non appliquée). */
+  dueTime?: string | null;
 };
 
 /** Qui agit : un membre de l'équipe et son pouvoir de coordination (`admin` ou `super_admin`). */
 export type Actor = { memberId: string; coordinator: boolean };
 /** Informations modifiables SEPAREMENT du responsable et du statut (trois actions distinctes). */
-export type MissionInfoInput = { title: string; description: string; validatorId: string; dueDate: string | null; priority: MissionPriority };
-export type MissionInput = { title: string; description: string; assigneeId: string; validatorId: string; dueDate: string | null; priority: MissionPriority; status: MissionStatus };
+export type MissionInfoInput = { title: string; description: string; validatorId: string; dueDate: string | null; dueTime?: string | null; priority: MissionPriority };
+export type MissionInput = { title: string; description: string; assigneeId: string; validatorId: string; dueDate: string | null; dueTime?: string | null; priority: MissionPriority; status: MissionStatus };
 
 /* ---------- Validation ---------- */
-export type MissionErrors = Partial<Record<"title" | "description" | "assigneeId" | "validatorId" | "dueDate" | "priority" | "status", string>>;
+export type MissionErrors = Partial<Record<"title" | "description" | "assigneeId" | "validatorId" | "dueDate" | "dueTime" | "priority" | "status", string>>;
+export const isTime = (s: string) => /^([01]\d|2[0-3]):[0-5]\d$/.test(s);
 const isISODate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`)) && new Date(`${s}T00:00:00Z`).toISOString().slice(0, 10) === s;
 
 export function validateMissionInput(i: MissionInput, memberIds: readonly string[], validatorIds: readonly string[] = memberIds): { ok: true; value: MissionInput } | { ok: false; errors: MissionErrors } {
@@ -51,9 +54,11 @@ export function validateMissionInput(i: MissionInput, memberIds: readonly string
   if (!memberIds.includes(i.validatorId) || !validatorIds.includes(i.validatorId)) errors.validatorId = "Le validateur doit être un administrateur (Graw ou Tom).";
   else if (i.validatorId === i.assigneeId) errors.validatorId = "La validation doit être faite par une autre personne.";
   if (i.dueDate !== null && !isISODate(i.dueDate)) errors.dueDate = "Date invalide.";
+  if (i.dueTime && !isTime(i.dueTime)) errors.dueTime = "Heure invalide.";
+  else if (i.dueTime && !i.dueDate) errors.dueTime = "Choisissez d'abord une date.";
   if (!MISSION_PRIORITIES.includes(i.priority)) errors.priority = "Priorité invalide.";
   if (!MISSION_STATUSES.includes(i.status)) errors.status = "Statut invalide.";
-  return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value: { ...i, title, description, dueDate: i.dueDate || null } };
+  return Object.keys(errors).length ? { ok: false, errors } : { ok: true, value: { ...i, title, description, dueDate: i.dueDate || null, dueTime: i.dueDate ? i.dueTime || null : null } };
 }
 
 /* ---------- Retards ---------- */
@@ -138,7 +143,7 @@ export function archiveMission(m: Mission, a: Actor, now: string): Res<Mission> 
 
 /** Missions enregistrées avant l'introduction des propositions / archives (stockage local V1) : champs manquants complétés, rien n'est supprimé. */
 export function normalizeMission(raw: Partial<Mission> & Pick<Mission, "id" | "title">): Mission {
-  return { description: "", assigneeId: "", creatorId: "", validatorId: "", dueDate: null, priority: "normal", status: "todo", createdAt: "", updatedAt: "", history: [], ...raw, proposedAssigneeId: raw.proposedAssigneeId ?? null, archivedAt: raw.archivedAt ?? null } as Mission;
+  return { description: "", assigneeId: "", creatorId: "", validatorId: "", dueDate: null, dueTime: null, priority: "normal", status: "todo", createdAt: "", updatedAt: "", history: [], ...raw, proposedAssigneeId: raw.proposedAssigneeId ?? null, archivedAt: raw.archivedAt ?? null } as Mission;
 }
 
 export function changeStatus(m: Mission, to: MissionStatus, a: Actor, now: string, note?: string): Res<Mission> {
@@ -166,9 +171,10 @@ export function editMissionInfo(m: Mission, i: MissionInfoInput, a: Actor, membe
   if (!canEdit(a, m)) return { ok: false, reason: "Vous ne pouvez pas modifier cette mission." };
   const v = validateMissionInput({ ...i, assigneeId: m.assigneeId, status: m.status }, memberIds, validatorIds); if (!v.ok) return { ok: false, reason: Object.values(v.errors)[0] ?? "Mission invalide." };
   if (m.proposedAssigneeId && v.value.validatorId === m.proposedAssigneeId) return { ok: false, reason: "Le validateur ne peut pas être la personne proposée." };
-  const changed = (["title", "description", "validatorId", "dueDate", "priority"] as const).filter((k) => m[k] !== v.value[k]);
+  const changed = (["title", "description", "validatorId", "dueDate", "priority"] as const).filter((k) => m[k] !== v.value[k]) as string[];
+  const nextTime = v.value.dueTime ?? null; if ((m.dueTime ?? null) !== nextTime) changed.push("dueTime");
   if (!changed.length) return { ok: true, value: m };
-  return { ok: true, value: { ...m, title: v.value.title, description: v.value.description, validatorId: v.value.validatorId, dueDate: v.value.dueDate, priority: v.value.priority, updatedAt: now, history: [...m.history, entry(`${m.id}-h${m.history.length}`, now, a.memberId, "edited", { note: changed.join(", ") })] } };
+  return { ok: true, value: { ...m, title: v.value.title, description: v.value.description, validatorId: v.value.validatorId, dueDate: v.value.dueDate, dueTime: nextTime, priority: v.value.priority, updatedAt: now, history: [...m.history, entry(`${m.id}-h${m.history.length}`, now, a.memberId, "edited", { note: changed.join(", ") })] } };
 }
 
 /* ---------- Affichage ---------- */

@@ -50,7 +50,7 @@ t("le service n'appelle que les fonctions et tables autorisées (liste fermée)"
 });
 t("l'identité d'action en mode base de données est l'UUID du compte, jamais le slug local", () => {
   const a = read("src/lib/useActor.ts"); assert.match(a, /isUuid\(s\.userId\)/); assert.match(a, /memberId: s\.userId/);
-  assert.match(read("src/lib/useMissions.ts"), /isUuid\(st\.session\?\.userId\)/);
+  assert.match(read("src/lib/missions/useMissionsSource.ts"), /isUuid\(st\.session\?\.userId\)/);
 });
 t("la session expose l'UUID en mode Supabase uniquement ; la source de données vient du serveur", () => {
   const r = read("src/app/api/staff/session/route.ts");
@@ -62,7 +62,7 @@ t("le proxy suspend STAFF HQ (503) en cas de configuration invalide, avant tout 
   assert.match(read("src/lib/auth/token.ts"), /!staffConfigIssue\(\)/);
 });
 t("côté interface : statut « misconfigured » sans aucune donnée (ni base, ni locale)", () => {
-  const u = read("src/lib/useMissions.ts"); assert.match(u, /status: "misconfigured", missions: \[\], local: null/);
+  const u = read("src/lib/missions/useMissionsSource.ts"); assert.match(u, /status: "misconfigured", missions: \[\], local: null/);
   assert.match(u, /useLocalMissions\(dbMode \|\| misconfigured \? `\$\{MISSIONS_KEY\}:inactive`/);
 });
 console.log(`${n} tests MODES : OK`);

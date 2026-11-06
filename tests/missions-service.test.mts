@@ -22,6 +22,8 @@ await db.exec(`
   alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
 `);
 for (const f of readdirSync("supabase/migrations").filter((x) => x.endsWith(".sql")).sort()) await db.exec(readFileSync(`supabase/migrations/${f}`, "utf8"));
+// Compatibilité : `EXTRA_SQL=supabase/proposals/B3_1_agenda_notifications.sql` rejoue TOUTE la suite sur B0 + proposition (la proposition ne doit rien casser).
+for (const f of (process.env.EXTRA_SQL ?? "").split(",").filter(Boolean)) await db.exec(readFileSync(f, "utf8"));
 
 const ids: Record<string, string> = {};
 const provision = async (slug: string, o: { platform?: string[]; spaces?: string[]; staff?: string[]; active?: boolean } = {}) => {

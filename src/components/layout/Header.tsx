@@ -67,6 +67,7 @@ export function Header() {
           ))}
         </ul>
         <p className="mt-2 text-xs text-dim">Notifications fictives — aucune notification push réelle dans cette version.</p>
+        <Link href="/v3/notifications" onClick={() => setOpen(false)} className="mt-3 inline-flex min-h-11 items-center font-mono text-[0.78rem] uppercase tracking-[0.14em] text-sky underline underline-offset-4">Mes notifications et préférences →</Link>
       </Sheet>
     </>
   );

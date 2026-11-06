@@ -109,6 +109,11 @@ export function createMissionsService(port: DbPort) {
       if (r.error) return fail(r.error);
       return { ok: true, value: (r.data ?? []).map(toComment) };
     },
+    /** Commentaires récents visibles par l'utilisateur (RLS) : alimente la boîte de notifications, en UNE requête. */
+    async loadRecentComments(limit = 60): Promise<Result<MissionComment[]>> {
+      const r = await port.select("mission_comments", { columns: COMMENT_COLS, order: [["created_at", false]], limit });
+      return r.error ? fail(r.error) : { ok: true, value: (r.data ?? []).map(toComment) };
+    },
     async addComment(id: string, body: string): Promise<Result<MissionComment>> {
       if (!isUuid(id)) return bad();
       const r = await port.rpc("add_mission_comment", { p_id: id, p_body: body }); if (r.error) return fail(r.error);

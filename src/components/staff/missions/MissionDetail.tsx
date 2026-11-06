@@ -35,7 +35,7 @@ export function MissionDetail({ m, actor, today, M, onEditInfo, onArchive, onDel
         <dl className="mt-4 divide-y divide-line border-y border-line text-[0.95rem]">
           <div className="flex justify-between gap-4 py-3"><dt className="text-dim">Validation par</dt><dd>{who(m.validatorId)}</dd></div>
           <div className="flex justify-between gap-4 py-3"><dt className="text-dim">Créée par</dt><dd>{who(m.creatorId)}</dd></div>
-          <div className="flex justify-between gap-4 py-3"><dt className="text-dim">Échéance</dt><dd className={od ? "text-sunset" : ""}>{m.dueDate ? `${fmtDate(m.dueDate)}${od && today ? ` · en retard de ${daysLate(m, today)} j` : ""}` : "Aucune"}</dd></div>
+          <div className="flex justify-between gap-4 py-3"><dt className="text-dim">Échéance</dt><dd className={od ? "text-sunset" : ""}>{m.dueDate ? `${fmtDate(m.dueDate)}${m.dueTime ? ` à ${m.dueTime.replace(":", "h")}` : ""}${od && today ? ` · en retard de ${daysLate(m, today)} j` : ""}` : "Aucune"}</dd></div>
         </dl>
         {canEdit(actor, m) && !m.archivedAt && <button type="button" onClick={onEditInfo} className={cn(btn, "mt-4 min-h-11 border border-silver/45 px-5")}>Modifier les informations</button>}
       </Section>
