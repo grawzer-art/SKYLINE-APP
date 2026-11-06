@@ -52,9 +52,9 @@ const titles = async (who: string, ...r: [string?, string?]) => (await agenda(wh
 const SECRET = "DESCRIPTION CONFIDENTIELLE : budget artiste, ne pas diffuser";
 const mk = async (who: string, title: string, assignee: string, validator: string, due: string | null, time: string | null = null, desc = SECRET) =>
   (await q(who, `select * from public.create_mission_v2($1, $2, $3, $4, $5, $6)`, [title, desc, ids[assignee], ids[validator], due, time]))[0];
-const mTom = await mk("tom", "Brief équipe", "tom", "graw", "2026-11-10", "09:00");
+await mk("tom", "Brief équipe", "tom", "graw", "2026-11-10", "09:00");
 const mQaf = await mk("tom", "Repérage photo", "qafard", "graw", "2026-11-10", null);
-const mGraw = await mk("graw", "Direction artistique", "graw", "tom", "2026-11-12", "14:30");
+await mk("graw", "Direction artistique", "graw", "tom", "2026-11-12", "14:30");
 const mPriv = await mk("tom", "Négociation confidentielle", "tom", "graw", "2026-11-11", "10:00");
 await mk("tom", "Sans date", "tom", "graw", null);
 const mArch = await mk("tom", "Archivée", "tom", "graw", "2026-11-13"); await q("tom", `select * from public.archive_mission($1)`, [mArch.id]);

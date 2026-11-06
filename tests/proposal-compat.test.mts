@@ -69,8 +69,7 @@ for (const [scenarioName, defaults] of Object.entries(defaultsBy)) {
     if (typeof x === "string" && /^\d{4}-\d{2}-\d{2}T/.test(x)) return "T";
     return x;
   })); };
-  const nameOf = (id: string) => Object.entries(ids).find(([, v]) => v === id)?.[0] ?? id;
-  const withoutNew = (rows: any[]) => rows.map((r) => { const { due_time, is_private, ...rest } = r; return rest; });
+  const withoutNew = (rows: any[]) => rows.map((r) => Object.fromEntries(Object.entries(r).filter(([k]) => k !== "due_time" && k !== "is_private")));
   const scenario = async () => {
     const out: any[] = []; const rec = async (step: string, who: string, sql: string, p: unknown[] = []) => { const r = await tryq(who, sql, p); out.push({ step, ...(r.ok ? { rows: withoutNew(r.rows) } : { error: r.error }) }); return r; };
     const m1 = (await rec("create (B2)", "tom", `select * from public.create_mission('Repérage', 'Description', $1, $2, '2026-11-12', 'normal', 'todo', null)`, [ids.qafard, ids.graw])) as any; const id1 = m1.rows[0].id;

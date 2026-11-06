@@ -37,7 +37,8 @@ const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0
   await Q.goto(APP + "/staff/schedule", { waitUntil: "domcontentloaded" }); await vis(btn(Q, /^Ajouter$/), 10000);
   ok("B3 · AGENDA : « Mon agenda » de Qafard ne montre pas la mission de Tom", (await Q.getByText("Planning de Tom").count()) === 0);
   await btn(Q, /^Équipe$/).click();
-  ok("B3 · AGENDA COLLECTIF : Qafard (membre) voit le planning de l'équipe — mission de Tom, heure, responsable", (await vis(Q.getByTestId("shared-row").filter({ hasText: "Planning de Tom" }))) && (await Q.getByTestId("shared-row").filter({ hasText: "Planning de Tom" }).getByText("08h00").count()) === 1 && (await Q.getByTestId("shared-row").filter({ hasText: "Planning de Tom" }).getByText("Tom", { exact: true }).count()) >= 1);
+  const sharedRow = Q.getByTestId("shared-row").filter({ hasText: "Planning de Tom" }); const rowText = (await vis(sharedRow)) ? await sharedRow.first().innerText() : "";
+  ok("B3 · AGENDA COLLECTIF : Qafard (membre) voit le planning de l'équipe — mission de Tom, heure, responsable, statut", /Planning de Tom/.test(rowText) && /08h00/i.test(rowText) && /Tom/.test(rowText.replace("Planning de Tom", "")) && /à faire/i.test(rowText), rowText.replace(/\n/g, " | "));
   ok("B3 · AGENDA COLLECTIF : mention explicite « le détail reste réservé aux personnes concernées »", await vis(Q.getByText(/détail d.une mission reste réservé/)));
   ok("B3 · CONFIDENTIALITÉ : la mission marquée privée n'apparaît PAS dans le planning collectif", (await Q.getByText("Négociation privée").count()) === 0);
   const row = Q.getByTestId("shared-row").filter({ hasText: "Planning de Tom" }); await row.click({ force: true }).catch(() => {}); await Q.waitForTimeout(500);

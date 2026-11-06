@@ -53,32 +53,49 @@ components/notifications/PushCard  activation volontaire et contextuelle (inacti
 **Phase 1 — garanties testées** : l'application **ne demande jamais** l'autorisation à l'ouverture, **n'enregistre aucun service worker**, n'appelle ni `requestPermission` ni `subscribe` (appels espionnés = 0, tests E2E) ; le bouton « Activer » est **inactif**. Aucun envoi réel.
 
 ## 6. Migration PROPOSÉE (non appliquée) — `supabase/proposals/B3_1_agenda_notifications.sql`
-Placée **hors** de `supabase/migrations/` pour ne pas pouvoir être appliquée par erreur. **À valider avant application.** Non destructive.
+Placée **hors** de `supabase/migrations/` pour ne pas pouvoir être appliquée par erreur. **À valider avant application.** Non destructive, **sans aucun DROP ni CREATE OR REPLACE** de fonction existante.
+
+### 6.1 Compatibilité des fonctions de missions (révision)
+Stratégie retenue : **les fonctions B0 ne sont pas touchées** (`create_mission`, `update_mission`, `set_mission_status`, `assign_mission`, `resolve_assignment`, `add_mission_comment`, `archive_mission`, `delete_mission`, helpers). Mêmes signatures, même code, même OID, mêmes droits d'exécution.
+- L'heure s'écrit par de **nouvelles fonctions `create_mission_v2` et `update_mission_v2`** (noms distincts : **aucune surcharge**, RPC non ambigu). Leur paramètre `p_time` est **obligatoire** (sans défaut) : l'omettre est une **erreur** (fonction introuvable), jamais un effacement silencieux ; `null` explicite = « aucune heure ».
+- **Un client B2 ne peut pas effacer `due_time`** : l'ancienne `update_mission` ne touche pas la colonne. Si un client B2 efface la **date** d'une mission horodatée, un déclencheur de cohérence (`missions_keep_time_consistent`) efface l'heure (jamais d'état « heure sans date », jamais d'erreur côté B2).
+- Dépendances PostgreSQL : l'ajout de colonnes à `missions` (type de retour des fonctions B0) a été vérifié **dans la même session** (plans en cache) : les anciennes fonctions fonctionnent à l'identique.
+- Droits : nouvelles fonctions **révoquées pour `public` et `anon`** explicitement, accordées à `authenticated` (la fonction de déclencheur n'est exécutable par personne). Les droits des fonctions B0 ne sont pas modifiés. Vérifié avec deux jeux de privilèges par défaut (supabase_admin « large », postgres).
+- **Client B3** : le réglage serveur `STAFF_DB_SCHEMA` (`b2` par défaut, `b3` après application de la migration) choisit les fonctions. En `b2`, le client n'appelle jamais `_v2` ni `list_team_agenda` et ne lit pas `due_time`. `STAFF_DB_SCHEMA=b3` sans `STAFF_DATA_SOURCE=db`, ou une valeur inconnue, produit l'erreur de configuration explicite (503).
+
+### 6.2 Agenda collectif — `list_team_agenda(p_from, p_to)`
+Lecture **sécurisée** pour **tous les membres STAFF actifs**, sans élargir la RLS B2 (un membre ne lit toujours pas les missions des autres).
+- **Exposé (7 colonnes, exactement)** : `id`, `title`, `assignee_id`, `due_date`, `due_time`, `status`, `priority`.
+- **Jamais exposé** : description, créateur, validateur, personne proposée, projet, version, **commentaires, historique**.
+- **Règles de confidentialité (à valider)** : 1) membres STAFF actifs uniquement (participants, comptes inactifs ou sans accès, anonymes : refus) ; 2) missions **archivées exclues** ; 3) missions **privées exclues** (`missions.is_private`, défaut `false` = partagée ; modifiable par le créateur ou un administrateur via `set_mission_private`) ; 4) missions **datées** seulement, fenêtre **62 jours max**, **500 lignes max** (pas d'export en masse) ; 5) le **titre** d'une mission non privée est visible de toute l'équipe STAFF — **décision à confirmer** : conserver ce défaut « partagé » ou passer à « privé par défaut » (opt-in).
+- Interface : en vue « Équipe », les entrées d'autres membres s'affichent en **lecture seule** (pas de fiche), avec la mention « le détail reste réservé aux personnes concernées ». Pas encore de bouton « mission privée » dans l'interface (fonction prête).
+
+### 6.3 Autres éléments de la migration
 | Contenu | Détail |
 |---|---|
-| Heure des missions | `missions.due_time` (+ contrainte « heure ⇒ date ») ; `create_mission` / `update_mission` reçoivent `p_time` (défaut null) |
-| Événements | table `agenda_events` + `create/update/delete_agenda_event` ; création d'équipe = administrateurs ; personnelle = tout membre ; lecture : membres STAFF (équipe) ou créateur (personnel) |
+| Événements | table `agenda_events` + `create/update/delete_agenda_event` (création d'équipe = administrateurs ; personnelle = tout membre) ; client base de données à venir |
 | Notifications | tables `notifications` (audience `staff` / `participants`, contrainte catégorie ↔ audience), `notification_reads`, `notification_preferences` ; `can_view_notification`, `mark_notifications_read`, `set_notification_preferences` |
-| Annonces | `send_announcement(audience, titre, texte, urgent, confirm)` : **administrateurs**, **confirmation obligatoire** ; écrit l'annonce, **n'envoie aucun push** |
+| Annonces | `send_announcement(audience, titre, texte, urgent, confirm)` : **administrateurs**, **confirmation obligatoire** ; n'envoie **aucun push** |
 | Web Push | `push_subscriptions` (secrets illisibles par colonnes) ; `register_push_subscription`, `revoke_push_subscription` |
 | Droits | RLS partout, `anon` : aucun droit, `authenticated` : lecture seule (appareils : colonnes non secrètes), écritures par fonctions uniquement |
-**Validation locale** (`tests/proposal-b3.test.mts`, Postgres local, B0 + proposition) : 13 tests — compatibilité des anciens appels, heure, événements (visibilité, droits), **séparation STAFF / participants**, annonces (admin + confirmation), lecture, préférences, appareils (secrets illisibles), privilèges. La suite **B2 (15 tests) passe aussi** sur B0 + proposition.
-**Attention de déploiement** : un client B2 qui appelle `update_mission` sans `p_time` effacerait l'heure → déployer le client B3 avec la migration. **Décision à prendre** : vue « Équipe » pour les membres — B2 limite la lecture aux missions qui les concernent ; une vue d'équipe complète demanderait une fonction de lecture minimale (titre, responsable, date, statut) pour tous les membres : à valider séparément.
+
+**Validation locale** : `tests/proposal-b3.test.mts` (13), `tests/proposal-compat.test.mts` (24 vérifications × 2 jeux de privilèges : fonctions B0 identiques avant/après, scénario client B2 rejoué avant/après dans la même session, `due_time` jamais effacé, parité des règles B0 ↔ `_v2`, matrice de droits), `tests/proposal-team-agenda.test.mts` (10), `tests/missions-service-b3.test.mts` (6). La suite **B2 complète (15 tests)** passe aussi sur B0 + proposition.
 
 ## 7. Tests
 | Suite | Ce qu'elle prouve |
 |---|---|
 | `tests/agenda.test.mts` (8) | semaines (lundi), heure facultative, Mon agenda / Équipe, À planifier / En retard, propositions, **visibilité jamais élargie**, événements (portée, droits) |
 | `tests/notifications.test.mts` (16) | dérivation (réattribution, validation, propositions, commentaires, rappels), fenêtre 30 j, préférences, urgents non masquables, exemples étiquetés, annonces (droits + confirmation), catégories participants distinctes, contrats push, **aucune autorisation / abonnement / service worker**, clés de stockage séparées |
-| `tests/proposal-b3.test.mts` (13) | migration proposée sur Postgres local (RLS, droits, séparation) |
+| `tests/proposal-b3.test.mts` (13) · `proposal-compat` · `proposal-team-agenda` (10) · `missions-service-b3` (6) | migration proposée sur Postgres local : RLS, droits, séparation, **compatibilité avant / après**, **agenda collectif** |
+| `tests/e2e-db-b3.cjs` (24) | schéma `b3` (faux serveur) : heure, agenda collectif, confidentialité (réponse réseau à 7 champs), états, ergonomie 320–430 px |
 | `tests/e2e-agenda.cjs` (83) | parcours complets (local) + ergonomie **320 / 375 / 390 / 430 px** : agenda, ajout, formulaires, notifications STAFF et participants, préférences |
 | `tests/e2e-db.cjs` (65) | + agenda et notifications en **mode base** (faux serveur Supabase local) : tâche = mission, pas d'heure ni d'événements sans table, commentaires → notification, annonce sans envoi, aucun stockage local de missions |
 | suites existantes | participants (v3, v32, pass, SOUND), STAFF, missions, configuration, authentification : sans régression |
 
 ## 8. Limites de la phase 1
 - **Pas d'envoi réel** et pas de service worker (volontaire). Le bouton d'activation est inactif.
-- **Heure et événements : mode local seulement** tant que la migration n'est pas appliquée (en mode base : tâches datées sans heure, pas de réunions partagées). L'interface le gère sans afficher de faux contenu.
-- **Vue Équipe en mode base** : limitée par la RLS B2 aux missions concernant l'utilisateur (note affichée) ; les administrateurs voient tout.
+- **Heure : base de données seulement après la migration** (`STAFF_DB_SCHEMA=b3`) ; **réunions et événements : mode local seulement** (client base de données à venir). Sans la migration (schéma `b2`, défaut), l'interface n'affiche ni heure ni événements partagés, sans faux contenu.
+- **Vue Équipe en mode base** : schéma `b2` = missions concernant l'utilisateur (note affichée) ; schéma `b3` = planning collectif complet en lecture seule (colonnes minimales), administrateurs : tout.
 - Notifications STAFF **calculées dans le navigateur** (état lu / préférences sur l'appareil) ; la table serveur et la synchronisation entre appareils viendront avec la migration.
 - Pas de rappel « en arrière-plan » (il faut l'envoi push) ; les rappels s'affichent à l'ouverture.
 - Boîte participants **vide** tant qu'aucune source officielle n'est branchée (annonces d'artistes, vol, programme : contenu de l'organisation, phase suivante). Libellés des cartes push et de la boîte participants traduits FR / EN ; l'écran STAFF est en français.
