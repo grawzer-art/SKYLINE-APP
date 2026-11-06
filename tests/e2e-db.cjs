@@ -26,7 +26,7 @@ const cookieFor = (who) => { const s = { access_token: "tok-" + who, refresh_tok
   ok("CHARGEMENT : état « Chargement des missions… » visible pendant la lecture", await vis(text(T, /Chargement des missions/), 5000));
   ok("LISTE : les missions arrivent après le chargement", await vis(text(T, /Brief équipe/), 10000));
   await ctl({ delay: 0 });
-  ok("BANNIÈRE : « Missions partagées · base de l'équipe » (pas « données locales »)", /Missions partagées/.test(await T.getByTestId("local-data-banner").innerText()));
+  ok("BANNIÈRE : « Missions partagées · base de l'équipe » (pas « données locales »)", /missions partagées/i.test(await T.getByTestId("local-data-banner").innerText()));
   ok("MOBILE : pas de défilement horizontal", await T.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
   await btn(T, /^Toutes$/).click(); ok("PÉRIMÈTRE : Tom (admin) voit les 3 missions (« Toutes »)", await vis(text(T, /3 missions/)));
   await T.screenshot({ path: "/tmp/db-list.png" });
@@ -74,16 +74,17 @@ const cookieFor = (who) => { const s = { access_token: "tok-" + who, refresh_tok
   ok("COMMENTAIRES : publication → affiché avec l'auteur + « Commentaire publié. »", (await vis(text(T, /Commentaire publié\./))) && await vis(T.getByRole("dialog").getByText("Bien reçu").first()));
 
   // Archivage
+  const rows = () => T.locator("section[aria-label='Liste des missions'] li").count(); const before = await rows();
   await btn(T, /^Archiver$/).click(); ok("ARCHIVAGE : confirmation demandée", await vis(text(T, /sera masquée des listes/)));
   await T.getByRole("dialog").getByRole("button", { name: /^Archiver$/ }).click();
-  ok("ARCHIVAGE : la mission disparaît de la liste", !(await vis(text(T, /Version finale/), 1500)) && await vis(text(T, /3 missions/)));
+  await T.waitForTimeout(800); ok("ARCHIVAGE : la mission disparaît de la liste (une de moins)", (await rows()) === before - 1 && !(await vis(T.locator("section[aria-label='Liste des missions']").getByText(/Version finale/), 800)), `${before} → ${await rows()}`);
 
   /* 4. Réseau : erreur de chargement initial, puis actualisation échouée avec données conservées */
   await ctl({ fail: { missions: { destroy: true } } }); await T.reload({ waitUntil: "domcontentloaded" });
   ok("RÉSEAU : échec du chargement initial → « Impossible de charger les missions » + Réessayer", (await vis(text(T, /Impossible de charger les missions/))) && await vis(btn(T, /^Réessayer$/)));
   await btn(T, /^Réessayer$/).click(); ok("RÉSEAU : « Réessayer » recharge la liste", await vis(text(T, /Brief équipe/)));
   await btn(T, /^Toutes$/).click();
-  await ctl({ fail: { "rpc/list_team": { status: 500, body: { message: "x" } } } }); await btn(T, /Actualiser les missions/).click();
+  await ctl({ fail: { "list_team": { status: 500, body: { message: "x" } } } }); await btn(T, /Actualiser les missions/).click();
   ok("ACTUALISATION : échec → bandeau « Actualisation impossible », données conservées", (await vis(text(T, /Actualisation impossible/))) && await vis(text(T, /Brief équipe/)));
 
   /* 5. Qafard (member) : visibilité limitée, proposition, pas d'approbation */

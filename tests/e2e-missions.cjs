@@ -19,7 +19,7 @@ let fails = 0; const ok = (n, c, d = "") => { console.log(`${c ? "PASS" : "FAIL"
     if (f.due) await dialog(p).getByLabel("Échéance").fill(f.due);
     if (f.prio) await dialog(p).getByRole("radio", { name: f.prio }).click();
     if (f.status) await dialog(p).getByLabel("Statut").selectOption({ label: f.status });
-    await dialog(p).getByRole("button", { name: "Enregistrer" }).click(); await p.waitForTimeout(500);
+    await dialog(p).getByRole("button", { name: /^Créer la mission$/ }).click(); await p.waitForTimeout(500);
   };
   const closeSheet = async (p) => { await p.keyboard.press("Escape"); await p.waitForTimeout(500); };
   const card = (p, t) => p.getByRole("button", { name: new RegExp(t) }).filter({ hasNot: p.getByRole("dialog") });
@@ -32,13 +32,13 @@ let fails = 0; const ok = (n, c, d = "") => { console.log(`${c ? "PASS" : "FAIL"
     ok("MISSIONS : Qafard (non coordinateur) n'a pas la vue « Toutes » ni les exemples", (await p.getByRole("button", { name: "Toutes", exact: true }).count()) === 0 && (await p.getByText(/Charger 4 missions/).count()) === 0);
     ok("MISSIONS : état vide clair", (await p.getByText("Aucune mission pour le moment.").count()) === 1);
     await p.getByRole("button", { name: /Nouvelle mission/ }).first().click(); await p.waitForTimeout(500);
-    await dialog(p).getByRole("button", { name: "Enregistrer" }).click(); await p.waitForTimeout(300);
+    await dialog(p).getByRole("button", { name: /^Créer la mission$/ }).click(); await p.waitForTimeout(300);
     ok("CRÉATION : titre obligatoire (erreur affichée, rien créé)", (await dialog(p).getByRole("alert").filter({ hasText: "titre est obligatoire" }).count()) === 1);
-    ok("CRÉATION : Qafard ne peut choisir que lui-même comme responsable ; « Terminée » absente du statut", (await dialog(p).getByLabel("Responsable").locator("option").allInnerTexts()).join() === "Qafard" && !(await dialog(p).getByLabel("Statut").locator("option").allInnerTexts()).includes("Terminée"));
+    ok("CRÉATION : Qafard peut viser un autre membre (= PROPOSITION annoncée) ; « Terminée » absente du statut", (await dialog(p).getByLabel("Responsable").locator("option").count()) === 3 && (await dialog(p).getByLabel("Responsable").selectOption({ label: "Tom" }), (await dialog(p).getByText(/Proposition : vous restez responsable/).count()) === 1) && (await dialog(p).getByLabel("Responsable").selectOption({ label: "Qafard (moi)" }), true) && !(await dialog(p).getByLabel("Statut").locator("option").allInnerTexts()).includes("Terminée"));
     ok("CRÉATION : la validation ne peut pas être confiée à l'assigné", !(await dialog(p).getByLabel("Validation par").locator("option").allInnerTexts()).includes("Qafard"));
     await dialog(p).getByLabel("Titre *").fill("Repérage photo plage"); await dialog(p).getByLabel("Description").fill("Repérer trois spots.");
     await dialog(p).getByLabel("Échéance").fill("2099-05-20"); await dialog(p).getByRole("radio", { name: "Haute" }).click(); await dialog(p).getByLabel("Statut").selectOption({ label: "En cours" });
-    await dialog(p).getByRole("button", { name: "Enregistrer" }).click(); await p.waitForTimeout(600);
+    await dialog(p).getByRole("button", { name: /^Créer la mission$/ }).click(); await p.waitForTimeout(600);
     ok("CRÉATION : la fiche de la mission s'ouvre (responsable Qafard, validation Tom, historique « a créé »)", (await dialog(p).getByText("Repérage photo plage").count()) >= 1 && (await dialog(p).getByText("Validation par").count()) === 1 && (await dialog(p).getByText("Tom", { exact: true }).count()) >= 1 && (await dialog(p).getByText(/a créé la mission/).count()) === 1);
     await closeSheet(p);
     ok("SUIVI : compteurs mis à jour (1 en cours) et carte compacte visible", /0 À faire 1 En cours 0 Terminées/i.test(await counts(p)) && (await p.getByRole("button", { name: /Repérage photo plage/ }).count()) === 1);
@@ -46,9 +46,9 @@ let fails = 0; const ok = (n, c, d = "") => { console.log(`${c ? "PASS" : "FAIL"
     ok("PERSISTANCE : la mission est toujours là après rechargement", (await p.getByRole("button", { name: /Repérage photo plage/ }).count()) === 1 && /1 En cours/i.test(await counts(p)));
     // Modification
     await p.getByRole("button", { name: /Repérage photo plage/ }).click(); await p.waitForTimeout(500);
-    await dialog(p).getByRole("button", { name: "Modifier" }).click(); await p.waitForTimeout(400);
-    await dialog(p).getByLabel("Titre *").fill("Repérage photo plage + calanque"); await dialog(p).getByRole("radio", { name: "Urgente" }).click(); await dialog(p).getByRole("button", { name: "Enregistrer" }).click(); await p.waitForTimeout(600);
-    ok("MODIFICATION : titre et priorité mis à jour, historique « a modifié »", (await dialog(p).getByText("Repérage photo plage + calanque").count()) >= 1 && (await dialog(p).getByText(/Priorité urgente/).count()) === 1 && (await dialog(p).getByText(/a modifié la mission/).count()) === 1);
+    await dialog(p).getByRole("button", { name: "Modifier les informations" }).click(); await p.waitForTimeout(400);
+    await dialog(p).getByLabel("Titre *").fill("Repérage photo plage + calanque"); await dialog(p).getByRole("radio", { name: "Urgente" }).click(); await dialog(p).getByRole("button", { name: "Enregistrer les informations" }).click(); await p.waitForTimeout(600);
+    ok("MODIFICATION : titre et priorité mis à jour, historique « a modifié »", (await dialog(p).getByText("Repérage photo plage + calanque").count()) >= 1 && (await dialog(p).getByText(/Priorité urgente/).count()) === 1 && (await dialog(p).getByText(/a modifié les informations/).count()) === 1);
     // Statuts
     ok("STATUT : l'assigné peut envoyer en validation, mais n'a aucun bouton « Terminée »", (await dialog(p).getByRole("button", { name: "Envoyer en validation" }).count()) === 1 && (await dialog(p).getByRole("button", { name: "Terminée", exact: true }).count()) === 0);
     await dialog(p).getByRole("button", { name: "Envoyer en validation" }).click(); await p.waitForTimeout(500);

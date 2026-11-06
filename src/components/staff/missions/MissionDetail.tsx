@@ -96,9 +96,10 @@ function Assignment({ m, actor, M }: { m: Mission; actor: Actor; M: MissionsApi 
             <button type="button" disabled={resolve.pending} onClick={() => resolve.run(true).then((r) => { if (r?.ok) setNote(""); })} className={cn(btn, "min-h-11 bg-sky px-5 text-jet")}>Approuver</button>
             <button type="button" disabled={resolve.pending} onClick={() => resolve.run(false).then((r) => { if (r?.ok) setNote(""); })} className={cn(btn, "min-h-11 border border-silver/45 px-5")}>Refuser</button>
           </div>
-          <ActionNotice pending={resolve.pending} result={resolve.result} doing="Décision en cours…" done="Décision enregistrée." onReload={M.refresh} />
         </div>
       )}
+      {/* Hors du bloc conditionnel : le résultat reste visible même quand la proposition vient d'être traitée (le bloc disparaît). */}
+      <ActionNotice pending={resolve.pending} result={resolve.result} doing="Décision en cours…" done="Décision enregistrée." onReload={M.refresh} />
 
       {canAssign(actor, m) && options.length > 0 && (
         <div className="mt-5">
@@ -106,9 +107,9 @@ function Assignment({ m, actor, M }: { m: Mission; actor: Actor; M: MissionsApi 
           <select id={`as-${m.id}`} value={target} onChange={(e) => setTarget(e.target.value)} disabled={assign.pending} className={field}><option value="">Choisir une personne</option>{options.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
           {!direct && <p className="mt-2 text-[0.85rem] leading-snug text-cloud/72">Une proposition ne change rien tant qu&apos;un administrateur ne l&apos;a pas approuvée.</p>}
           <button type="button" disabled={!target || assign.pending} onClick={() => assign.run(target).then((r) => { if (r?.ok) setTarget(""); })} className={cn(btn, "mt-3 min-h-11 border border-silver/45 px-5")}>{direct ? "Attribuer" : "Proposer"}</button>
-          <ActionNotice pending={assign.pending} result={assign.result} doing={direct ? "Attribution en cours…" : "Envoi de la proposition…"} done={direct ? "Mission attribuée." : "Proposition envoyée."} onReload={M.refresh} />
         </div>
       )}
+      <ActionNotice pending={assign.pending} result={assign.result} doing={direct ? "Attribution en cours…" : "Envoi de la proposition…"} done={direct ? "Mission attribuée." : "Proposition envoyée."} onReload={M.refresh} />
     </Section>
   );
 }
@@ -128,9 +129,9 @@ function StatusSection({ m, actor, M }: { m: Mission; actor: Actor; M: MissionsA
             {canValidate && <button type="button" disabled={act.pending} onClick={() => go("done")} className={cn(btn, "min-h-11 bg-sky px-5 text-jet")}>Valider · terminée</button>}
             {next.filter((s) => !(canValidate && s === "done")).map((s) => <button key={s} type="button" disabled={act.pending} onClick={() => go(s)} className={cn(btn, "min-h-11 border border-silver/45 px-5")}>{canValidate && s === "in_progress" ? "Renvoyer en cours" : s === "review" ? "Envoyer en validation" : STATUS_LABEL[s]}</button>)}
           </div>
-          <ActionNotice pending={act.pending} result={act.result} doing="Changement de statut…" done="Statut mis à jour." onReload={M.refresh} />
         </div>
       )}
+      <ActionNotice pending={act.pending} result={act.result} doing="Changement de statut…" done="Statut mis à jour." onReload={M.refresh} />
     </Section>
   );
 }
