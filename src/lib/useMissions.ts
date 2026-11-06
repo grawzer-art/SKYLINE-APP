@@ -16,8 +16,11 @@ export function useMissions(): MissionsApi {
   const st = useDemoStatus();
   const dbMode = st?.mode === "supabase" && st.dataSource === "db" && isUuid(st.session?.userId);
   const key = st === undefined || (st.mode === "supabase" && !st.session?.memberId) ? `${MISSIONS_KEY}:pending` : st.mode === "supabase" ? `${MISSIONS_KEY}:db:${st.session?.memberId}` : MISSIONS_KEY;
-  const local = useLocalMissions(dbMode ? `${MISSIONS_KEY}:inactive` : key, st !== undefined && !dbMode);
+  const misconfigured = st?.dataSource === "misconfigured";
+  const local = useLocalMissions(dbMode || misconfigured ? `${MISSIONS_KEY}:inactive` : key, st !== undefined && !dbMode && !misconfigured);
   const db = useDbMissions(dbMode);
   if (st === undefined) return { ...local, status: "loading" };
+  // Configuration invalide : erreur explicite, AUCUNE donnée (ni base, ni locale) : pas de repli silencieux qui ferait croire à une synchronisation.
+  if (misconfigured) return { ...local, status: "misconfigured", missions: [], local: null, error: { kind: "unknown", message: st.configError ?? "Configuration de STAFF HQ invalide." } };
   return dbMode ? db : local;
 }

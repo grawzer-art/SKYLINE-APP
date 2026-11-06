@@ -7,7 +7,8 @@ export type ActionResult = { ok: true; mission: Mission | null } | { ok: false; 
 export type Person = { id: string; name: string };
 /** Annuaire utilisé par l'écran : équipe locale de démonstration OU équipe réelle (list_team, UUID). */
 export type Directory = { members: Person[]; validatorIds: string[]; name: (id: string) => string };
-export type LoadStatus = "loading" | "ready" | "error" | "forbidden";
+/** `misconfigured` : configuration demandée mais incorrecte (ex. STAFF_DATA_SOURCE=db sans authentification Supabase) : aucune donnée, jamais de repli local. */
+export type LoadStatus = "loading" | "ready" | "error" | "forbidden" | "misconfigured";
 
 export type MissionsApi = {
   /** `local` : données de démonstration sur l'appareil. `db` : base Supabase (partagée, droits vérifiés par la base). */

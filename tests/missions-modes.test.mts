@@ -1,16 +1,32 @@
 // B2 — Séparation stricte des modes (local / base de données) et activation explicite. `node --experimental-strip-types tests/missions-modes.test.mts`
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
-import { resolveDataSource } from "../src/lib/staff/data-source.ts";
+import { evaluateStaffConfig, type ConfigEnv } from "../src/lib/staff/data-source.ts";
 
 let n = 0; const t = (name: string, fn: () => void) => { fn(); n++; console.log("PASS", name); };
+const cfg = (e: Partial<ConfigEnv>) => evaluateStaffConfig({ supabaseConfigured: true, ...e });
 
-t("source de données : « local » par défaut, « db » seulement si demandée ET si l'authentification Supabase est active", () => {
-  assert.equal(resolveDataSource({}, "demo"), "local");
-  assert.equal(resolveDataSource({}, "supabase"), "local");                                   // auth Supabase seule ≠ données en base
-  assert.equal(resolveDataSource({ STAFF_DATA_SOURCE: "db" }, "demo"), "local");              // jamais « db » sans authentification Supabase
-  assert.equal(resolveDataSource({ STAFF_DATA_SOURCE: "db" }, "supabase"), "db");
-  for (const v of ["DB", "true", "1", "supabase", " db", "", "local"]) assert.equal(resolveDataSource({ STAFF_DATA_SOURCE: v }, "supabase"), "local", `valeur ${JSON.stringify(v)}`);
+t("défaut : données « local » (démonstration) quand STAFF_DATA_SOURCE est absente, vide ou « local »", () => {
+  for (const d of [undefined, "", "local"]) { const c = cfg({ STAFF_DATA_SOURCE: d }); assert.deepEqual([c.data, c.issue], ["local", null]); }
+  const c = cfg({ STAFF_AUTH_MODE: "supabase", STAFF_DATA_SOURCE: "local" }); assert.deepEqual([c.auth, c.data, c.issue], ["supabase", "local", null]);   // auth Supabase seule ≠ données en base
+});
+t("activation : « db » uniquement avec l'authentification Supabase ET l'URL / la clé publique", () => {
+  const c = cfg({ STAFF_AUTH_MODE: "supabase", STAFF_DATA_SOURCE: "db" }); assert.deepEqual([c.auth, c.data, c.issue], ["supabase", "db", null]);
+});
+t("ERREUR EXPLICITE (jamais de repli silencieux) : « db » demandé sans authentification Supabase", () => {
+  for (const a of [undefined, "", "demo"]) { const c = cfg({ STAFF_AUTH_MODE: a, STAFF_DATA_SOURCE: "db" }); assert.equal(c.data, "misconfigured"); assert.match(c.issue ?? "", /STAFF_DATA_SOURCE=db.*STAFF_AUTH_MODE=supabase/); }
+});
+t("ERREUR EXPLICITE : configuration Supabase incomplète (URL ou clé absente), avec ou sans « db »", () => {
+  const a = cfg({ STAFF_AUTH_MODE: "supabase", STAFF_DATA_SOURCE: "db", supabaseConfigured: false }); assert.equal(a.data, "misconfigured"); assert.match(a.issue ?? "", /NEXT_PUBLIC_SUPABASE_URL/);
+  const b = cfg({ STAFF_AUTH_MODE: "supabase", supabaseConfigured: false }); assert.equal(b.data, "misconfigured");                // plus de retour discret à la démo
+});
+t("ERREUR EXPLICITE : toute valeur non reconnue (faute de frappe) est refusée, jamais interprétée comme « local »", () => {
+  for (const v of ["DB", "true", "1", "supabase", " db", "Local", "database"]) { const c = cfg({ STAFF_AUTH_MODE: "supabase", STAFF_DATA_SOURCE: v }); assert.equal(c.data, "misconfigured", `valeur ${JSON.stringify(v)}`); assert.match(c.issue ?? "", /non reconnue/); }
+  for (const v of ["Supabase", "on", "true"]) assert.equal(cfg({ STAFF_AUTH_MODE: v }).data, "misconfigured", `auth ${v}`);
+});
+t("les messages d'erreur ne citent que des NOMS de variables, jamais de valeur sensible", () => {
+  const all = [cfg({ STAFF_DATA_SOURCE: "db" }), cfg({ STAFF_AUTH_MODE: "supabase", supabaseConfigured: false }), cfg({ STAFF_DATA_SOURCE: "sb_secret_abc123" })];
+  for (const c of all) assert.doesNotMatch(c.issue ?? "", /sb_secret|abc123|https?:\/\//);
 });
 
 const read = (p: string) => readFileSync(p, "utf8");
@@ -38,7 +54,15 @@ t("l'identité d'action en mode base de données est l'UUID du compte, jamais le
 });
 t("la session expose l'UUID en mode Supabase uniquement ; la source de données vient du serveur", () => {
   const r = read("src/app/api/staff/session/route.ts");
-  assert.match(r, /userId: id\.userId/); assert.match(r, /dataSource: staffDataSource\(\)/);
+  assert.match(r, /userId: id\.userId/); assert.match(r, /dataSource: cfg\.data/); assert.match(r, /if \(cfg\.issue\)/);
   assert.equal([...r.matchAll(/dataSource: "local"/g)].length, 3, "démo, Supabase sans session, et erreur : toujours local");
+});
+t("le proxy suspend STAFF HQ (503) en cas de configuration invalide, avant tout accès ; la démo est coupée", () => {
+  const p = read("src/proxy.ts"); assert.match(p, /const issue = staffConfigIssue\(\);\s*if \(issue\) return configErrorPage\(issue\)/); assert.match(p, /status: 503/);
+  assert.match(read("src/lib/auth/token.ts"), /!staffConfigIssue\(\)/);
+});
+t("côté interface : statut « misconfigured » sans aucune donnée (ni base, ni locale)", () => {
+  const u = read("src/lib/useMissions.ts"); assert.match(u, /status: "misconfigured", missions: \[\], local: null/);
+  assert.match(u, /useLocalMissions\(dbMode \|\| misconfigured \? `\$\{MISSIONS_KEY\}:inactive`/);
 });
 console.log(`${n} tests MODES : OK`);

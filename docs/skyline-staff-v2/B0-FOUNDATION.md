@@ -1,6 +1,6 @@
 # SKYLINE APP — B0 : fondation (Supabase, authentification, modèle d'accès GLOBAL, migrations, RLS)
 
-Branche de travail `feat/staff-v2-b0-foundation` ; **branche de prévisualisation stable `staff-preview`** (même commit). **Aucune migration n'a été exécutée sur Supabase.** Rien n'est fusionné dans `main`. MEMBERS et SKYLINE SOUND ne sont pas modifiés. Revue SQL complète (texte intégral des migrations) : `B0-SQL-REVIEW.md`.
+Branche de travail `feat/staff-v2-b0-foundation` ; **branche de prévisualisation stable `staff-preview`** (même commit). **Mise à jour : les trois migrations ont été appliquées sur SKYLINE-APP (Irlande) et vérifiées ; aucun compte ni rôle n'est encore créé.** Rien n'est fusionné dans `main`. MEMBERS et SKYLINE SOUND ne sont pas modifiés. Revue SQL complète (texte intégral des migrations) : `B0-SQL-REVIEW.md`.
 
 ## 0. Modèle d'accès (GRAW super admin GLOBAL de SKYLINE APP)
 Trois notions distinctes et cumulables (détail : `B0-SQL-REVIEW.md` §1) :
@@ -24,7 +24,7 @@ Tables : `accounts` (identité globale) · `platform_roles` · `space_access` ·
 
 ## 2. Ce qui est dans le code
 - **Clients Supabase** (`src/lib/supabase/`) : navigateur (clé publique seulement), serveur (cookies httpOnly, `getUser()`), rafraîchissement de session dans le proxy. `service_role` jamais utilisée.
-- **Mode** (`src/lib/staff/mode.ts`) : `STAFF_AUTH_MODE=supabase` **et** URL + clé publique ⇒ mode Supabase ; sinon **mode démonstration** (inchangé).
+- **Mode** (`src/lib/staff/mode.ts`) : `STAFF_AUTH_MODE=supabase` **et** URL + clé publique ⇒ mode Supabase ; variable absente ⇒ **mode démonstration** (inchangé). **Depuis B2** : `STAFF_AUTH_MODE=supabase` sans URL / clé, ou une valeur non reconnue, produit une **erreur explicite (503)** et non un retour silencieux à la démonstration (voir `B2-SYNC.md` §1).
 - **Connexion** : `/staff/login` (code à 6 chiffres, valable aussi dans la PWA iPhone ; lien magique en secours), `/auth/callback`, `/auth/signout` (POST), `/api/staff/session`.
 - **Isolation** (`src/proxy.ts`) : en mode Supabase, session vérifiée auprès de Supabase + compte **actif** + accès **`staff`** + fiche d'annuaire, sinon redirection ; le mode démo est fermé.
 - **Accès** (`src/lib/auth/roles.ts`) : `platform` / `spaces` / `staff` (miroir de la base) ; fonctions professionnelles à part (`src/data/staff.ts`).

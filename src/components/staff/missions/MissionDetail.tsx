@@ -17,10 +17,14 @@ type Props = { m: Mission; actor: Actor; today: string | null; M: MissionsApi; o
 export function MissionDetail({ m, actor, today, M, onEditInfo, onArchive, onDelete }: Props) {
   const { name } = M.directory; const od = isOverdue(m, today);
   const who = (id: string) => name(id);
+  // Base de données : la suppression est réservée aux administrateurs (fonction delete_mission). Local : le créateur peut aussi supprimer.
+  const mayDelete = M.source === "db" ? actor.coordinator : canDelete(actor, m);
   const person = (note?: string) => (note && M.directory.members.some((x) => x.id === note) ? name(note) : note ?? "");
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-3">
+      {/* Titre de la mission dans le contenu (et non dans l'en-tête de la fenêtre) : un mot très long ne peut pas faire déborder l'écran. */}
+      <h3 className="font-display text-[1.5rem] leading-tight [overflow-wrap:anywhere]">{m.title}</h3>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
         <StatusPill s={m.status} />
         <span className={cn("font-mono text-[0.78rem] uppercase tracking-[0.12em]", m.priority === "urgent" ? "text-sunset" : m.priority === "high" ? "text-sky" : "text-cloud/72")}>Priorité {PRIORITY_LABEL[m.priority].toLowerCase()}</span>
         {m.archivedAt && <span className="font-mono text-[0.72rem] uppercase tracking-[0.12em] text-dim">Archivée</span>}
@@ -50,10 +54,10 @@ export function MissionDetail({ m, actor, today, M, onEditInfo, onArchive, onDel
         </ol>
       </Section>
 
-      {(canArchive(actor, m) || canDelete(actor, m)) && (
+      {(canArchive(actor, m) || mayDelete) && (
         <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line pt-5">
           {canArchive(actor, m) && <button type="button" onClick={onArchive} className={cn(btn, "min-h-11 border border-silver/45 px-5")}>Archiver</button>}
-          {canDelete(actor, m) && <button type="button" onClick={onDelete} className={cn(btn, "min-h-11 px-0 text-sunset underline underline-offset-4")}>Supprimer</button>}
+          {mayDelete && <button type="button" onClick={onDelete} className={cn(btn, "min-h-11 px-0 text-sunset underline underline-offset-4")}>Supprimer</button>}
         </div>
       )}
     </div>

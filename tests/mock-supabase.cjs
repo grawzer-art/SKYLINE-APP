@@ -17,7 +17,7 @@ const uid = () => "aaaaaaaa-" + String(Date.now() % 1e4).padStart(4, "0") + "-4"
 const ev = (m, actor, kind, x = {}) => S.events.push({ id: S.events.length + 1, mission_id: m.id, at: now(), actor_id: actor, kind, from_status: null, to_status: null, note: null, ...x });
 const seed = () => {
   const mk = (title, assignee, validator, creator, status = "todo", extra = {}) => { const m = { id: uid(), title, description: "", creator_id: U[creator], assignee_id: U[assignee], proposed_assignee_id: null, validator_id: U[validator], project_id: null, priority: "normal", status, due_date: null, archived_at: null, version: 1, created_at: now(), updated_at: now(), ...extra }; S.missions.push(m); ev(m, U[creator], "created"); return m; };
-  mk("Repérage photo", "qafard", "graw", "tom"); mk("Brief équipe", "tom", "graw", "tom", "in_progress"); mk("Mission privée de Tom", "tom", "graw", "tom");
+  mk("Repérage photo", "qafard", "graw", "tom"); mk("Brief équipe", "tom", "graw", "tom", "in_progress"); mk("Mission privée de Tom", "tom", "graw", "tom"); mk("Photographies-panoramiques-extrêmement-longues-sans-espace-ABCDEFGHIJKLMNOPQRSTUVWXYZ", "tom", "graw", "tom");
 };
 seed();
 const visible = (m, me) => coord(me) || [m.creator_id, m.assignee_id, m.validator_id, m.proposed_assignee_id].includes(U[me]);

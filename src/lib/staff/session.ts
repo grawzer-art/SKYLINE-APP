@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { canEnterStaff, type Access, type PlatformRole, type Space, type StaffRole } from "@/lib/auth/roles";
+import { canEnterStaff, type Access, type PlatformRole, type Space, type StaffRole } from "../auth/roles.ts";
 
 export type StaffIdentity = { userId: string; email: string; slug: string; name: string; access: Access };
 

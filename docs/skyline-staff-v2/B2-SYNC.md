@@ -2,14 +2,18 @@
 
 Branche : `feat/staff-v2-b2-sync` (depuis `55d028d`). **Aucune migration modifiée, aucun compte créé, aucun rôle attribué, aucun réglage d'authentification touché.**
 
-## 1. Trois couches d'activation (rien ne bascule automatiquement)
-| Couche | Variable | Défaut | Effet |
+## 1. Activation : configuration validée, jamais corrigée en silence
+| Variable | Valeurs | Défaut | Effet |
 |---|---|---|---|
-| Authentification | `STAFF_AUTH_MODE` | `demo` | `supabase` = connexion individuelle (B0) |
-| Source des données | `STAFF_DATA_SOURCE` | `local` | `db` = missions dans la base. **Ignorée (retour à `local`) si l'authentification n'est pas `supabase`.** Seule la valeur exacte `db` active. |
-| Interface | — | — | La source est exposée par `/api/staff/session` (`dataSource`), décidée côté serveur. |
+| `STAFF_AUTH_MODE` | `demo` · `supabase` | `demo` | `supabase` = connexion individuelle (B0). Exige `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. |
+| `STAFF_DATA_SOURCE` | `local` · `db` | `local` | `local` = démonstration sur l'appareil. `db` = missions partagées dans Supabase. **Exige `STAFF_AUTH_MODE=supabase`.** |
 
-Le mode local (démonstration, `localStorage`) est conservé tel quel. En authentification Supabase **sans** `STAFF_DATA_SOURCE=db`, le comportement B0 est inchangé : données locales séparées par compte + bannière « Données locales · non partagées ».
+**Règle de sécurité (aucun repli silencieux).** Une configuration demandée mais incorrecte ne revient **jamais** discrètement aux données locales : l'équipe croirait ses missions synchronisées. À la place, STAFF HQ est **suspendu** avec une erreur explicite :
+- `STAFF_DATA_SOURCE=db` sans `STAFF_AUTH_MODE=supabase` → erreur ;
+- `STAFF_AUTH_MODE=supabase` sans URL / clé publique → erreur (plus de retour discret à la démonstration) ;
+- toute valeur non reconnue (`DB`, `true`, `database`…) → erreur.
+
+Effets : toutes les pages `/staff/**` répondent **503 « Configuration invalide »** (cause indiquée, uniquement des *noms* de variables, jamais de valeurs ; `no-store`), `/api/staff/session` renvoie `dataSource: "misconfigured"`, la session de démonstration est coupée, l'écran Missions n'affiche aucune donnée (ni base, ni locale). L'application participants n'est pas affectée. Variables absentes ou `STAFF_DATA_SOURCE=local` : démonstration normale. Le mode local est conservé tel quel ; en authentification Supabase avec `STAFF_DATA_SOURCE=local`, le comportement B0 est inchangé (données locales séparées par compte + bannière « Données locales · non partagées »).
 
 ## 2. Architecture
 ```
@@ -51,6 +55,8 @@ Chaque action a son **propre** état (en cours / réussi / erreur), son propre m
 | `tests/missions-service.test.mts` (15) | Le **vrai** service contre un **vrai** Postgres local avec les migrations B0 : anonyme / participant / compte inactif refusés ; un membre ne voit pas les missions des autres ; responsable ne peut jamais « terminer » ; propositions ; conflit de version ; commentaires ; archivage / suppression ; identifiants fictifs jamais envoyés ; UUID inexistant refusé par la base ; erreurs sans fuite |
 | `tests/missions-modes.test.mts` (7) | Activation explicite ; aucun stockage navigateur en mode `db` ; aucun appel base en mode local ; aucune clé secrète ; liste fermée des fonctions / tables ; identité = UUID |
 | `tests/missions.test.mts` (42) | Règles du domaine, dont l'édition « informations seulement » |
+| `tests/identity.test.mts` (4) | Identité STAFF réelle (code du proxy) sous RLS : UUID de session = `auth.users.id` = `accounts.id` = `list_team().id` ; participant, inactif, sans accès, sans fiche → refusés ; un compte ne peut pas lire l'identité d'un autre |
+| `tests/e2e-config.cjs` via `tests/run-config.sh` | Configuration invalide → 503 explicite, démo coupée, participants intacts ; `local` explicite → démonstration normale |
 | `tests/e2e-db.cjs` via `tests/run-db.sh` | Interface complète sur un **faux serveur Supabase local** : chargement, erreurs réseau, conflit, refus, commentaires, proposition → approbation, archivage, aucun `localStorage` |
 | `tests/e2e-missions.cjs` etc. | Mode local inchangé (adapté aux nouveaux libellés) |
 

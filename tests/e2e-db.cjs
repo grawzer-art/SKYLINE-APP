@@ -1,6 +1,6 @@
 /* eslint-disable */
 // STAFF HQ B2 — mode « base de données » : chargement, erreurs, conflits, permissions, trois actions séparées, commentaires.
-// Faux serveur Supabase local (tests/mock-supabase.cjs) : AUCUN vrai projet n'est contacté. Voir tests/run-db.sh.
+// Faux serveur Supabase local (tests/mock-supabase.cjs, ergonomie iPhone 320 → 430 px incluse) : AUCUN vrai projet n'est contacté. Voir tests/run-db.sh.
 const { chromium } = require("playwright");
 const APP = process.env.BASE_DB || "http://localhost:3103"; const MOCK = process.env.MOCK || "http://127.0.0.1:3199";
 let fails = 0; const ok = (n, c, d = "") => { console.log(`${c ? "PASS" : "FAIL"} ${n}${!c && d ? " — " + d : ""}`); if (!c) fails++; };
@@ -28,7 +28,7 @@ const cookieFor = (who) => { const s = { access_token: "tok-" + who, refresh_tok
   await ctl({ delay: 0 });
   ok("BANNIÈRE : « Missions partagées · base de l'équipe » (pas « données locales »)", /missions partagées/i.test(await T.getByTestId("local-data-banner").innerText()));
   ok("MOBILE : pas de défilement horizontal", await T.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
-  await btn(T, /^Toutes$/).click(); ok("PÉRIMÈTRE : Tom (admin) voit les 3 missions (« Toutes »)", await vis(text(T, /3 missions/)));
+  await btn(T, /^Toutes$/).click(); ok("PÉRIMÈTRE : Tom (admin) voit les 4 missions (« Toutes »)", await vis(text(T, /4 missions/)));
   await T.screenshot({ path: "/tmp/db-list.png" });
 
   /* 2. Création (une seule action) */
@@ -96,7 +96,7 @@ const cookieFor = (who) => { const s = { access_token: "tok-" + who, refresh_tok
   ok("PROPOSITION : message « Proposition : vous restez responsable… » affiché", await vis(text(Q, /Proposition : vous restez responsable/)));
   await btn(Q, /Créer la mission/).click(); ok("PROPOSITION : créée, « Proposition en attente » = Tom", await vis(Q.getByRole("dialog").getByText("Proposition en attente")));
   ok("MEMBER : aucun bouton Approuver / Refuser", (await Q.getByRole("button", { name: /^Approuver$|^Refuser$/ }).count()) === 0);
-  ok("MEMBER : pas de suppression (réservée aux administrateurs)", (await Q.getByRole("button", { name: /^Supprimer$/ }).count()) === 0 || true);
+  ok("MEMBER : pas de bouton « Supprimer » (réservé aux administrateurs), même sur sa propre mission", (await Q.getByRole("button", { name: /^Supprimer$/ }).count()) === 0 && (await Q.getByRole("button", { name: /^Archiver$/ }).count()) === 1);
 
   /* 6. Tom approuve la proposition */
   await T.reload({ waitUntil: "domcontentloaded" }); ok("ADMIN : compteur « 1 proposition à traiter »", await vis(text(T, /1 proposition à traiter/)));
@@ -105,5 +105,24 @@ const cookieFor = (who) => { const s = { access_token: "tok-" + who, refresh_tok
 
   /* 7. Aucune donnée de mission dans le stockage du navigateur (mode base de données) */
   for (const [n, p] of [["Tom", T], ["Qafard", Q]]) { const keys = await p.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith("skyline.staff.missions"))); const vals = await p.evaluate(() => Object.keys(localStorage).filter((k) => k.startsWith("skyline.staff.missions")).map((k) => localStorage.getItem(k))); ok(`STOCKAGE : ${n} — aucune mission écrite dans localStorage`, vals.every((v) => !v || v === "[]"), JSON.stringify(keys)); }
+
+  /* 8. Ergonomie iPhone : zones tactiles ≥ 44 px, champs ≥ 16 px (pas de zoom iOS), aucun débordement horizontal — iPhone SE 1re gén. → Pro Max */
+  const ergo = (p) => p.evaluate(() => {
+    const root = document.querySelector("[role=dialog]") || document.body; const vis = (el) => { const r = el.getBoundingClientRect(); const cs = getComputedStyle(el); return r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && cs.display !== "none"; };
+    const small = [], zoom = []; root.querySelectorAll("button, a[href], select, input:not([type=hidden]), textarea, [role=radio]").forEach((el) => { if (!vis(el)) return; const r = el.getBoundingClientRect(); if (r.width <= 2 && r.height <= 2) return; const name = ((el.getAttribute("aria-label") || el.textContent || el.tagName) + "").trim().slice(0, 28);
+      if (r.height < 43.5 || r.width < 43.5) small.push(`${name} ${Math.round(r.width)}x${Math.round(r.height)}`); if (/INPUT|SELECT|TEXTAREA/.test(el.tagName) && parseFloat(getComputedStyle(el).fontSize) < 16) zoom.push(name); });
+    const d = document.querySelector("[role=dialog]"); return { small, zoom, hscroll: document.documentElement.scrollWidth > window.innerWidth || (d ? d.scrollWidth > d.clientWidth + 1 : false), fits: d ? d.getBoundingClientRect().height <= window.innerHeight + 1 : true };
+  });
+  for (const [w, h] of [[320, 568], [375, 667], [390, 844], [430, 932]]) {
+    const c = await mk("tom"); const P = c.p; await P.setViewportSize({ width: w, height: h }); await P.goto(APP + "/staff/missions", { waitUntil: "domcontentloaded" }); await vis(text(P, /Brief équipe/), 10000);
+    const rec = async (label) => { const r = await ergo(P); ok(`IPHONE ${w}×${h} — ${label} : zones tactiles ≥ 44 px, champs ≥ 16 px, sans débordement`, !r.small.length && !r.zoom.length && !r.hscroll && r.fits, JSON.stringify(r)); };
+    await rec("liste"); await text(P, /Photographies-panoramiques/).click(); await vis(P.getByRole("dialog").getByText("Historique")); await rec("fiche mission (titre d'un seul mot très long)");
+    await btn(P, /Modifier les informations/).click(); await vis(P.locator("#f-title")); await rec("formulaire d'informations");
+    await P.keyboard.press("Escape"); await P.waitForTimeout(500);
+    if (await P.getByRole("dialog").count()) { await P.keyboard.press("Escape"); await P.waitForTimeout(400); }
+    await btn(P, /Nouvelle mission/).click(); await vis(P.locator("#f-title")); await rec("formulaire de création");
+    if (w === 390) await P.screenshot({ path: "/tmp/db-form-390.png" });
+    await c.ctx.close();
+  }
   await browser.close(); console.log(fails ? `\n${fails} ÉCHEC(S)` : "\nTous les tests E2E (mode base de données) sont passés."); process.exit(fails ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
