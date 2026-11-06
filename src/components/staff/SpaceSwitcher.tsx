@@ -6,11 +6,11 @@ import { canEnterStaff, type Access } from "@/lib/auth/roles";
 import { rememberSpace } from "@/lib/space";
 import { cn } from "@/lib/cn";
 
-export type SessionInfo = { name: string; access: Access; memberId?: string; demo: boolean } | null;
+export type SessionInfo = { name: string; access: Access; memberId?: string; /** uuid du compte (mode Supabase uniquement) */ userId?: string; demo: boolean } | null;
 /** État de la démonstration + session (informative : l'autorisation réelle est faite côté serveur par le proxy). `undefined` = lecture en cours. */
 export function useDemoStatus() {
-  const [st, setSt] = useState<{ enabled: boolean; mode: "demo" | "supabase"; session: SessionInfo } | undefined>(undefined);
-  useEffect(() => { let off = false; fetch("/api/staff/session", { cache: "no-store" }).then((r) => (r.ok ? r.json() : { mode: "demo", enabled: false, session: null })).then((j) => { if (!off) setSt({ enabled: j.enabled !== false, mode: j.mode === "supabase" ? "supabase" : "demo", session: j.session ?? null }); }).catch(() => { if (!off) setSt({ enabled: false, mode: "demo", session: null }); }); return () => { off = true; }; }, []);
+  const [st, setSt] = useState<{ enabled: boolean; mode: "demo" | "supabase"; dataSource: "local" | "db"; session: SessionInfo } | undefined>(undefined);
+  useEffect(() => { let off = false; fetch("/api/staff/session", { cache: "no-store" }).then((r) => (r.ok ? r.json() : { mode: "demo", enabled: false, session: null })).then((j) => { if (!off) setSt({ enabled: j.enabled !== false, mode: j.mode === "supabase" ? "supabase" : "demo", dataSource: j.mode === "supabase" && j.dataSource === "db" ? "db" : "local", session: j.session ?? null }); }).catch(() => { if (!off) setSt({ enabled: false, mode: "demo", dataSource: "local", session: null }); }); return () => { off = true; }; }, []);
   return st;
 }
 export const useSessionInfo = () => { const st = useDemoStatus(); return st === undefined ? undefined : st.session; };

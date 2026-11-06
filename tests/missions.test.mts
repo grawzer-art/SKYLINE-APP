@@ -1,6 +1,6 @@
 // Tests unitaires MISSIONS : `node --experimental-strip-types tests/missions.test.mts`
 import assert from "node:assert/strict";
-import { allowedStatusTransitions, archiveMission, assignMission, canCreateFor, canDelete, canEdit, canView, changeStatus, countByStatus, createMission, daysLate, filterMissions, isOverdue, normalizeMission, resolveAssignment, sortMissions, updateMission, validateMissionInput, type Actor, type Mission, type MissionInput } from "../src/domain/missions.ts";
+import { allowedStatusTransitions, archiveMission, assignMission, canCreateFor, canDelete, canEdit, canView, changeStatus, countByStatus, createMission, daysLate, filterMissions, isOverdue, normalizeMission, resolveAssignment, sortMissions, updateMission, editMissionInfo, canArchive, canAssign, canResolveAssignment, validateMissionInput, type Actor, type Mission, type MissionInput } from "../src/domain/missions.ts";
 
 let n = 0; const t = (name: string, fn: () => void) => { fn(); n++; console.log("PASS", name); };
 const IDS = ["tom", "graw", "qafard"]; const VIDS = ["tom", "graw"];
@@ -82,4 +82,27 @@ t("filtres membre / statut / priorité combinés", () => {
 t("compteurs par statut", () => assert.deepEqual(countByStatus([mk({}, tom, "a"), mk({ status: "in_progress" }, tom, "b"), mk({ status: "done" }, tom, "c"), mk({ status: "review" }, tom, "d")]), { todo: 1, in_progress: 1, review: 1, done: 1 }));
 t("tri : retards d'abord, terminées en dernier", () => { const late = mk({ dueDate: "2026-10-01", priority: "normal" }, tom, "late"), urgent = mk({ priority: "urgent", dueDate: "2027-03-01" }, tom, "urgent"), done = mk({ status: "done", priority: "urgent" }, tom, "done"); assert.deepEqual(sortMissions([done, urgent, late], "2026-11-10").map((m) => m.id), ["late", "urgent", "done"]); });
 t("l'équipe active se limite à Tom, Graw, Qafard (aucun autre identifiant accepté)", () => { for (const bad of ["sarah", "loick", "bastien"]) assert.ok(!validateMissionInput({ ...base, assigneeId: bad }, IDS).ok); });
+
+/* ---- B2 : trois actions séparées (informations / attribution / statut) ---- */
+const info = (o: Partial<{ title: string; description: string; validatorId: string; dueDate: string | null; priority: "normal" | "high" | "urgent" }> = {}) => ({ title: "Shooting repérage", description: "", validatorId: "tom", dueDate: "2027-01-10", priority: "normal" as const, ...o });
+t("édition des informations : ne change NI le responsable NI le statut, journalise « modifiée »", () => {
+  const m = mk({ status: "in_progress" }); const r = editMissionInfo(m, info({ title: "Nouveau titre", priority: "urgent" }), tom, IDS, "2026-11-02T10:00:00Z", VIDS);
+  assert.ok(r.ok); assert.equal(r.value.assigneeId, "qafard"); assert.equal(r.value.status, "in_progress"); assert.equal(r.value.title, "Nouveau titre");
+  assert.equal(r.value.history.at(-1)?.kind, "edited"); assert.equal(r.value.history.at(-1)?.note, "title, priority"); assert.equal(r.value.history.length, m.history.length + 1);
+});
+t("édition des informations : sans changement → aucune entrée d'historique", () => { const m = mk(); const r = editMissionInfo(m, info(), tom, IDS, "2026-11-02T10:00:00Z", VIDS); assert.ok(r.ok && r.value === m); });
+t("édition des informations : refusée à un membre non créateur, sur une mission archivée, ou avec un validateur invalide", () => {
+  const m = mk({}, tom); assert.ok(!editMissionInfo(m, info({ title: "X" }), qafard, IDS, "t", VIDS).ok);
+  const a = archiveMission(m, tom, "t"); assert.ok(a.ok && !editMissionInfo(a.value, info({ title: "X" }), tom, IDS, "t", VIDS).ok);
+  assert.ok(!editMissionInfo(m, info({ validatorId: "qafard" }), tom, IDS, "t", VIDS).ok); assert.ok(!editMissionInfo(m, info({ validatorId: "qafard" }), tom, IDS, "t", VIDS).ok);
+});
+t("permissions d'interface : attribuer, proposer, approuver, archiver (la base revérifie toujours)", () => {
+  const m = mk({ assigneeId: "qafard" }, tom);                       // créée par Tom pour Qafard
+  assert.ok(canAssign(tom, m) && canAssign(qafard, m));              // le responsable peut PROPOSER
+  const other = mk({ assigneeId: "graw", validatorId: "tom" }, tom); assert.equal(canAssign(qafard, other), false);
+  const p = mk({ assigneeId: "tom", validatorId: "graw" }, qafard); assert.ok(p.proposedAssigneeId);
+  assert.ok(canResolveAssignment(tom, p)); assert.equal(canResolveAssignment(qafard, p), false); assert.equal(canResolveAssignment(tom, m), false);
+  assert.ok(canArchive(qafard, p) && !canArchive(qafard, m) && canArchive(tom, m));
+  const a = archiveMission(m, tom, "t"); assert.ok(a.ok && !canAssign(tom, a.value) && !canArchive(tom, a.value));
+});
 console.log(`${n} tests MISSIONS : OK`);

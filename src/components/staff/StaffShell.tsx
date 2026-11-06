@@ -36,8 +36,13 @@ export function StaffShell({ children }: { children: React.ReactNode }) {
       </header>
 
       <div className="min-h-dvh pb-[calc(var(--nav-h)+var(--safe-bottom)+2.5rem)] pt-[calc(var(--safe-top)+3.5rem)]">
-        {/* Compte connecté (Supabase) mais écrans encore locaux : jamais de confusion entre données partagées et données locales. */}
-        {st?.mode === "supabase" && (
+        {/* Compte connecté (Supabase) : jamais de confusion entre données partagées (base) et données locales (appareil). */}
+        {st?.mode === "supabase" && st.dataSource === "db" && (
+          <p role="note" data-testid="local-data-banner" className="mx-5 mt-4 rounded-[8px] border border-sky/60 px-4 py-3 text-[0.85rem] leading-snug text-cloud/90">
+            <span className="font-mono text-[0.75rem] uppercase tracking-[0.14em] text-sky">Missions partagées · base de l&apos;équipe</span><br />Les missions et leurs commentaires sont enregistrés dans la base ; les droits sont vérifiés par le serveur. Plannings, messages et annonces restent des données de démonstration locales à cet appareil.
+          </p>
+        )}
+        {st?.mode === "supabase" && st.dataSource !== "db" && (
           <p role="note" data-testid="local-data-banner" className="mx-5 mt-4 rounded-[8px] border border-sunset/60 px-4 py-3 text-[0.85rem] leading-snug text-cloud/90">
             <span className="font-mono text-[0.75rem] uppercase tracking-[0.14em] text-sunset">Données locales · non partagées</span><br />Vous êtes connecté, mais les missions, plannings, messages et annonces de cet écran restent des données de démonstration enregistrées sur cet appareil. Elles ne sont ni partagées avec l&apos;équipe ni enregistrées dans la base.
           </p>

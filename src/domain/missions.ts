@@ -27,10 +27,14 @@ export type Mission = {
   /** Archivée = masquée des listes, conservée avec son historique. */
   archivedAt: string | null;
   createdAt: string; updatedAt: string; history: HistoryEntry[];
+  /** Mode base de données uniquement : numéro de version (verrou optimiste) et projet. Absents en mode local. */
+  version?: number; projectId?: string | null;
 };
 
 /** Qui agit : un membre de l'équipe et son pouvoir de coordination (`admin` ou `super_admin`). */
 export type Actor = { memberId: string; coordinator: boolean };
+/** Informations modifiables SEPAREMENT du responsable et du statut (trois actions distinctes). */
+export type MissionInfoInput = { title: string; description: string; validatorId: string; dueDate: string | null; priority: MissionPriority };
 export type MissionInput = { title: string; description: string; assigneeId: string; validatorId: string; dueDate: string | null; priority: MissionPriority; status: MissionStatus };
 
 /* ---------- Validation ---------- */
@@ -67,6 +71,10 @@ export const isMine = (a: Actor, m: Mission) => m.assigneeId === a.memberId;
 export const canCreateFor = (a: Actor, assigneeId: string) => a.coordinator || assigneeId === a.memberId;
 export const canEdit = (a: Actor, m: Mission) => a.coordinator || m.creatorId === a.memberId;
 export const canDelete = (a: Actor, m: Mission) => a.coordinator || m.creatorId === a.memberId;
+export const canArchive = (a: Actor, m: Mission) => !m.archivedAt && (a.coordinator || m.creatorId === a.memberId);
+/** Attribuer (coordinateur) ou PROPOSER une attribution (créateur ou responsable). Interface seulement : la base revérifie. */
+export const canAssign = (a: Actor, m: Mission) => !m.archivedAt && (a.coordinator || m.creatorId === a.memberId || m.assigneeId === a.memberId);
+export const canResolveAssignment = (a: Actor, m: Mission) => !m.archivedAt && a.coordinator && !!m.proposedAssigneeId;
 
 /** Statuts que `actor` peut donner à la mission. « Terminée » n'est JAMAIS accessible à l'assigné : seule la validation (ou un coordinateur) clôt. */
 export function allowedStatusTransitions(a: Actor, m: Mission): MissionStatus[] {
@@ -150,6 +158,17 @@ export function updateMission(m: Mission, i: MissionInput, a: Actor, memberIds: 
   if (v.value.assigneeId !== m.assigneeId) { const r = assignMission(next, v.value.assigneeId, a, memberIds, now); if (!r.ok) return r; next = r.value; }
   if (v.value.status !== m.status) { const s = changeStatus(next, v.value.status, a, now); if (!s.ok) return s; next = s.value; }
   return { ok: true, value: next };
+}
+
+/** Modifier UNIQUEMENT les informations (titre, description, validateur, échéance, priorité) : ni responsable, ni statut. */
+export function editMissionInfo(m: Mission, i: MissionInfoInput, a: Actor, memberIds: readonly string[], now: string, validatorIds: readonly string[] = memberIds): Res<Mission> {
+  if (m.archivedAt) return { ok: false, reason: "Mission archivée." };
+  if (!canEdit(a, m)) return { ok: false, reason: "Vous ne pouvez pas modifier cette mission." };
+  const v = validateMissionInput({ ...i, assigneeId: m.assigneeId, status: m.status }, memberIds, validatorIds); if (!v.ok) return { ok: false, reason: Object.values(v.errors)[0] ?? "Mission invalide." };
+  if (m.proposedAssigneeId && v.value.validatorId === m.proposedAssigneeId) return { ok: false, reason: "Le validateur ne peut pas être la personne proposée." };
+  const changed = (["title", "description", "validatorId", "dueDate", "priority"] as const).filter((k) => m[k] !== v.value[k]);
+  if (!changed.length) return { ok: true, value: m };
+  return { ok: true, value: { ...m, title: v.value.title, description: v.value.description, validatorId: v.value.validatorId, dueDate: v.value.dueDate, priority: v.value.priority, updatedAt: now, history: [...m.history, entry(`${m.id}-h${m.history.length}`, now, a.memberId, "edited", { note: changed.join(", ") })] } };
 }
 
 /* ---------- Affichage ---------- */
