@@ -50,8 +50,11 @@ export const canManageEvent = (e: AgendaEvent, me: string, coordinator: boolean)
 
 /* ---------- Construction de l'agenda ---------- */
 export type AgendaView = "mine" | "team";
+/** Entrée de l'agenda COLLECTIF (fonction `list_team_agenda`) : le strict nécessaire, JAMAIS de description, commentaire ni historique. */
+export type SharedEntry = { id: string; title: string; assigneeId: string; dueDate: string; dueTime: string | null; status: Mission["status"]; priority: Mission["priority"] };
 export type AgendaItem =
   | { type: "mission"; key: string; date: string; time: string | null; mission: Mission }
+  | { type: "shared"; key: string; date: string; time: string | null; entry: SharedEntry }
   | { type: "event"; key: string; date: string; time: string | null; event: AgendaEvent };
 export type Agenda = {
   byDay: Record<string, AgendaItem[]>;
@@ -68,8 +71,9 @@ const cmpItem = (a: AgendaItem, b: AgendaItem) => {
   // Éléments horaires d'abord (par heure), puis « toute la journée » ; à égalité : événements avant missions, priorité, titre.
   if ((a.time === null) !== (b.time === null)) return a.time === null ? 1 : -1;
   if (a.time !== b.time) return (a.time ?? "") < (b.time ?? "") ? -1 : 1;
-  if (a.type !== b.type) return a.type === "event" ? -1 : 1;
-  if (a.type === "mission" && b.type === "mission") return PRIO[a.mission.priority] - PRIO[b.mission.priority] || a.mission.title.localeCompare(b.mission.title, "fr");
+  if ((a.type === "event") !== (b.type === "event")) return a.type === "event" ? -1 : 1;
+  const pa = a.type === "mission" ? a.mission : a.type === "shared" ? a.entry : null; const pb = b.type === "mission" ? b.mission : b.type === "shared" ? b.entry : null;
+  if (pa && pb) return PRIO[pa.priority] - PRIO[pb.priority] || pa.title.localeCompare(pb.title, "fr");
   return 0;
 };
 
@@ -78,13 +82,15 @@ const cmpItem = (a: AgendaItem, b: AgendaItem) => {
  * « Équipe » : toutes les missions que l'utilisateur est autorisé à voir (la base applique ses droits) + événements d'équipe + les miens.
  * `missions` doit déjà être filtré par les droits de lecture (base) : l'agenda n'élargit JAMAIS la visibilité.
  */
-export function buildAgenda(input: { missions: Mission[]; events: AgendaEvent[]; me: string; coordinator: boolean; view: AgendaView; today: string }): Agenda {
+export function buildAgenda(input: { missions: Mission[]; events: AgendaEvent[]; me: string; coordinator: boolean; view: AgendaView; today: string; /** Planning collectif (vue Équipe seulement) : entrées minimales d'autres missions. */ shared?: SharedEntry[] }): Agenda {
   const { me, view, today } = input;
   const live = input.missions.filter((m) => !m.archivedAt);
   const scoped = view === "mine" ? live.filter((m) => m.assigneeId === me) : live;
   const byDay: Record<string, AgendaItem[]> = {};
   const push = (it: AgendaItem) => { (byDay[it.date] ??= []).push(it); };
   for (const m of scoped) if (m.dueDate) push({ type: "mission", key: `m:${m.id}`, date: m.dueDate, time: m.dueTime ?? null, mission: m });
+  // Agenda collectif : seulement en vue Équipe, jamais en double d'une mission déjà lisible, jamais archivée (la base les exclut aussi).
+  if (view === "team") { const known = new Set(input.missions.map((m) => m.id)); for (const e of input.shared ?? []) if (!known.has(e.id)) push({ type: "shared", key: `s:${e.id}`, date: e.dueDate, time: e.dueTime, entry: e }); }
   for (const e of input.events) if (canSeeEvent(e, me)) push({ type: "event", key: `e:${e.id}`, date: e.date, time: e.startTime, event: e });
   for (const d of Object.keys(byDay)) byDay[d].sort(cmpItem);
   return {

@@ -44,7 +44,7 @@ await provision("norole", {});
 // ---- Port de test : SQL local sous le rôle `authenticated` + JWT simulé (ou `anon`), sérialisé (une seule connexion).
 let chain: Promise<unknown> = Promise.resolve(); let calls = 0;
 const serial = <T,>(fn: () => Promise<T>): Promise<T> => { const r = chain.then(fn, fn); chain = r.catch(() => undefined); return r; };
-const COL = /^[a-z_,]+$/; const IDENT = /^[a-z_]+$/;
+const COL = /^[a-z0-9_,]+$/; const IDENT = /^[a-z0-9_]+$/;
 const run = async (who: string, sql: string, params: unknown[]) => serial(async () => {
   calls++;
   if (who === "anon") await db.exec(`set role anon; select set_config('request.jwt.claims', '', false)`);

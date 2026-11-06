@@ -24,6 +24,8 @@ const KNOWN: Record<string, MissionError> = {
   invalid_title: E("invalid", "Titre invalide (1 à 120 caractères)."),
   invalid_description: E("invalid", "Description trop longue (500 caractères maximum)."),
   invalid_comment: E("invalid", "Commentaire invalide (1 à 1000 caractères)."),
+  invalid_time: E("invalid", "Heure invalide : choisissez d'abord une date."),
+  invalid_range: E("invalid", "Période invalide pour l'agenda collectif."),
   no_pending_assignment: E("conflict", "Aucune attribution en attente (déjà traitée ?). Rechargez la mission."),
 };
 

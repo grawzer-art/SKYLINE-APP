@@ -16,7 +16,7 @@ const now = () => new Date().toISOString();
 const uid = () => "aaaaaaaa-" + String(Date.now() % 1e4).padStart(4, "0") + "-4" + String(S.seq).padStart(3, "0") + "-8" + String(++S.seq).padStart(3, "0") + "-" + String(Math.floor(Math.random() * 1e12)).padStart(12, "0");
 const ev = (m, actor, kind, x = {}) => S.events.push({ id: S.events.length + 1, mission_id: m.id, at: now(), actor_id: actor, kind, from_status: null, to_status: null, note: null, ...x });
 const seed = () => {
-  const mk = (title, assignee, validator, creator, status = "todo", extra = {}) => { const m = { id: uid(), title, description: "", creator_id: U[creator], assignee_id: U[assignee], proposed_assignee_id: null, validator_id: U[validator], project_id: null, priority: "normal", status, due_date: null, archived_at: null, version: 1, created_at: now(), updated_at: now(), ...extra }; S.missions.push(m); ev(m, U[creator], "created"); return m; };
+  const mk = (title, assignee, validator, creator, status = "todo", extra = {}) => { const m = { id: uid(), title, description: "", creator_id: U[creator], assignee_id: U[assignee], proposed_assignee_id: null, validator_id: U[validator], project_id: null, priority: "normal", status, due_date: null, due_time: null, is_private: false, archived_at: null, version: 1, created_at: now(), updated_at: now(), ...extra }; S.missions.push(m); ev(m, U[creator], "created"); return m; };
   mk("Repérage photo", "qafard", "graw", "tom"); mk("Brief équipe", "tom", "graw", "tom", "in_progress"); mk("Mission privée de Tom", "tom", "graw", "tom"); mk("Photographies-panoramiques-extrêmement-longues-sans-espace-ABCDEFGHIJKLMNOPQRSTUVWXYZ", "tom", "graw", "tom");
 };
 seed();
@@ -27,15 +27,19 @@ const FORB = E("42501", "forbidden"); const NOTF = E("P0001", "not_found");
 function rpc(fn, a, me) {
   if (fn === "list_team") return { body: Object.keys(U).filter(isStaff).map((s) => ({ id: U[s], slug: s, display_name: NAMES[s], function_title: "Fonction " + s, platform_roles: ROLES[s].platform, staff_roles: ROLES[s].staff })) };
   if (!isStaff(me)) return FORB;
+  if (fn === "list_team_agenda") {
+    if (!a.p_from || !a.p_to || a.p_to < a.p_from) return E("P0001", "invalid_range");
+    return { body: S.missions.filter((m) => !m.archived_at && !m.is_private && m.due_date && m.due_date >= a.p_from && m.due_date <= a.p_to).sort((x, y) => (x.due_date + (x.due_time || "99")).localeCompare(y.due_date + (y.due_time || "99"))).map((m) => ({ id: m.id, title: m.title, assignee_id: m.assignee_id, due_date: m.due_date, due_time: m.due_time, status: m.status, priority: m.priority })) };
+  }
   const find = () => S.missions.find((x) => x.id === a.p_id && visible(x, me));
   const c = coord(me);
-  if (fn === "create_mission") {
+  if (fn === "create_mission" || fn === "create_mission_v2") {
     if (!a.p_title || !a.p_title.trim()) return E("P0001", "invalid_title");
     if (a.p_status === "done" && !c) return E("42501", "forbidden_status");
     const valid = Object.keys(U).find((s) => U[s] === a.p_validator && coord(s)); if (!valid) return E("P0001", "invalid_validator");
     let eff = a.p_assignee, prop = null; if (a.p_assignee !== U[me] && !c) { eff = U[me]; prop = a.p_assignee; }
     if (a.p_validator === eff || a.p_validator === prop) return E("P0001", "validator_conflict");
-    const m = { id: uid(), title: a.p_title.trim(), description: a.p_description || "", creator_id: U[me], assignee_id: eff, proposed_assignee_id: prop, validator_id: a.p_validator, project_id: null, priority: a.p_priority, status: a.p_status, due_date: a.p_due || null, archived_at: null, version: 1, created_at: now(), updated_at: now() };
+    const m = { id: uid(), title: a.p_title.trim(), description: a.p_description || "", creator_id: U[me], assignee_id: eff, proposed_assignee_id: prop, validator_id: a.p_validator, project_id: null, priority: a.p_priority, status: a.p_status, due_date: a.p_due || null, due_time: fn === "create_mission_v2" && a.p_due ? a.p_time || null : null, is_private: false, archived_at: null, version: 1, created_at: now(), updated_at: now() };
     S.missions.push(m); ev(m, U[me], "created"); if (prop) ev(m, U[me], "assignment_proposed", { note: prop }); return { body: m };
   }
   if (fn === "add_mission_comment") { const m = find(); if (!m) return FORB; if (!a.p_body || !a.p_body.trim()) return E("P0001", "invalid_comment"); const cm = { id: uid(), mission_id: m.id, author_id: U[me], body: a.p_body.trim(), created_at: now() }; S.comments.push(cm); return { body: cm }; }
@@ -45,9 +49,9 @@ function rpc(fn, a, me) {
     m.proposed_assignee_id = null; m.version++; return { body: null };
   }
   const m = find(); if (!m) return NOTF; if (m.archived_at && fn !== "delete_mission") return E("P0001", "archived");
-  if (fn === "update_mission") {
+  if (fn === "update_mission" || fn === "update_mission_v2") {
     if (!(c || m.creator_id === U[me])) return FORB; if (m.version !== a.p_expected_version) return E("P0001", "version_conflict");
-    Object.assign(m, { title: a.p_title.trim(), description: a.p_description || "", validator_id: a.p_validator, due_date: a.p_due || null, priority: a.p_priority, version: m.version + 1, updated_at: now() }); ev(m, U[me], "edited", { note: "title" }); return { body: m };
+    Object.assign(m, { title: a.p_title.trim(), description: a.p_description || "", validator_id: a.p_validator, due_date: a.p_due || null, priority: a.p_priority, version: m.version + 1, updated_at: now() }); if (fn === "update_mission_v2") m.due_time = a.p_due ? a.p_time || null : null; else if (!a.p_due) m.due_time = null; ev(m, U[me], "edited", { note: "title" }); return { body: m };
   }
   if (fn === "set_mission_status") {
     if (a.p_to === m.status) return E("P0001", "same_status"); const old = m.status;
@@ -58,6 +62,7 @@ function rpc(fn, a, me) {
     if (a.p_assignee === m.assignee_id) return E("P0001", "same_assignee"); if (c) { m.assignee_id = a.p_assignee; m.proposed_assignee_id = null; ev(m, U[me], "reassigned", { note: a.p_assignee }); }
     else if (m.creator_id === U[me] || m.assignee_id === U[me]) { m.proposed_assignee_id = a.p_assignee; ev(m, U[me], "assignment_proposed", { note: a.p_assignee }); } else return FORB; m.version++; return { body: m };
   }
+  if (fn === "set_mission_private") { if (!(c || m.creator_id === U[me])) return FORB; m.is_private = !!a.p_private; m.version++; return { body: m }; }
   if (fn === "archive_mission") { if (!(c || m.creator_id === U[me])) return FORB; m.archived_at = now(); m.version++; ev(m, U[me], "archived"); return { body: m }; }
   if (fn === "delete_mission") { if (!c) return FORB; S.missions = S.missions.filter((x) => x !== m); S.events = S.events.filter((e) => e.mission_id !== m.id); return { body: null }; }
   return E("P0001", "unknown_function");

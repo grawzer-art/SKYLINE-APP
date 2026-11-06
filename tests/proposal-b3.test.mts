@@ -50,19 +50,19 @@ const q = (who: string, sql: string, p: unknown[] = []) => as(who, async () => (
 const fails = async (who: string, sql: string, re: RegExp, p: unknown[] = []) => { let msg = ""; try { await q(who, sql, p); } catch (e) { msg = String((e as Error).message); } assert.match(msg, re, `attendu ${re} pour : ${sql.slice(0, 80)}`); };
 const titles = async (who: string) => (await q(who, `select title from public.notifications order by title`)).map((r) => r.title);
 
-await t("migration : B0 + proposition s'appliquent sans erreur ; l'ancien appel de create_mission (sans p_time) reste valide", async () => {
+await t("migration : B0 + proposition s'appliquent sans erreur ; les anciens appels B2 (create_mission / update_mission) restent valides", async () => {
   const m = (await q("tom", `select * from public.create_mission('Repérage', '', $1, $2, '2026-11-12', 'normal', 'todo', null)`, [ids.qafard, ids.graw]))[0];
   assert.equal(m.due_time, null); assert.equal(m.due_date.toISOString().slice(0, 10), "2026-11-12");
 });
-await t("heure facultative : enregistrée avec la date, refusée sans date, effacée si la date disparaît, historisée", async () => {
-  const m = (await q("tom", `select * from public.create_mission(p_title => 'Avec heure', p_description => '', p_assignee => $1, p_validator => $2, p_due => '2026-11-12', p_time => '09:30')`, [ids.qafard, ids.graw]))[0];
+await t("heure facultative (fonctions _v2) : enregistrée avec la date, refusée sans date, effacée si la date disparaît, historisée", async () => {
+  const m = (await q("tom", `select * from public.create_mission_v2(p_title => 'Avec heure', p_description => '', p_assignee => $1, p_validator => $2, p_due => '2026-11-12', p_time => '09:30')`, [ids.qafard, ids.graw]))[0];
   assert.equal(String(m.due_time), "09:30:00");
-  await fails("tom", `select * from public.create_mission(p_title => 'x', p_description => '', p_assignee => $1, p_validator => $2, p_due => null, p_time => '09:30')`, /invalid_time/, [ids.qafard, ids.graw]);
-  const u = (await q("tom", `select * from public.update_mission($1, 1, 'Avec heure', '', $2, '2026-11-12', 'normal', null, '14:00')`, [m.id, ids.graw]))[0]; assert.equal(String(u.due_time), "14:00:00"); assert.equal(u.version, 2);
+  await fails("tom", `select * from public.create_mission_v2(p_title => 'x', p_description => '', p_assignee => $1, p_validator => $2, p_due => null, p_time => '09:30')`, /invalid_time/, [ids.qafard, ids.graw]);
+  const u = (await q("tom", `select * from public.update_mission_v2($1, 1, 'Avec heure', '', $2, '2026-11-12', '14:00', 'normal', null)`, [m.id, ids.graw]))[0]; assert.equal(String(u.due_time), "14:00:00"); assert.equal(u.version, 2);
   const ev = (await q("tom", `select note from public.mission_events where mission_id = $1 order by id desc limit 1`, [m.id]))[0]; assert.equal(ev.note, "dueTime");
-  await fails("tom", `select * from public.update_mission($1, 2, 'Avec heure', '', $2, null, 'normal', null, '14:00')`, /invalid_time/, [m.id, ids.graw]);   // une heure sans date est refusée
-  const c = (await q("tom", `select * from public.update_mission($1, 2, 'Avec heure', '', $2, null, 'normal', null, null)`, [m.id, ids.graw]))[0]; assert.equal(c.due_time, null); assert.equal(c.due_date, null);
-  await fails("qafard", `select * from public.update_mission($1, 3, 'x', '', $2, null, 'normal')`, /forbidden|not_found/, [m.id, ids.graw]);
+  await fails("tom", `select * from public.update_mission_v2($1, 2, 'Avec heure', '', $2, null, '14:00', 'normal', null)`, /invalid_time/, [m.id, ids.graw]);
+  const c = (await q("tom", `select * from public.update_mission_v2($1, 2, 'Avec heure', '', $2, null, null, 'normal', null)`, [m.id, ids.graw]))[0]; assert.equal(c.due_time, null); assert.equal(c.due_date, null);
+  await fails("qafard", `select * from public.update_mission_v2($1, 3, 'x', '', $2, null, null, 'normal')`, /forbidden|not_found/, [m.id, ids.graw]);
 });
 await t("événements : un membre crée un événement PERSONNEL ; l'événement d'ÉQUIPE est réservé aux administrateurs", async () => {
   await q("qafard", `select * from public.create_agenda_event('Rdv perso', 'meeting', '2026-11-12', '10:00', '11:00', 'Bureau', 'me')`);
@@ -169,6 +169,7 @@ await t("PRIVILÈGES : anon = aucun droit ; authenticated = SELECT seul sur les 
   assert.deepEqual(await fn("anon"), []);
   const auth = await fn("authenticated"); for (const f of ["create_agenda_event", "update_agenda_event", "delete_agenda_event", "mark_notifications_read", "set_notification_preferences", "register_push_subscription", "revoke_push_subscription", "send_announcement", "can_view_notification"]) assert.ok(auth.includes(f), f);
   assert.ok(!auth.includes("is_staff_user") && !auth.includes("is_validator_user") && !auth.includes("handle_new_user"));
-  assert.equal(auth.filter((x) => x === "create_mission" || x === "update_mission").length, 2, "une seule version de chaque fonction (pas de surcharge ambiguë)");
+  for (const f of ["create_mission", "update_mission", "create_mission_v2", "update_mission_v2", "list_team_agenda", "set_mission_private"]) assert.equal(auth.filter((x) => x === f).length, 1, `${f} : une seule signature (aucune surcharge ambiguë)`);
+  assert.ok(!auth.includes("missions_keep_time_consistent"), "fonction de déclencheur inexécutable");
 });
 console.log(`${n} tests PROPOSITION B3 (Postgres local) : OK`);

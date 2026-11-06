@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Mission } from "../../domain/missions.ts";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import { createSupabasePort } from "./supabase-port.ts";
-import { createMissionsService, type Result, type TeamMember } from "./service.ts";
+import { createMissionsService, type DbSchema, type Result, type TeamMember } from "./service.ts";
 import type { MissionError } from "./errors.ts";
 import type { ActionResult, MissionsApi, LoadStatus } from "./types.ts";
 
@@ -17,10 +17,10 @@ type State = { status: LoadStatus; error: MissionError | null; missions: Mission
 const INITIAL: State = { status: "loading", error: null, missions: [], team: [] };
 const toAction = (r: Result<Mission | null>): ActionResult => (r.ok ? { ok: true, mission: r.value } : { ok: false, kind: r.error.kind, message: r.error.message });
 
-export function useDbMissions(enabled: boolean): MissionsApi {
+export function useDbMissions(enabled: boolean, schema: DbSchema = "b2"): MissionsApi {
   const [state, setState] = useState<State>(INITIAL);
   const [refreshing, setRefreshing] = useState(false);
-  const service = useMemo(() => (enabled ? createMissionsService(createSupabasePort(createBrowserSupabase())) : null), [enabled]);
+  const service = useMemo(() => (enabled ? createMissionsService(createSupabasePort(createBrowserSupabase()), { schema }) : null), [enabled, schema]);
   const seq = useRef(0); const last = useRef(0);
 
   /** Applique le résultat d'une lecture, sauf si une lecture plus récente a pris le relais. */
@@ -74,8 +74,9 @@ export function useDbMissions(enabled: boolean): MissionsApi {
       load: (id) => (service ? service.loadComments(id) : Promise.resolve({ ok: false, error: { kind: "invalid", message: "Base de données indisponible." } })),
       add: (id, body) => (service ? service.addComment(id, body) : Promise.resolve({ ok: false, error: { kind: "invalid", message: "Base de données indisponible." } })),
     },
-    // Heure et événements : pas de colonne / table en base tant que la migration B3 (proposée) n'est pas validée et appliquée.
-    capabilities: { dueTime: false, events: false },
+    // Schéma B2 (défaut) : ni heure ni agenda collectif. Schéma B3 (migration appliquée, STAFF_DB_SCHEMA=b3) : heure + agenda collectif. Événements : client à venir.
+    capabilities: { dueTime: schema === "b3", events: false, teamAgenda: schema === "b3" },
+    teamAgenda: (from, to) => (service ? service.loadTeamAgenda(from, to) : Promise.resolve({ ok: false, error: { kind: "invalid", message: "Base de données indisponible." } })),
     local: null,
   };
 }

@@ -66,4 +66,14 @@ t("événements : validation (titre, date, heures cohérentes), création, droit
   const c = createEvent({ title: " Brief ", kind: "event", date: "2026-11-10", startTime: null, endTime: null, place: "", scope: "team" }, "tom", "2026-11-01T00:00:00Z", "e9"); assert.ok(c.ok && c.value.title === "Brief" && c.value.creatorId === "tom");
   assert.ok(canManageEvent(ev(), "tom", false) && !canManageEvent(ev(), "qafard", false) && canManageEvent(ev({ creatorId: "qafard" }), "tom", true) && !canManageEvent(ev({ creatorId: "qafard", scope: "me" }), "tom", true));
 });
+t("agenda COLLECTIF : entrées minimales ajoutées en vue Équipe seulement, sans doublon avec une mission lisible, triées avec le reste", () => {
+  const mine = mk({ assigneeId: "qafard", dueTime: "14:00" });
+  const shared = [{ id: "s1", title: "Mission d'un autre", assigneeId: "tom", dueDate: "2026-11-10", dueTime: "08:00", status: "todo" as const, priority: "high" as const }, { id: mine.id, title: "doublon", assigneeId: "qafard", dueDate: "2026-11-10", dueTime: "14:00", status: "todo" as const, priority: "normal" as const }];
+  const team = buildAgenda({ missions: [mine], events: [], me: "qafard", coordinator: false, view: "team", today: TODAY, shared });
+  assert.deepEqual((team.byDay["2026-11-10"] ?? []).map((i) => i.key), ["s:s1", `m:${mine.id}`]);                       // 08:00 (partagée) puis 14:00 ; le doublon est ignoré
+  const it = (team.byDay["2026-11-10"] ?? [])[0]; assert.ok(it.type === "shared"); assert.deepEqual(Object.keys((it as { entry: object }).entry).sort(), ["assigneeId", "dueDate", "dueTime", "id", "priority", "status", "title"]);
+  const minev = buildAgenda({ missions: [mine], events: [], me: "qafard", coordinator: false, view: "mine", today: TODAY, shared });
+  assert.ok(!Object.values(minev.byDay).flat().some((i) => i.type === "shared"));                                       // « Mon agenda » : jamais de missions d'autrui
+  assert.equal(team.unscheduled.length + team.overdue.length + team.proposals.length, 0);                              // les entrées partagées n'alimentent pas « À planifier » / « En retard » / propositions
+});
 console.log(`${n} tests AGENDA : OK`);

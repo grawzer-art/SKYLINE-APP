@@ -9,22 +9,26 @@ import { supabaseEnv } from "./mode.ts";
  * Les messages ne citent que des noms de variables, jamais leurs valeurs.
  */
 export type StaffDataSource = "local" | "db";
-export type StaffConfig = { auth: "demo" | "supabase"; data: StaffDataSource | "misconfigured"; issue: string | null };
-export type ConfigEnv = { STAFF_AUTH_MODE?: string; STAFF_DATA_SOURCE?: string; supabaseConfigured: boolean };
+export type DbSchema = "b2" | "b3";
+export type StaffConfig = { auth: "demo" | "supabase"; data: StaffDataSource | "misconfigured"; /** Schéma de la base attendu par le client : `b2` (défaut) ou `b3` (migration B3 appliquée). */ dbSchema: DbSchema; issue: string | null };
+export type ConfigEnv = { STAFF_AUTH_MODE?: string; STAFF_DATA_SOURCE?: string; STAFF_DB_SCHEMA?: string; supabaseConfigured: boolean };
 
 export function evaluateStaffConfig(env: ConfigEnv): StaffConfig {
   const a = (env.STAFF_AUTH_MODE ?? "").trim() === "" ? "demo" : env.STAFF_AUTH_MODE;
   const d = (env.STAFF_DATA_SOURCE ?? "") === "" ? "local" : env.STAFF_DATA_SOURCE;
-  const bad = (issue: string): StaffConfig => ({ auth: a === "supabase" ? "supabase" : "demo", data: "misconfigured", issue });
+  const sc = (env.STAFF_DB_SCHEMA ?? "") === "" ? "b2" : env.STAFF_DB_SCHEMA;
+  const bad = (issue: string): StaffConfig => ({ auth: a === "supabase" ? "supabase" : "demo", data: "misconfigured", dbSchema: "b2", issue });
   if (a !== "demo" && a !== "supabase") return bad("STAFF_AUTH_MODE a une valeur non reconnue (attendu : « demo » ou « supabase »).");
   if (d !== "local" && d !== "db") return bad("STAFF_DATA_SOURCE a une valeur non reconnue (attendu : « local » ou « db »).");
   if (a === "supabase" && !env.supabaseConfigured) return bad("STAFF_AUTH_MODE=supabase est demandé mais l'URL ou la clé publique Supabase est absente (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY).");
   if (d === "db" && a !== "supabase") return bad("STAFF_DATA_SOURCE=db est demandé mais l'authentification Supabase n'est pas active (STAFF_AUTH_MODE=supabase requis).");
-  return { auth: a, data: d, issue: null };
+  if (sc !== "b2" && sc !== "b3") return bad("STAFF_DB_SCHEMA a une valeur non reconnue (attendu : « b2 » ou « b3 »).");
+  if (sc === "b3" && d !== "db") return bad("STAFF_DB_SCHEMA=b3 n'a de sens qu'avec STAFF_DATA_SOURCE=db (la migration B3 doit d'abord être appliquée à la base).");
+  return { auth: a, data: d, dbSchema: sc, issue: null };
 }
 
 /** Configuration de l'environnement courant (serveur). */
-export const staffConfig = (): StaffConfig => evaluateStaffConfig({ STAFF_AUTH_MODE: process.env.STAFF_AUTH_MODE, STAFF_DATA_SOURCE: process.env.STAFF_DATA_SOURCE, supabaseConfigured: !!supabaseEnv() });
+export const staffConfig = (): StaffConfig => evaluateStaffConfig({ STAFF_AUTH_MODE: process.env.STAFF_AUTH_MODE, STAFF_DATA_SOURCE: process.env.STAFF_DATA_SOURCE, STAFF_DB_SCHEMA: process.env.STAFF_DB_SCHEMA, supabaseConfigured: !!supabaseEnv() });
 export const staffConfigIssue = (): string | null => staffConfig().issue;
 /** Source des données : `misconfigured` = erreur de configuration (aucune donnée n'est servie, ni locale ni base). */
 export const staffDataSource = (): StaffDataSource | "misconfigured" => staffConfig().data;

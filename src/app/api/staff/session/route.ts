@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     try {
       const supabase = await createServerSupabase(); const { data } = await supabase.auth.getUser();
       const id = data.user ? await loadStaffIdentity(supabase, data.user.id, data.user.email ?? "") : null;
-      return NextResponse.json({ mode: "supabase", dataSource: cfg.data, enabled: true, session: id ? { name: id.name, access: id.access, memberId: id.slug, userId: id.userId, demo: false } : null }, { headers: noStore });
+      return NextResponse.json({ mode: "supabase", dataSource: cfg.data, dbSchema: cfg.dbSchema, enabled: true, session: id ? { name: id.name, access: id.access, memberId: id.slug, userId: id.userId, demo: false } : null }, { headers: noStore });
     } catch { return NextResponse.json({ mode: "supabase", dataSource: "local", enabled: true, session: null }, { headers: noStore }); }
   }
   if (!demoAuthEnabled()) return NextResponse.json({ mode: "demo", dataSource: "local", enabled: false, session: null }, { headers: noStore });

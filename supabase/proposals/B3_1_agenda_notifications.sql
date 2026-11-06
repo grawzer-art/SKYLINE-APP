@@ -8,20 +8,36 @@
 -- Principes (mêmes que B0) : REFUS PAR DÉFAUT · RLS partout · aucun droit pour `anon` · écritures UNIQUEMENT par fonctions SECURITY DEFINER
 -- (search_path vide, objets qualifiés) · séparation stricte des destinataires (audience `staff` / `participants`).
 --
--- ATTENTION déploiement : les fonctions create_mission / update_mission reçoivent un paramètre `p_time` (par défaut null). Un client antérieur
--- (B2) qui appelle update_mission sans `p_time` EFFACERAIT l'heure d'une mission : déployer le client B3 avec (ou juste après) cette migration.
+-- COMPATIBILITÉ : les fonctions B0 (create_mission, update_mission, …) restent STRICTEMENT inchangées (aucun DROP, aucun CREATE OR REPLACE) : un client
+-- B2 continue de fonctionner à l'identique, avant comme après cette migration, et ne peut PAS effacer `due_time`. Les clients B3 utilisent les fonctions
+-- `_v2` (heure explicite). Le client B3 n'appelle ces fonctions qu'une fois la migration appliquée (réglage serveur STAFF_DB_SCHEMA=b3).
 -- ============================================================================
 
--- ---------------------------------------------------------------- 1. Heure facultative d'une mission
+-- ---------------------------------------------------------------- 1. Heure facultative + mission privée (COMPATIBLE avec les clients B2)
+-- STRATÉGIE : les fonctions B0 `create_mission` et `update_mission` ne sont NI supprimées, NI remplacées, NI modifiées (mêmes signatures, même corps,
+-- mêmes droits d'exécution, même OID). Aucun DROP : aucune dépendance PostgreSQL, aucun privilège ni signature RPC n'est touché.
+-- L'heure s'écrit par de NOUVELLES fonctions `create_mission_v2` / `update_mission_v2` (noms distincts : aucune surcharge ambiguë côté RPC),
+-- dont le paramètre `p_time` est OBLIGATOIRE (pas de défaut) : l'omettre est une ERREUR, jamais un effacement silencieux.
+-- Un client B2 qui appelle l'ancienne `update_mission` ne touche pas à `due_time` : l'heure est CONSERVÉE (sauf si la date est effacée : voir déclencheur).
 alter table public.missions add column due_time time;
+-- Mission privée : exclue de l'agenda collectif (list_team_agenda). Défaut false = partagée avec l'équipe STAFF (règle à valider, voir §2bis).
+alter table public.missions add column is_private boolean not null default false;
 alter table public.missions add constraint missions_due_time_needs_date check (due_time is null or due_date is not null);
 
--- create_mission : ajoute p_time (dernier paramètre, défaut null). Corps identique à B0 + heure.
-drop function public.create_mission(text, text, uuid, uuid, date, public.mission_priority, public.mission_status, uuid);
-create function public.create_mission(
-  p_title text, p_description text, p_assignee uuid, p_validator uuid, p_due date,
-  p_priority public.mission_priority default 'normal', p_status public.mission_status default 'todo', p_project uuid default null,
-  p_time time default null
+-- Cohérence : sans date, pas d'heure. Un ancien client qui efface la DATE d'une mission horodatée n'obtient donc pas d'erreur : l'heure suit (déclencheur BEFORE).
+create function public.missions_keep_time_consistent() returns trigger
+language plpgsql set search_path = '' as $$
+begin
+  if new.due_date is null then new.due_time := null; end if;
+  return new;
+end $$;
+create trigger missions_time_consistency before insert or update of due_date, due_time on public.missions
+for each row execute function public.missions_keep_time_consistent();
+
+-- create_mission_v2 : corps B0 + heure. `p_time` obligatoire (avant les paramètres à valeur par défaut).
+create function public.create_mission_v2(
+  p_title text, p_description text, p_assignee uuid, p_validator uuid, p_due date, p_time time,
+  p_priority public.mission_priority default 'normal', p_status public.mission_status default 'todo', p_project uuid default null
 ) returns public.missions
 language plpgsql security definer set search_path = '' as $$
 declare me uuid := auth.uid(); coord boolean; eff uuid; proposed uuid; m public.missions;
@@ -49,11 +65,10 @@ begin
   return m;
 end $$;
 
--- update_mission : ajoute p_time (dernier paramètre, défaut null = aucune heure). Corps identique à B0 + heure.
-drop function public.update_mission(uuid, integer, text, text, uuid, date, public.mission_priority, uuid);
-create function public.update_mission(
-  p_id uuid, p_expected_version integer, p_title text, p_description text, p_validator uuid,
-  p_due date, p_priority public.mission_priority, p_project uuid default null, p_time time default null
+-- update_mission_v2 : corps B0 + heure, contrôle de version inchangé. `p_time` obligatoire : null = « aucune heure » (explicite).
+create function public.update_mission_v2(
+  p_id uuid, p_expected_version integer, p_title text, p_description text, p_validator uuid, p_due date, p_time time,
+  p_priority public.mission_priority, p_project uuid default null
 ) returns public.missions
 language plpgsql security definer set search_path = '' as $$
 declare me uuid := auth.uid(); m public.missions; changed text[] := '{}'; v_time time;
@@ -85,6 +100,40 @@ begin
   where id = p_id returning * into m;
   insert into public.mission_events (mission_id, actor_id, kind, note) values (p_id, me, 'edited', array_to_string(changed, ', '));
   return m;
+end $$;
+
+-- Mission privée : le créateur ou un coordinateur la retire (ou la remet) dans l'agenda collectif. Ne change pas la visibilité B0 (RLS inchangée).
+create function public.set_mission_private(p_id uuid, p_private boolean) returns public.missions
+language plpgsql security definer set search_path = '' as $$
+declare me uuid := auth.uid(); m public.missions;
+begin
+  if me is null or not public.is_staff_member() then raise exception 'forbidden' using errcode = '42501'; end if;
+  select * into m from public.missions where id = p_id for update;
+  if not found or not public.can_view_mission(p_id) then raise exception 'not_found'; end if;
+  if not (public.is_staff_coordinator() or m.creator_id = me) then raise exception 'forbidden' using errcode = '42501'; end if;
+  update public.missions set is_private = coalesce(p_private, false), version = version + 1, updated_at = now() where id = p_id returning * into m;
+  return m;
+end $$;
+
+-- ---------------------------------------------------------------- 1bis. AGENDA COLLECTIF : lecture sécurisée, colonnes MINIMALES
+-- Tout membre STAFF actif consulte le planning de l'équipe SANS pouvoir lire les missions des autres (la RLS B0 reste inchangée).
+-- EXPOSÉ : id, titre, responsable (id), date, heure, statut, priorité — et rien d'autre.
+-- JAMAIS EXPOSÉ : description, créateur, validateur, personne proposée, projet, commentaires, historique, version.
+-- RÈGLES DE CONFIDENTIALITÉ (à valider) : 1) membres STAFF actifs uniquement (participants, comptes inactifs, anonymes : refus) ;
+-- 2) missions archivées exclues ; 3) missions marquées privées (is_private) exclues ; 4) seulement les missions DATÉES, dans une fenêtre bornée
+-- (62 jours max, 500 lignes max : pas d'export en masse) ; 5) le titre d'une mission non privée est visible de toute l'équipe STAFF.
+create function public.list_team_agenda(p_from date, p_to date)
+returns table (id uuid, title text, assignee_id uuid, due_date date, due_time time, status public.mission_status, priority public.mission_priority)
+language plpgsql stable security definer set search_path = '' as $$
+begin
+  if auth.uid() is null or not public.is_staff_member() then raise exception 'forbidden' using errcode = '42501'; end if;
+  if p_from is null or p_to is null or p_to < p_from or p_to - p_from > 62 then raise exception 'invalid_range'; end if;
+  return query
+    select m.id, m.title, m.assignee_id, m.due_date, m.due_time, m.status, m.priority
+    from public.missions m
+    where m.archived_at is null and not m.is_private and m.due_date between p_from and p_to
+    order by m.due_date, m.due_time nulls last, m.title
+    limit 500;
 end $$;
 
 -- ---------------------------------------------------------------- 2. Réunions et événements (type DISTINCT des missions)
@@ -292,16 +341,24 @@ grant select on public.agenda_events, public.notifications, public.notification_
 grant select (id, user_id, device_label, created_at, last_seen_at, revoked_at) on public.push_subscriptions to authenticated;
 create policy agenda_events_select on public.agenda_events for select to authenticated using (public.is_staff_member() and (scope = 'team' or creator_id = auth.uid()));
 
-do $revoke$
-declare f regprocedure;
-begin
-  for f in select p.oid::regprocedure from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-           where n.nspname = 'public' and p.prokind = 'f' and p.prorettype <> 'pg_catalog.event_trigger'::regtype
-  loop execute format('revoke execute on function %s from public, anon', f); end loop;
-end $revoke$;
+-- Droits d'exécution : EXPLICITES, uniquement pour les NOUVELLES fonctions. Les fonctions B0 ne sont pas touchées (leurs droits restent identiques).
+-- (Les privilèges par défaut de Supabase peuvent accorder EXECUTE à anon / authenticated : on révoque donc explicitement pour `public` et `anon`.)
+revoke execute on function
+  public.create_mission_v2(text, text, uuid, uuid, date, time, public.mission_priority, public.mission_status, uuid),
+  public.update_mission_v2(uuid, integer, text, text, uuid, date, time, public.mission_priority, uuid),
+  public.set_mission_private(uuid, boolean), public.list_team_agenda(date, date),
+  public.create_agenda_event(text, public.agenda_event_kind, date, time, time, text, public.agenda_scope),
+  public.update_agenda_event(uuid, text, public.agenda_event_kind, date, time, time, text), public.delete_agenda_event(uuid),
+  public.can_view_notification(uuid), public.mark_notifications_read(uuid[]), public.set_notification_preferences(jsonb, text, boolean),
+  public.register_push_subscription(text, text, text, text), public.revoke_push_subscription(uuid),
+  public.send_announcement(public.notification_audience, text, text, boolean, boolean)
+  from public, anon;
+-- Interne (déclencheur) : inexécutable par les utilisateurs.
+revoke execute on function public.missions_keep_time_consistent() from public, anon, authenticated;
 grant execute on function
-  public.create_mission(text, text, uuid, uuid, date, public.mission_priority, public.mission_status, uuid, time),
-  public.update_mission(uuid, integer, text, text, uuid, date, public.mission_priority, uuid, time),
+  public.create_mission_v2(text, text, uuid, uuid, date, time, public.mission_priority, public.mission_status, uuid),
+  public.update_mission_v2(uuid, integer, text, text, uuid, date, time, public.mission_priority, uuid),
+  public.set_mission_private(uuid, boolean), public.list_team_agenda(date, date),
   public.create_agenda_event(text, public.agenda_event_kind, date, time, time, text, public.agenda_scope),
   public.update_agenda_event(uuid, text, public.agenda_event_kind, date, time, time, text),
   public.delete_agenda_event(uuid),

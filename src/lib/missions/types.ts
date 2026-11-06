@@ -1,6 +1,6 @@
 import type { Actor, Mission, MissionInfoInput, MissionInput, MissionStatus } from "../../domain/missions.ts";
 import type { DbErrorKind, MissionError } from "./errors.ts";
-import type { MissionComment, Result } from "./service.ts";
+import type { MissionComment, Result, TeamAgendaEntry } from "./service.ts";
 
 /** Résultat d'une action de l'interface (une action = un résultat, un message, un état de chargement). */
 export type ActionResult = { ok: true; mission: Mission | null } | { ok: false; kind: DbErrorKind | "local"; message: string };
@@ -26,7 +26,9 @@ export type MissionsApi = {
   /** Commentaires : mode base de données uniquement. */
   comments: { supported: boolean; load: (id: string) => Promise<Result<MissionComment[]>>; recent: () => Promise<Result<MissionComment[]>>; add: (id: string, body: string) => Promise<Result<MissionComment>> };
   /** Ce que la source de données sait enregistrer. `dueTime` : heure facultative d'une mission (mode local ; base = migration B3 proposée, non appliquée). */
-  capabilities: { dueTime: boolean; events: boolean };
+  capabilities: { dueTime: boolean; events: boolean; /** Planning collectif lisible par tous les membres STAFF (fonction list_team_agenda, schéma B3). */ teamAgenda: boolean };
+  /** Agenda collectif (schéma B3) : titre, responsable, date, heure, statut, priorité des missions de l'équipe, sans aucun détail privé. */
+  teamAgenda: (from: string, to: string) => Promise<Result<TeamAgendaEntry[]>>;
   /** Outils de démonstration (mode local uniquement). */
   local: { clearAll: () => void; addMany: (list: Mission[]) => void } | null;
 };

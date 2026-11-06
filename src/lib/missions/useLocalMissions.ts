@@ -50,7 +50,8 @@ export function useLocalMissions(storageKey: string, active: boolean): MissionsA
       set(latest().filter((x) => x.id !== id)); return { ok: true, mission: null };
     },
     comments: { supported: false, load: async () => ({ ok: true, value: [] }), recent: async () => ({ ok: true, value: [] }), add: async () => ({ ok: false, error: { kind: "invalid", message: "Commentaires indisponibles en mode local." } }) },
-    capabilities: { dueTime: true, events: true },
+    capabilities: { dueTime: true, events: true, teamAgenda: false },
+    teamAgenda: async () => ({ ok: false, error: { kind: "invalid", message: "Agenda collectif indisponible en mode local." } }),
     local: active ? { clearAll: () => set(EMPTY), addMany: (list) => set([...latest(), ...list]) } : null,
   };
 }
