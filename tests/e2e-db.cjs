@@ -80,9 +80,10 @@ const cookieFor = (who) => { const s = { access_token: "tok-" + who, refresh_tok
   await T.waitForTimeout(800); ok("ARCHIVAGE : la mission disparaît de la liste (une de moins)", (await rows()) === before - 1 && !(await vis(T.locator("section[aria-label='Liste des missions']").getByText(/Version finale/), 800)), `${before} → ${await rows()}`);
 
   /* 4. Réseau : erreur de chargement initial, puis actualisation échouée avec données conservées */
-  await ctl({ fail: { missions: { destroy: true } } }); await T.reload({ waitUntil: "domcontentloaded" });
+  // Panne PERSISTANTE (le client Supabase retente de lui-même une panne réseau isolée sur les lectures).
+  await ctl({ fail: { missions: { destroy: true, once: false } } }); await T.reload({ waitUntil: "domcontentloaded" });
   ok("RÉSEAU : échec du chargement initial → « Impossible de charger les missions » + Réessayer", (await vis(text(T, /Impossible de charger les missions/))) && await vis(btn(T, /^Réessayer$/)));
-  await btn(T, /^Réessayer$/).click(); ok("RÉSEAU : « Réessayer » recharge la liste", await vis(text(T, /Brief équipe/)));
+  await ctl({ fail: {} }); await btn(T, /^Réessayer$/).click(); ok("RÉSEAU : « Réessayer » recharge la liste", await vis(text(T, /Brief équipe/)));
   await btn(T, /^Toutes$/).click();
   await ctl({ fail: { "list_team": { status: 500, body: { message: "x" } } } }); await btn(T, /Actualiser les missions/).click();
   ok("ACTUALISATION : échec → bandeau « Actualisation impossible », données conservées", (await vis(text(T, /Actualisation impossible/))) && await vis(text(T, /Brief équipe/)));

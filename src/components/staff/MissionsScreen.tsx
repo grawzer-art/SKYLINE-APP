@@ -11,6 +11,7 @@ import {
 import { useActor } from "@/lib/useActor";
 import { useClock } from "@/lib/useClock";
 import { useMissions } from "@/lib/useMissions";
+import { useDemoStatus } from "./SpaceSwitcher";
 import type { MissionsApi } from "@/lib/missions/types";
 import { cn } from "@/lib/cn";
 import { ActionNotice, SkeletonList, Spinner, StatusPill, addDays, btn, fmtDate, localISO, useAction } from "./missions/kit";
@@ -23,7 +24,7 @@ type View = null | { mode: "detail"; id: string } | { mode: "create" } | { mode:
 
 /** MISSIONS : suivi opérationnel. Source `local` (démonstration sur l'appareil) ou `db` (base partagée, droits vérifiés par le serveur). */
 export function MissionsScreen() {
-  const who = useActor(); const clock = useClock(); const M = useMissions(); const db = M.source === "db";
+  const who = useActor(); const clock = useClock(); const M = useMissions(); const db = M.source === "db"; const supa = useDemoStatus()?.mode === "supabase";
   const today = clock ? localISO(new Date(clock)) : null;
   const [scope, setScope] = useState<"mine" | "all">("mine");
   const [fStatus, setFStatus] = useState<MissionStatus | "">(""); const [fPrio, setFPrio] = useState<MissionPriority | "">(""); const [fMember, setFMember] = useState("");
@@ -31,7 +32,7 @@ export function MissionsScreen() {
 
   const intro = (
     <StaffTitle eyebrow="Opérationnel" title="Missions">
-      <p role="note" className="mt-4 max-w-[36ch] border-l border-sky pl-4 text-[0.9rem] leading-snug text-cloud/80">{db ? "Missions partagées avec l'équipe, enregistrées dans la base. Les droits sont vérifiés par le serveur." : M.status === "loading" ? "Chargement…" : "Enregistré sur cet appareil uniquement : pas de synchronisation entre Tom, Graw et Qafard."}</p>
+      <p role="note" className="mt-4 max-w-[36ch] border-l border-sky pl-4 text-[0.9rem] leading-snug text-cloud/80">{db ? "Missions partagées avec l'équipe, enregistrées dans la base. Les droits sont vérifiés par le serveur." : supa ? "Données locales de démonstration, enregistrées sur cet appareil pour votre compte uniquement. Elles ne sont ni partagées avec l'équipe ni enregistrées dans la base." : "Enregistré sur cet appareil uniquement : pas de synchronisation entre Tom, Graw et Qafard."}</p>
     </StaffTitle>
   );
 
@@ -109,7 +110,7 @@ export function MissionsScreen() {
             <p className="font-display text-[1.25rem] leading-snug">{filtered ? "Aucune mission ne correspond aux filtres." : pool.length === 0 && M.missions.length === 0 ? "Aucune mission pour le moment." : "Aucune mission dans cette vue."}</p>
             <div className="mt-5 flex flex-wrap items-center gap-4">
               {filtered ? <button type="button" onClick={() => { setFStatus(""); setFPrio(""); setFMember(""); }} className={cn(btn, "border border-silver/45")}>Effacer les filtres</button> : <button type="button" onClick={() => setView({ mode: "create" })} className={cn(btn, "bg-cloud text-jet")}>Créer une mission</button>}
-              {M.local && !filtered && M.missions.length === 0 && canViewAll(actor) && <button type="button" onClick={loadExamples} className="min-h-11 font-mono text-[0.78rem] uppercase tracking-[0.14em] text-sky underline underline-offset-4">Charger 4 missions d&apos;exemple</button>}
+              {M.local && !supa && !filtered && M.missions.length === 0 && canViewAll(actor) && <button type="button" onClick={loadExamples} className="min-h-11 font-mono text-[0.78rem] uppercase tracking-[0.14em] text-sky underline underline-offset-4">Charger 4 missions d&apos;exemple</button>}
             </div>
           </div>
         ) : (
@@ -134,7 +135,7 @@ export function MissionsScreen() {
             })}
           </ul>
         )}
-        {M.local && M.missions.length > 0 && <button type="button" onClick={() => setView({ mode: "clear" })} aria-haspopup="dialog" className="mt-8 min-h-11 font-mono text-[0.75rem] uppercase tracking-[0.14em] text-dim underline underline-offset-4">{M.source === "local" && who.status === "ok" ? "Effacer les missions locales de cet appareil" : "Effacer"}</button>}
+        {M.local && M.missions.length > 0 && <button type="button" onClick={() => setView({ mode: "clear" })} aria-haspopup="dialog" className="mt-8 min-h-11 font-mono text-[0.75rem] uppercase tracking-[0.14em] text-dim underline underline-offset-4">{supa ? "Effacer mes missions locales de cet appareil" : "Effacer toutes les missions de cet appareil"}</button>}
       </section>
       {!db && <DemoLine />}
 
@@ -146,7 +147,7 @@ export function MissionsScreen() {
         {view?.mode === "archive" && current && <Confirm M={M} text={`« ${current.title} » sera masquée des listes. Elle est conservée avec son historique.`} cta="Archiver" doing="Archivage…" run={() => M.archive(current.id, actor)} onDone={close} onCancel={() => setView({ mode: "detail", id: current.id })} />}
         {view?.mode === "delete" && current && <Confirm M={M} danger text={db ? `« ${current.title} » sera supprimée définitivement de la base, avec son historique et ses commentaires. Préférez l'archivage.` : `« ${current.title} » sera supprimée de cet appareil. Cette action est définitive.`} cta="Supprimer" doing="Suppression…" run={() => M.remove(current.id, actor)} onDone={close} onCancel={() => setView({ mode: "detail", id: current.id })} />}
         {view?.mode === "clear" && M.local && (
-          <div><p className="text-[1rem] leading-relaxed text-cloud/85">Toutes les missions enregistrées sur cet appareil seront supprimées. Cette action est définitive.</p>
+          <div><p className="text-[1rem] leading-relaxed text-cloud/85">Toutes les missions enregistrées sur cet appareil seront supprimées, y compris celles des autres membres sur cet appareil. Cette action est définitive.</p>
             <div className="mt-6 grid gap-3"><button type="button" onClick={() => { M.local?.clearAll(); close(); }} className={cn(btn, "bg-sunset text-jet")}>Tout effacer</button><button type="button" onClick={close} className={cn(btn, "border border-silver/45")}>Annuler</button></div></div>
         )}
       </Sheet>
