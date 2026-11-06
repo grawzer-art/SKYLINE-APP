@@ -36,6 +36,6 @@ const PATHS = ["/staff", "/staff/missions", "/staff/access", "/staff/login", "/s
   const r = await get(E.D + "/staff/missions"); ok("LOCAL EXPLICITE : STAFF HQ accessible en démonstration (200), sans erreur de configuration", r.status() === 200 && !/Configuration invalide/.test(await r.text()), String(r.status()));
   const s = await (await get(E.D + "/api/staff/session")).json(); ok("LOCAL EXPLICITE : source « local », mode démo", s.dataSource === "local" && s.mode === "demo" && s.session?.memberId === "tom");
   const q = await ctx.newPage(); await q.goto(E.D + "/staff/missions", { waitUntil: "domcontentloaded" });
-  ok("LOCAL EXPLICITE : l'écran Missions affiche la mention de stockage local", await q.getByText(/Enregistré sur cet appareil uniquement/).first().isVisible({ timeout: 10000 }).catch(() => false));
+  ok("LOCAL EXPLICITE : l'écran Missions affiche la mention de stockage local", await q.getByText(/Enregistré sur cet appareil uniquement/).first().waitFor({ state: "visible", timeout: 10000 }).then(() => true).catch(() => false));
   await browser.close(); console.log(fails ? `\n${fails} ÉCHEC(S)` : "\nTous les tests de configuration sont passés."); process.exit(fails ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(1); });
