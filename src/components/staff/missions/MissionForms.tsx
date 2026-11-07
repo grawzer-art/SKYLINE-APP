@@ -10,7 +10,7 @@ const FieldError = ({ id, text }: { id: string; text?: string }) => (text ? <p i
 
 /** CRÉATION : attribution directe à tout membre STAFF, validation finale par un administrateur distinct. */
 export function CreateForm({ actor, M, onDone, onCancel }: Props & { onDone: (id: string) => void; onCancel: () => void }) {
-  const { members, validatorIds, name } = M.directory; const ids = members.map((x) => x.id);
+  const { members, validatorIds } = M.directory; const ids = members.map((x) => x.id);
   const validators = members.filter((x) => validatorIds.includes(x.id));
   const firstOther = (avoid: string[]) => validators.find((x) => !avoid.includes(x.id))?.id ?? "";
   const [v, setV] = useState<MissionInput>({ title: "", description: "", assigneeId: actor.memberId, validatorId: firstOther([actor.memberId]), dueDate: null, priority: "normal", status: "todo" });
