@@ -26,7 +26,7 @@ function Countdown() {
     <div role="timer" aria-label={`Départ dans ${s.days} jours${eventConfirmation.dates ? "" : " (date à confirmer)"}`}>
       <p className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-cloud/72">Départ dans</p>
       <p className="mt-1.5 font-mono text-[1.05rem] tabular-nums">{s.days}<span className="ml-0.5 mr-2 text-[0.72rem] text-cloud/68">J</span>{pad(s.hours)}<span className="ml-0.5 mr-2 text-[0.72rem] text-cloud/68">H</span>{pad(s.minutes)}<span className="ml-0.5 text-[0.72rem] text-cloud/68">M</span></p>
-      {!eventConfirmation.dates && <p data-testid="to-confirm" className="mt-1 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-sunset/90">Date à confirmer</p>}
+      {!eventConfirmation.dates && <p data-testid="to-confirm" className="mt-1 font-mono text-[0.72rem] uppercase tracking-[0.18em] text-sunset/90">Date à confirmer</p>}
     </div>
   );
 }

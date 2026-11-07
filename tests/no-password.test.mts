@@ -13,8 +13,10 @@ t("aucun appel à signInWithPassword / signUp / resetPasswordForEmail / updateUs
 });
 t("aucun champ de mot de passe dans l'interface STAFF", () => { assert.deepEqual(hits(/type=["']password["']|autoComplete=["'](current|new)-password["']/), []); });
 t("l'authentification Supabase n'utilise que le code e-mail / lien magique, sans création de compte", () => {
-  const login = readFileSync("src/components/staff/LoginScreen.tsx", "utf8");
+  // Mécanisme UNIQUE (hook partagé STAFF + participants) : code e-mail, jamais de création de compte.
+  const login = readFileSync("src/lib/auth/useEmailCodeLogin.ts", "utf8");
   assert.match(login, /signInWithOtp/); assert.match(login, /shouldCreateUser:\s*false/); assert.match(login, /verifyOtp/);
+  for (const f of ["src/components/staff/LoginScreen.tsx", "src/components/participant/ParticipantLogin.tsx"]) { const s = readFileSync(f, "utf8"); assert.match(s, /useEmailCodeLogin\(/, f); assert.doesNotMatch(s, /signInWithOtp|verifyOtp|signUp/, `${f} : pas de second mécanisme`); }
 });
 t("aucune clé secrète (service_role / secret) référencée dans le code", () => { assert.deepEqual(hits(/SERVICE_ROLE|service_role|sb_secret_/i), []); });
 t("la clé Supabase lue côté client est la clé PUBLIQUE", () => { const m = readFileSync("src/lib/staff/mode.ts", "utf8"); assert.match(m, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/); });

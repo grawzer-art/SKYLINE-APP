@@ -43,7 +43,7 @@ function QuietCountdown({ target, label }: { target: string; label: string }) {
       <p className="mt-1.5 flex items-baseline gap-2.5 font-mono text-[1.2rem] tabular-nums text-cloud">
         {parts.map(([v, u]) => <span key={u}>{v}<span className="ml-0.5 text-[0.72rem] text-cloud/68">{u}</span></span>)}
       </p>
-      {!eventConfirmation.dates && <p data-testid="to-confirm" className="mt-1 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-sunset/90">Date à confirmer</p>}
+      {!eventConfirmation.dates && <p data-testid="to-confirm" className="mt-1 font-mono text-[0.72rem] uppercase tracking-[0.18em] text-sunset/90">Date à confirmer</p>}
     </div>
   );
 }
