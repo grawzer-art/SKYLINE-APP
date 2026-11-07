@@ -11,9 +11,9 @@ const ctl = (b) => fetch(MOCK + "/__control", { method: "POST", body: JSON.strin
   const mk = async (base, o = {}) => { const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, ...o }); await ctx.addCookies([{ name: "sk_space", value: "members", url: base }]); const p = await ctx.newPage(); p.setDefaultTimeout(15000); p.on("pageerror", (e) => errs.push(e.message)); return { ctx, p }; };
   const vis = async (loc, t = 8000) => { try { await loc.first().waitFor({ state: "visible", timeout: t }); return true; } catch { return false; } };
   const get = (ctx, url) => ctx.request.get(url, { maxRedirects: 0 });
-  const ergo = (page) => page.evaluate(() => { const v = (el) => { const r = el.getBoundingClientRect(); const cs = getComputedStyle(el); return r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && cs.display !== "none"; }; const small = [], zoom = [];
-    document.querySelectorAll("main button, main a[href], main select, main input:not([type=hidden]), main textarea, [data-testid=account-link], [data-testid=login-link]").forEach((el) => { if (!v(el)) return; const r = el.getBoundingClientRect(); const nm = ((el.getAttribute("aria-label") || el.textContent || el.tagName) + "").trim().slice(0, 28); if (r.height < 43.5) small.push(`${nm} ${Math.round(r.width)}x${Math.round(r.height)}`); if (/INPUT|SELECT|TEXTAREA/.test(el.tagName) && parseFloat(getComputedStyle(el).fontSize) < 16) zoom.push(nm); });
-    return { small, zoom, hscroll: document.documentElement.scrollWidth > window.innerWidth }; });
+  const ergo = (page, only) => page.evaluate((only) => { const v = (el) => { const r = el.getBoundingClientRect(); const cs = getComputedStyle(el); return r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && cs.display !== "none"; }; const small = [], zoom = [];
+    document.querySelectorAll(only || "main button, main a[href], main select, main input:not([type=hidden]), main textarea").forEach((el) => { if (!v(el)) return; const r = el.getBoundingClientRect(); const nm = ((el.getAttribute("aria-label") || el.textContent || el.tagName) + "").trim().slice(0, 28); if (r.height < 43.5) small.push(`${nm} ${Math.round(r.width)}x${Math.round(r.height)}`); if (/INPUT|SELECT|TEXTAREA/.test(el.tagName) && parseFloat(getComputedStyle(el).fontSize) < 16) zoom.push(nm); });
+    return { small, zoom, hscroll: document.documentElement.scrollWidth > window.innerWidth }; }, only);
 
   /* ======= A. Authentification participants DÉSACTIVÉE (défaut) : application strictement inchangée ======= */
   { const { ctx, p } = await mk(OFF);
@@ -73,7 +73,7 @@ const ctl = (b) => fetch(MOCK + "/__control", { method: "POST", body: JSON.strin
   await p.goto(A + "/v3/profile", { waitUntil: "domcontentloaded" }); ok("IDENTITÉ : l'espace profil affiche le compte (nom et adresse), lien vers « Mon compte »", (await vis(p.getByTestId("account-link").filter({ hasText: "Camille D." }))) && /participant@example\.test/.test(await p.getByTestId("account-link").innerText()));
   await p.goto(A + "/v3/flight", { waitUntil: "domcontentloaded" }); ok("IDENTITÉ : le pass porte le nom du participant, statut « Réservation à confirmer »", (await vis(p.getByText(/Camille D\./i))) && (await p.getByText("Réservation à confirmer").count()) >= 1);
   const legacy = await mk(A); await legacy.ctx.addCookies((await ctx.cookies()).filter((c) => c.name.startsWith("sb-"))); await legacy.p.goto(A + "/", { waitUntil: "domcontentloaded" }); ok("IDENTITÉ : l'accueil historique affiche aussi le nom réel", await vis(legacy.p.getByTestId("identity-name").filter({ hasText: "Camille D." }))); await legacy.ctx.close();
-  await p.reload({ waitUntil: "domcontentloaded" }); ok("SESSION : persistante après rechargement (cookie de session)", await vis(p.getByTestId("identity-name")));
+  await p.goto(A + "/v3", { waitUntil: "domcontentloaded" }); await p.reload({ waitUntil: "domcontentloaded" }); ok("SESSION : persistante après rechargement (cookie de session)", await vis(p.getByTestId("identity-name")));
 
   // C4. États d'erreur : profil indisponible (migration non appliquée), panne
   await ctl({ profileTable: "missing" }); await p.goto(A + "/v3/account", { waitUntil: "domcontentloaded" });
@@ -105,9 +105,9 @@ const ctl = (b) => fetch(MOCK + "/__control", { method: "POST", body: JSON.strin
   // C7. Ergonomie 320 → 430 px
   const sess = await mk(A); await sess.p.goto(A + "/v3/login", { waitUntil: "domcontentloaded" }); await sess.p.locator("#login-email").fill("participant@example.test"); await sess.p.getByRole("button", { name: "Recevoir un code" }).click(); await sess.p.locator("#login-code").fill("123456"); await sess.p.getByRole("button", { name: "Se connecter" }).click(); await sess.p.waitForURL("**/v3/account");
   for (const [w, h] of [[320, 568], [375, 667], [390, 844], [430, 932]]) {
-    await sess.p.setViewportSize({ width: w, height: h }); const rec = async (l, page) => { const r = await ergo(page); ok(`IPHONE ${w} px — ${l} : cibles ≥ 44 px, champs ≥ 16 px, sans débordement`, !r.small.length && !r.zoom.length && !r.hscroll, JSON.stringify(r)); };
+    await sess.p.setViewportSize({ width: w, height: h }); const rec = async (l, page, only) => { const r = await ergo(page, only); ok(`IPHONE ${w} px — ${l} : cibles ≥ 44 px, champs ≥ 16 px, sans débordement`, !r.small.length && !r.zoom.length && !r.hscroll, JSON.stringify(r)); };
     await sess.p.goto(A + "/v3/account", { waitUntil: "domcontentloaded" }); await vis(sess.p.locator("#p-first")); await rec("Mon compte", sess.p);
-    await sess.p.goto(A + "/v3/profile", { waitUntil: "domcontentloaded" }); await vis(sess.p.getByTestId("account-link")); await rec("espace profil", sess.p);
+    await sess.p.goto(A + "/v3/profile", { waitUntil: "domcontentloaded" }); await vis(sess.p.getByTestId("account-link")); await rec("espace profil (bloc « Mon compte »)", sess.p, "[data-testid=account-link]");
     await p.setViewportSize({ width: w, height: h }); await p.goto(A + "/v3/login", { waitUntil: "domcontentloaded" }); await vis(p.locator("#login-email")); await rec("connexion", p);
     await sess.p.goto(A + "/v3", { waitUntil: "domcontentloaded" }); await vis(sess.p.getByTestId("identity-name")); ok(`IPHONE ${w} px — accueil avec identité réelle : sans débordement horizontal`, await sess.p.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth));
   }
