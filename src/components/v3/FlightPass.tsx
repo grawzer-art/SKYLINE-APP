@@ -5,8 +5,9 @@ import { DemoTag } from "./ui";
 import { MetalSurface, type useMetal } from "./metal";
 import { cn } from "@/lib/cn";
 
-export type PassStatus = "confirmed" | "pending" | "ended";
-const statusText: Record<PassStatus, string> = { confirmed: "Réservation confirmée", pending: "En attente de confirmation", ended: "Édition terminée" };
+/** `to_confirm` : aucune donnée de réservation réelle n'est encore reliée au compte → « à confirmer » (jamais présenté comme confirmé). */
+export type PassStatus = "confirmed" | "pending" | "ended" | "to_confirm";
+const statusText: Record<PassStatus, string> = { confirmed: "Réservation confirmée", pending: "En attente de confirmation", ended: "Édition terminée", to_confirm: "Réservation à confirmer" };
 
 /**
  * MY FLIGHT PASS : accès personnel à l'événement. Distinct de la carte membre CLUB et de la carte d'embarquement de la compagnie.

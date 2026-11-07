@@ -7,6 +7,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import { ChangeSpaceLink, SpaceSwitcher } from "@/components/staff/SpaceSwitcher";
 import { locales } from "@/i18n";
 import { useCommunity } from "@/lib/useCommunity";
+import { identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 import { cn } from "@/lib/cn";
 
 /** Profil & paramètres du compte (via l'avatar) : langue, notifications, blocages, données. La visibilité et le contact se règlent dans My Space. */
@@ -25,6 +26,7 @@ export function V3Profile() {
   return (
     <>
       <ScreenTitle eyebrow="Compte" title="Profil" />
+      <AccountBlock />
       <Block>
         <div className="flex items-center gap-4"><Initials name={state.me.pseudo} size={64} /><div><p className="font-display text-[1.15rem]">{state.me.pseudo}</p><Link href="/v3/club/space" className="font-mono text-[0.72rem] uppercase tracking-[0.18em] text-sky">{t("space.title")} →</Link></div></div>
       </Block>
@@ -61,5 +63,20 @@ export function V3Profile() {
       <Block label="Prototype"><Button variant="ghost" onClick={reset} className="w-full">Réinitialiser le prototype</Button><p className="mt-2 text-[0.72rem] text-dim">Efface l&apos;état local de démonstration sur cet appareil.</p></Block>
       <Sheet open={!!info} onClose={() => setInfo(null)} eyebrow="Prototype" title={info ? texts[info].t : ""}><p className="leading-relaxed text-cloud/80">{info ? texts[info].p : ""}</p><Button variant="ghost" onClick={() => setInfo(null)} className="mt-5 w-full">{t("common.close")}</Button></Sheet>
     </>
+  );
+}
+
+/** Compte SKYLINE réel (authentification participants active) : identité du participant connecté, ou invitation à se connecter. Absent en mode démonstration (par défaut). */
+function AccountBlock() {
+  const id = useParticipantIdentity(); const name = identityName(id);
+  if (id.status === "off" || id.status === "loading" || id.status === "misconfigured") return null;
+  const link = "flex min-h-14 items-center justify-between border-y border-line text-[0.95rem]";
+  return (
+    <Block label="Mon compte SKYLINE">
+      {id.status === "ready" ? <Link href="/v3/account" className={link} data-testid="account-link"><span><span className="block">{name ?? "Compléter mon profil"}</span><span className="block text-[0.78rem] text-dim">{id.email}</span></span><span aria-hidden className="text-silver">→</span></Link>
+        : id.status === "no_access" ? <p role="status" className="rounded-[10px] border border-line p-4 text-[0.92rem] leading-snug text-cloud/85">Ce compte n&apos;a pas accès à l&apos;espace participants. Contactez l&apos;organisation SKYLINE.</p>
+        : id.status === "error" ? <p role="status" className="text-[0.9rem] text-dim">Compte momentanément indisponible.</p>
+        : <Link href="/v3/login?next=/v3/account" className={link} data-testid="login-link">Se connecter<span aria-hidden className="text-silver">→</span></Link>}
+    </Block>
   );
 }

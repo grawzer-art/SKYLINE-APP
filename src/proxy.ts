@@ -9,6 +9,8 @@ import { staffAuthMode } from "@/lib/staff/mode";
 import { staffConfigIssue } from "@/lib/staff/data-source";
 import { loadStaffIdentity } from "@/lib/staff/session";
 import { updateSession } from "@/lib/supabase/proxy";
+import { participantConfig } from "@/lib/participant/config";
+import { loadParticipantAccess } from "@/lib/participant/access";
 
 /**
  * 1) SIGNAL : un brouillon ou un slug inconnu doit répondre par un VRAI 404 dès la première requête
@@ -29,6 +31,22 @@ export async function proxy(request: NextRequest) {
     if (!space) return NextResponse.redirect(new URL("/start", request.url), { status: 307, headers: { "Cache-Control": "no-store" } });
     if (space === "staff") return NextResponse.redirect(new URL("/staff", request.url), { status: 307, headers: { "Cache-Control": "no-store" } });
     return NextResponse.next();
+  }
+
+  // PARTICIPANTS : pages personnelles (/v3/account) et connexion (/v3/login). Authentification Supabase RÉUTILISÉE (même session que STAFF).
+  // Défaut : application participants inchangée (PARTICIPANT_AUTH=off → ces pages n'existent pas : 404). Les autres pages /v3 restent publiques.
+  if (pathname === "/v3/login" || pathname === "/v3/account" || pathname.startsWith("/v3/account/")) {
+    const cfg = participantConfig();
+    if (cfg.mode === "off") return NextResponse.rewrite(new URL("/signal-introuvable", request.url));
+    if (cfg.mode === "misconfigured") return configErrorPage(cfg.issue ?? "Configuration invalide.", "Espace participants");
+    const noStore = (res: NextResponse) => { res.headers.set("Cache-Control", "private, no-store"); res.headers.set("X-Robots-Tag", "noindex, nofollow"); return res; };
+    if (pathname === "/v3/login") return noStore(NextResponse.next());
+    const { response, supabase, user } = await updateSession(request);
+    const go = (q: string) => { const u = new URL("/v3/login", request.url); u.search = q; return NextResponse.redirect(u, { status: 307, headers: { "Cache-Control": "no-store" } }); };
+    if (!user || !supabase) return go(`?next=${encodeURIComponent(pathname)}`);
+    // Vérification CÔTÉ SERVEUR : compte actif ET accès « members » (jamais un état d'interface, jamais les métadonnées de l'utilisateur).
+    if (!(await loadParticipantAccess(supabase, user.id))) return go("?denied=1");
+    return noStore(response());
   }
 
   if (pathname.startsWith("/staff")) {
@@ -74,9 +92,9 @@ export async function proxy(request: NextRequest) {
 
 const esc = (t: string) => t.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string);
 /** Page d'erreur de configuration (503) : cite des noms de variables, jamais de valeurs ni de secrets. */
-function configErrorPage(issue: string) {
-  const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>STAFF HQ — configuration invalide</title><style>body{margin:0;background:#0b0d10;color:#eef2f6;font:16px/1.5 system-ui,sans-serif;padding:max(24px,env(safe-area-inset-top)) 20px 32px}main{max-width:34rem;margin:0 auto}h1{font-size:1.5rem;margin:.2em 0}.tag{font:600 .75rem ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:#ff8a5c}p{color:#c9d2dc}code{color:#7cc4ff}</style></head><body><main role="alert" data-testid="config-error"><p class="tag">STAFF HQ · suspendu</p><h1>Configuration invalide</h1><p>${esc(issue)}</p><p>Pour votre sécurité, STAFF HQ ne bascule pas silencieusement vers des données locales : l'équipe pourrait croire que ses missions sont synchronisées. Corrigez les variables d'environnement, ou utilisez <code>STAFF_DATA_SOURCE=local</code> pour la démonstration.</p></main></body></html>`;
+function configErrorPage(issue: string, scope = "STAFF HQ") {
+  const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>${esc(scope)} — configuration invalide</title><style>body{margin:0;background:#0b0d10;color:#eef2f6;font:16px/1.5 system-ui,sans-serif;padding:max(24px,env(safe-area-inset-top)) 20px 32px}main{max-width:34rem;margin:0 auto}h1{font-size:1.5rem;margin:.2em 0}.tag{font:600 .75rem ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase;color:#ff8a5c}p{color:#c9d2dc}code{color:#7cc4ff}</style></head><body><main role="alert" data-testid="config-error"><p class="tag">${esc(scope)} · suspendu</p><h1>Configuration invalide</h1><p>${esc(issue)}</p><p>${scope === "STAFF HQ" ? "Pour votre sécurité, STAFF HQ ne bascule pas silencieusement vers des données locales : l'équipe pourrait croire que ses missions sont synchronisées. Corrigez les variables d'environnement, ou utilisez <code>STAFF_DATA_SOURCE=local</code> pour la démonstration." : "Les pages personnelles sont suspendues pour votre sécurité ; le reste de l'application reste disponible. Corrigez les variables d'environnement, ou utilisez <code>PARTICIPANT_AUTH=off</code>."}</p></main></body></html>`;
   return new NextResponse(html, { status: 503, headers: { "content-type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" } });
 }
 
-export const config = { matcher: ["/", "/signal/:slug", "/staff", "/staff/:path*"] };
+export const config = { matcher: ["/", "/signal/:slug", "/staff", "/staff/:path*", "/v3/login", "/v3/account", "/v3/account/:path*"] };

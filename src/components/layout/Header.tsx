@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Bell } from "lucide-react";
+import { Bell, User } from "lucide-react";
 import { user } from "@/data/demo";
 import { cn } from "@/lib/cn";
 import { Avatar } from "@/components/ui/Avatar";
@@ -10,6 +10,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import { ProfileSheet } from "@/components/layout/ProfileSheet";
 import { Wordmark } from "@/components/ui/Wordmark";
 import { useLocalStorage } from "@/lib/useLocalStorage";
+import { identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 
 /** Header compact (une seule ligne). Transparent sur la photo, vitré après défilement. */
 export function Header() {
@@ -18,6 +19,7 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState(false);
   const [seen, setSeen] = useLocalStorage<boolean>("skyline.demo.notifications.seen.v1", false);
+  const identity = useParticipantIdentity(); const avatarName = identity.status === "off" ? user.fullName : identityName(identity);
 
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 24);
@@ -47,7 +49,7 @@ export function Header() {
               {!seen && <span className="absolute right-[11px] top-[11px] size-2 rounded-full bg-sky ring-2 ring-jet" />}
             </button>
             <button type="button" onClick={() => setProfile(true)} aria-label="Mon profil" aria-haspopup="dialog" className="grid size-11 place-items-center rounded-full transition active:scale-95">
-              <Avatar name={user.fullName} size={30} />
+              {avatarName ? <Avatar name={avatarName} size={30} /> : <User size={20} strokeWidth={1.5} aria-hidden />}
             </button>
           </div>
         </div>

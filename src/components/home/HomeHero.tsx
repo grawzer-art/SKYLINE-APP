@@ -2,7 +2,8 @@
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight } from "lucide-react";
-import { PLACEHOLDER_PHOTOS, event, images, user } from "@/data/demo";
+import { PLACEHOLDER_PHOTOS, event, eventConfirmation, images } from "@/data/demo";
+import { IdentityLine } from "@/components/participant/IdentityLine";
 import { Photo } from "@/components/ui/Photo";
 import { ease } from "@/design/motion";
 import { useCountdown } from "@/lib/useCountdown";
@@ -37,11 +38,12 @@ function QuietCountdown({ target, label }: { target: string; label: string }) {
   const parts = s.status === "running"
     ? [[String(s.days), "J"], [pad(s.hours), "H"], [pad(s.minutes), "M"], [pad(s.seconds), "S"]] : [["–", "J"], ["–", "H"], ["–", "M"], ["–", "S"]];
   return (
-    <div role="timer" aria-label={s.status === "running" ? `${label} ${s.days} jours, ${s.hours} heures, ${s.minutes} minutes` : label}>
+    <div role="timer" aria-label={s.status === "running" ? `${label} ${s.days} jours, ${s.hours} heures, ${s.minutes} minutes${eventConfirmation.dates ? "" : " (date à confirmer)"}` : label}>
       <p className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-cloud/72">{label}</p>
       <p className="mt-1.5 flex items-baseline gap-2.5 font-mono text-[1.2rem] tabular-nums text-cloud">
         {parts.map(([v, u]) => <span key={u}>{v}<span className="ml-0.5 text-[0.72rem] text-cloud/68">{u}</span></span>)}
       </p>
+      {!eventConfirmation.dates && <p data-testid="to-confirm" className="mt-1 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-sunset/90">Date à confirmer</p>}
     </div>
   );
 }
@@ -67,8 +69,7 @@ export function HomeHero() {
 
       {/* Identité membre — discrète, façon étiquette */}
       <motion.div {...rise(0.2)} className="px-5">
-        <p className="font-display text-[1.1rem] leading-tight">{user.fullName}
-        </p>
+        <IdentityLine variant="legacy" />
       </motion.div>
 
 

@@ -34,6 +34,14 @@ export const event = {
   signature: "THE JOURNEY NEVER ENDS.",
 };
 
+/**
+ * CONFIRMATION DES INFORMATIONS ÉVÉNEMENTIELLES. Les dates, horaires, sièges et billets de ce fichier sont FICTIFS : tant qu'un indicateur est à `false`,
+ * l'interface affiche « à confirmer » et ne les présente JAMAIS comme confirmés. À passer à `true` uniquement quand l'organisation les confirme officiellement
+ * (et que la donnée vient d'une source réelle, plus de ce fichier).
+ */
+export const eventConfirmation = { dates: false, schedule: false, seats: false, tickets: false } as const;
+export const TO_CONFIRM = "À confirmer";
+
 export const user = {
   firstName: "Alex",
   fullName: "Alex Martin",

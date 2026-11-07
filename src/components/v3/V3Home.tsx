@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { event, images, user } from "@/data/demo";
+import { event, eventConfirmation, images } from "@/data/demo";
+import { IdentityLine } from "@/components/participant/IdentityLine";
 import type { Signal } from "@/data/signal-types";
 import { SignalCard } from "@/components/signal/SignalCard";
 import { Photo } from "@/components/ui/Photo";
@@ -22,9 +23,10 @@ function Countdown() {
   const s = useCountdown(event.departureISO);
   if (s.status !== "running") return null;
   return (
-    <div role="timer" aria-label={`Départ dans ${s.days} jours`}>
+    <div role="timer" aria-label={`Départ dans ${s.days} jours${eventConfirmation.dates ? "" : " (date à confirmer)"}`}>
       <p className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-cloud/72">Départ dans</p>
       <p className="mt-1.5 font-mono text-[1.05rem] tabular-nums">{s.days}<span className="ml-0.5 mr-2 text-[0.72rem] text-cloud/68">J</span>{pad(s.hours)}<span className="ml-0.5 mr-2 text-[0.72rem] text-cloud/68">H</span>{pad(s.minutes)}<span className="ml-0.5 text-[0.72rem] text-cloud/68">M</span></p>
+      {!eventConfirmation.dates && <p data-testid="to-confirm" className="mt-1 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-sunset/90">Date à confirmer</p>}
     </div>
   );
 }
@@ -80,7 +82,7 @@ export function V3Home({ signal }: { signal?: Signal }) {
           <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-jet/70 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-jet/95 via-jet/45 via-55% to-transparent" />
         </div>
-        <p className="px-5 font-mono text-[0.72rem] uppercase leading-relaxed tracking-[0.22em] text-cloud/80">{user.fullName}<br /><span className="text-cloud/68">{user.memberLine}</span></p>
+        <div className="px-5"><IdentityLine variant="v3" /></div>
         <div className="px-5 [text-shadow:0_1px_16px_rgb(0_0_0/0.7)]">
           <p className={cn("font-mono text-[0.72rem] uppercase tracking-[0.22em]", state.phase === "before" ? "text-cloud/90" : c.tone)}>{c.eyebrow}</p>
           <h1 id="v3-home-title" className="font-display mt-4 text-[clamp(1.7rem,8.4vw,2.5rem)]">

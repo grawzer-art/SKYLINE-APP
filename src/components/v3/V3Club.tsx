@@ -8,10 +8,12 @@ import { images } from "@/data/demo";
 import { visuals } from "@/data/visuals";
 import { ease } from "@/design/motion";
 import { useCommunity } from "@/lib/useCommunity";
+import { authActive, identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 
 /** CLUB : l'entrée du membership. Un héros photographique, la carte membre comme objet, puis les quatre espaces. */
 export function V3Club() {
   const c = useCommunity();
+  const identity = useParticipantIdentity(); const cardName = authActive(identity) ? identityName(identity) ?? "Participant" : c.state.me.pseudo;
   const { t, state } = c;
   const reduce = useReducedMotion();
   const metal = useMetal();
@@ -27,7 +29,7 @@ export function V3Club() {
         <motion.p {...rise(0.05)} className="font-mono text-[0.72rem] uppercase tracking-[0.24em] text-sky">{t("club.eyebrow")}</motion.p>
         <motion.h1 id="club-title" {...rise(0.12)} className="font-display mt-2 text-[clamp(2.4rem,13vw,3.6rem)] leading-[0.9]">{t("club.title")}</motion.h1>
         <motion.p {...rise(0.2)} className="font-tagline mt-3 text-[0.75rem] text-cloud/85">{t("club.tagline")}</motion.p>
-        <div className="mt-9"><MembershipCard name={state.me.pseudo} since={t("club.card.since.value")} number={t("club.card.pending")} member={t("club.card.member")} sinceLabel={t("club.card.since")} numberLabel={t("club.card.number")} demo metal={metal} /><TiltToggle metal={metal} label={t("club.card.tilt")} labelOn={t("club.card.tilt.on")} /></div>
+        <div className="mt-9"><MembershipCard name={cardName} since={t("club.card.since.value")} number={t("club.card.pending")} member={t("club.card.member")} sinceLabel={t("club.card.since")} numberLabel={t("club.card.number")} demo metal={metal} /><TiltToggle metal={metal} label={t("club.card.tilt")} labelOn={t("club.card.tilt.on")} /></div>
       </section>
 
       <section className="px-5 pt-7">

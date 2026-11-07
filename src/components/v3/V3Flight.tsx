@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Backdrop } from "./visual";
 import { DemoTag } from "./ui";
 import { FlightPass, type PassStatus } from "./FlightPass";
+import { authActive, identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 import { TiltToggle, useMetal } from "./metal";
 import { Sheet } from "@/components/ui/Sheet";
 import { images } from "@/data/demo";
@@ -81,13 +82,15 @@ export function V3Flight() {
   const reduce = useReducedMotion();
   const metal = useMetal(1.7);
   const phase = state.phase;
-  const demo = state.sim.trip;
+  // Authentification participants active : AUCUNE donnée de voyage réelle n'est encore reliée au compte → pas de voyage de démonstration, pass « à confirmer ».
+  const identity = useParticipantIdentity(); const realMode = authActive(identity); const passName = realMode ? identityName(identity) ?? "Participant" : state.me.pseudo;
+  const demo = !realMode && state.sim.trip;
   const trip = demo ? demoTrip : noTrip;
   const initial: Tab = phase === "during" ? "live" : "flight";
   const [pick, setPick] = useState<{ phase: string; tab: Tab } | null>(null);
   const tab = pick && pick.phase === phase ? pick.tab : initial;
   const [info, setInfo] = useState<null | "root" | (typeof docs)[number]>(null);
-  const status: PassStatus = phase === "after" ? "ended" : state.sim.reservation === "confirmed" ? "confirmed" : "pending";
+  const status: PassStatus = realMode ? "to_confirm" : phase === "after" ? "ended" : state.sim.reservation === "confirmed" ? "confirmed" : "pending";
   const doc = info && info !== "root" ? info : null;
 
   return (
@@ -95,7 +98,7 @@ export function V3Flight() {
       <section aria-labelledby="flight-title" className="relative isolate px-5 pt-[calc(var(--safe-top)+5.25rem)]">
         <Backdrop src={images.before} position="30% 62%" className="!bottom-auto !h-[21rem]" />
         <h1 id="flight-title" className="font-display text-[clamp(1.9rem,9.5vw,2.6rem)] leading-[0.92]">My Flight</h1>
-        <div className="mt-5"><FlightPass name={state.me.pseudo} status={status} metal={metal} demo /></div>
+        <div className="mt-5"><FlightPass name={passName} status={status} metal={metal} demo={!realMode} /></div>
         <TiltToggle metal={metal} label="Activer le reflet au mouvement" labelOn="Reflet au mouvement actif" />
       </section>
 

@@ -6,6 +6,8 @@ import { Emblem } from "@/components/ui/Emblem";
 import { Sheet } from "@/components/ui/Sheet";
 import { Icon } from "@/components/ui/Icon";
 import { ChangeSpaceLink, SpaceSwitcher } from "@/components/staff/SpaceSwitcher";
+import Link from "next/link";
+import { identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 
 function Row({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -22,6 +24,7 @@ function Row({ title, children }: { title: string; children: React.ReactNode }) 
 /** Profil : identité membre, informations pratiques et réglages de compte (remplace l'onglet MORE). */
 export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter();
+  const identity = useParticipantIdentity(); const real = identity.status !== "off" && identity.status !== "loading"; const name = identityName(identity);
 
   /** Ferme le panneau (qui retire son entrée d'historique) puis navigue, sans que les deux s'annulent. */
   const goTo = (href: string) => {
@@ -33,13 +36,20 @@ export function ProfileSheet({ open, onClose }: { open: boolean; onClose: () => 
   };
 
   return (
-    <Sheet open={open} onClose={onClose} eyebrow="Profil · Démo" title={user.fullName}>
+    <Sheet open={open} onClose={onClose} eyebrow={real ? "Profil" : "Profil · Démo"} title={real ? name ?? "Mon profil" : user.fullName}>
       <div className="flex items-center gap-4 pb-5">
         <Emblem size={64} />
-        <div>
-          <p className="font-medium">{user.memberLine}</p>
-          <p className="text-sm text-dim">Profil de démonstration</p>
-        </div>
+        {real ? (
+          <div>
+            <p className="font-medium">{identity.status === "ready" ? (name ? "Participant · SKYLINE 2027" : "Profil à compléter") : identity.status === "no_access" ? "Accès non activé" : "Non connecté"}</p>
+            <Link href={identity.status === "ready" ? "/v3/account" : "/v3/login?next=/v3/account"} onClick={onClose} className="inline-flex min-h-11 items-center text-sm text-sky underline underline-offset-4">{identity.status === "ready" ? "Mon compte" : "Se connecter"}</Link>
+          </div>
+        ) : (
+          <div>
+            <p className="font-medium">{user.memberLine}</p>
+            <p className="text-sm text-dim">Profil de démonstration</p>
+          </div>
+        )}
       </div>
 
       {/* Sélecteur d'espace : visible seulement pour un compte staff/admin ; la session est conservée. */}

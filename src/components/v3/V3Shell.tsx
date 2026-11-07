@@ -8,6 +8,7 @@ import { Icon } from "@/components/ui/Icon";
 import { phaseLabels, type Phase } from "@/data/v3";
 import { useCommunity } from "@/lib/useCommunity";
 import { locales } from "@/i18n";
+import { authActive, identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 import { Initials } from "./ui";
 import { cn } from "@/lib/cn";
 
@@ -26,14 +27,15 @@ export function V3Shell({ children }: { children: React.ReactNode }) {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => { const on = () => setScrolled(window.scrollY > 24); on(); window.addEventListener("scroll", on, { passive: true }); return () => window.removeEventListener("scroll", on); }, []);
   const active = (href: string) => (href === "/" ? false : pathname.startsWith(href)); // « Home » ramène à l'accueil de l'application
-  const bare = pathname.startsWith("/v3/wireframes") || pathname.startsWith("/v3/screens");
+  const bare = pathname.startsWith("/v3/wireframes") || pathname.startsWith("/v3/screens") || pathname === "/v3/login"; // la connexion est plein cadre
+  const identity = useParticipantIdentity(); const real = authActive(identity); const avatarName = real ? identityName(identity) ?? "" : state.me.pseudo;
 
   if (bare) return <>{children}</>; // documents de conception : plein cadre, sans chrome d'application
 
   return (
     <>
       <header className={cn("fixed inset-x-0 top-0 z-50 mx-auto w-full max-w-[480px] border-b px-5 pt-[var(--safe-top)] transition-[background-color,backdrop-filter,border-color] duration-300", scrolled ? "border-line bg-jet/85 backdrop-blur-xl" : "border-transparent bg-gradient-to-b from-jet/80 to-transparent")}>
-        <p className="pt-1.5 whitespace-nowrap font-mono text-[0.72rem] uppercase tracking-[0.06em] text-sunset/85">Prototype · données fictives</p>
+        {pathname !== "/v3/account" && <p className="pt-1.5 whitespace-nowrap font-mono text-[0.72rem] uppercase tracking-[0.06em] text-sunset/85">Prototype · données fictives</p>}
         <div className="flex h-12 items-center justify-between">
           <Link href="/v3" aria-label="SKYLINE — accueil du prototype" className="flex min-h-11 items-center"><Wordmark /></Link>
           <div className="flex items-center gap-1.5">
@@ -41,7 +43,7 @@ export function V3Shell({ children }: { children: React.ReactNode }) {
               className="inline-flex h-11 items-center gap-1.5 rounded-full border border-cloud/25 px-3 font-mono text-[0.7rem] uppercase tracking-[0.14em] transition active:scale-95">
               <span aria-hidden className="size-1.5 rounded-full bg-sky" />{phaseLabels[state.phase]}
             </button>
-            <Link href="/v3/profile" aria-label="Profil et paramètres" className="grid size-11 place-items-center"><Initials name={state.me.pseudo} size={30} /></Link>
+            <Link href="/v3/profile" aria-label="Profil et paramètres" className="grid size-11 place-items-center"><Initials name={avatarName || "·"} size={30} /></Link>
           </div>
         </div>
       </header>

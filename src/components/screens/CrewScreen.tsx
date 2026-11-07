@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { crew, type CrewMember } from "@/data/demo";
+import { crew, eventConfirmation, type CrewMember } from "@/data/demo";
 import { Avatar } from "@/components/ui/Avatar";
 import { BackButton } from "@/components/ui/BackButton";
 import { Sheet } from "@/components/ui/Sheet";
@@ -25,7 +25,7 @@ export function CrewScreen() {
                 <span className="block font-medium">{m.name}</span>
                 <span className="block text-sm text-dim">{m.role} · {m.city}</span>
               </span>
-              <span className="font-mono text-xs text-dim">{m.seat}</span>
+              <span className="font-mono text-xs text-dim">{eventConfirmation.seats ? m.seat : "Siège à confirmer"}</span>
             </button>
           </li>
         ))}
@@ -45,7 +45,7 @@ export function CrewScreen() {
               </div>
             </div>
             <p className="mt-5 leading-relaxed text-cloud/85">{selected.bio}</p>
-            <p className="mt-4 font-mono text-[0.72rem] uppercase tracking-[0.16em] text-dim">Siège fictif · {selected.seat}</p>
+            <p className="mt-4 font-mono text-[0.72rem] uppercase tracking-[0.16em] text-dim">{eventConfirmation.seats ? `Siège · ${selected.seat}` : "Siège à confirmer"}</p>
             <Button variant="ghost" onClick={() => setSelected(null)} className="mt-6 w-full">Fermer</Button>
           </div>
         )}

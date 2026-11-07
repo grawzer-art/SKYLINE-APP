@@ -1,10 +1,9 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Wordmark } from "@/components/ui/Wordmark";
-import { createBrowserSupabase } from "@/lib/supabase/client";
-import { LOGIN_NEXT_COOKIE, safeStaffNext } from "@/lib/staff/paths";
+import { useEmailCodeLogin } from "@/lib/auth/useEmailCodeLogin";
+import { safeStaffNext } from "@/lib/staff/paths";
 import { rememberSpace } from "@/lib/space";
 import { cn } from "@/lib/cn";
 
@@ -19,35 +18,7 @@ const btn = "inline-flex min-h-12 w-full items-center justify-center rounded-ful
 export function LoginScreen() {
   const q = useSearchParams(); const next = safeStaffNext(q.get("next"));
   const denied = q.get("denied") === "1"; const failed = q.get("error") === "1";
-  const [email, setEmail] = useState(""); const [code, setCode] = useState("");
-  const [step, setStep] = useState<"email" | "code">("email");
-  const [busy, setBusy] = useState(false); const [msg, setMsg] = useState<string | null>(null); const [err, setErr] = useState<string | null>(null);
-  const [cool, setCool] = useState(0);
-  useEffect(() => { if (cool <= 0) return; const t = setTimeout(() => setCool((c) => c - 1), 1000); return () => clearTimeout(t); }, [cool]);
-
-  const send = async (e?: React.FormEvent) => {
-    e?.preventDefault(); setErr(null); setMsg(null);
-    const addr = email.trim().toLowerCase(); if (!/^\S+@\S+\.\S+$/.test(addr)) { setErr("Saisissez une adresse e-mail valide."); return; }
-    setBusy(true);
-    try {
-      // Destination mémorisée dans un cookie court : l'URL de retour reste EXACTE (`…/auth/callback`, sans paramètre).
-      document.cookie = `${LOGIN_NEXT_COOKIE}=${encodeURIComponent(next)}; Path=/; Max-Age=900; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
-      const { error } = await createBrowserSupabase().auth.signInWithOtp({ email: addr, options: { shouldCreateUser: false, emailRedirectTo: `${location.origin}/auth/callback` } });
-      if (error && (error.status === 429 || /rate|too many|seconds/i.test(error.message))) { setErr("Trop de tentatives. Réessayez dans quelques minutes."); }
-      else { setStep("code"); setMsg("Si ce compte existe, un code vient d'être envoyé par e-mail."); setCool(60); }
-    } catch { setErr("Connexion impossible pour le moment. Réessayez."); }
-    setBusy(false);
-  };
-  const verify = async (e: React.FormEvent) => {
-    e.preventDefault(); setErr(null);
-    const token = code.replace(/\s/g, ""); if (!/^\d{6,10}$/.test(token)) { setErr("Saisissez le code reçu par e-mail."); return; }
-    setBusy(true);
-    try {
-      const { error } = await createBrowserSupabase().auth.verifyOtp({ email: email.trim().toLowerCase(), token, type: "email" });
-      if (error) { setErr("Code invalide ou expiré."); setBusy(false); return; }
-      rememberSpace("staff"); window.location.assign(next); // navigation complète : le proxy relit la session fraîche
-    } catch { setErr("Vérification impossible pour le moment. Réessayez."); setBusy(false); }
-  };
+  const { email, setEmail, code, setCode, step, busy, msg, err, cool, send, verify, changeEmail } = useEmailCodeLogin({ next, onVerified: () => { rememberSpace("staff"); window.location.assign(next); } });
 
   return (
     <main className="mx-auto min-h-dvh w-full max-w-[480px] px-5 pb-12 pt-[calc(var(--safe-top)+2rem)]">
@@ -75,7 +46,7 @@ export function LoginScreen() {
           <button type="submit" disabled={busy} className={cn(btn, "mt-5 bg-cloud text-jet")}>{busy ? "Vérification…" : "Se connecter"}</button>
           <div className="mt-4 flex items-center justify-between gap-3">
             <button type="button" onClick={() => send()} disabled={busy || cool > 0} className="min-h-11 font-mono text-[0.75rem] uppercase tracking-[0.14em] text-sky underline underline-offset-4 disabled:opacity-40 disabled:no-underline">{cool > 0 ? `Renvoyer le code (${cool} s)` : "Renvoyer le code"}</button>
-            <button type="button" onClick={() => { setStep("email"); setCode(""); setErr(null); setMsg(null); }} className="min-h-11 font-mono text-[0.75rem] uppercase tracking-[0.14em] text-dim underline underline-offset-4">Changer d&apos;adresse</button>
+            <button type="button" onClick={changeEmail} className="min-h-11 font-mono text-[0.75rem] uppercase tracking-[0.14em] text-dim underline underline-offset-4">Changer d&apos;adresse</button>
           </div>
           <p className="mt-3 text-[0.82rem] leading-snug text-dim">Vous pouvez aussi ouvrir le lien reçu par e-mail. Dans l&apos;application installée sur l&apos;écran d&apos;accueil, saisissez le code.</p>
         </form>
