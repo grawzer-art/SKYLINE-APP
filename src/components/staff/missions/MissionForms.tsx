@@ -8,7 +8,7 @@ import { ActionNotice, btn, field, label, useAction } from "./kit";
 type Props = { actor: Actor; M: MissionsApi };
 const FieldError = ({ id, text }: { id: string; text?: string }) => (text ? <p id={`e-${id}`} role="alert" className="mt-1.5 text-[0.88rem] text-sunset">{text}</p> : null);
 
-/** CRÉATION : une seule action (create_mission). Un membre qui choisit une autre personne fait une PROPOSITION. */
+/** CRÉATION : attribution directe à tout membre STAFF, validation finale par un administrateur distinct. */
 export function CreateForm({ actor, M, onDone, onCancel }: Props & { onDone: (id: string) => void; onCancel: () => void }) {
   const { members, validatorIds, name } = M.directory; const ids = members.map((x) => x.id);
   const validators = members.filter((x) => validatorIds.includes(x.id));
@@ -17,8 +17,7 @@ export function CreateForm({ actor, M, onDone, onCancel }: Props & { onDone: (id
   const [errors, setErrors] = useState<MissionErrors>({});
   const act = useAction((i: MissionInput) => M.create(i, actor));
   const set = <K extends keyof MissionInput>(k: K, x: MissionInput[K]) => setV((p) => ({ ...p, [k]: x }));
-  const proposal = !actor.coordinator && v.assigneeId !== actor.memberId;
-  const avoid = proposal ? [v.assigneeId, actor.memberId] : [v.assigneeId];
+  const avoid = [v.assigneeId];
   const statusChoices = MISSION_STATUSES.filter((s) => actor.coordinator || s !== "done");
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); const chk = validateMissionInput(v, ids, validatorIds); if (!chk.ok) { setErrors(chk.errors); return; } setErrors({});
@@ -31,7 +30,7 @@ export function CreateForm({ actor, M, onDone, onCancel }: Props & { onDone: (id
         <div><label htmlFor="f-desc" className={label}>Description</label><textarea id="f-desc" value={v.description} onChange={(e) => set("description", e.target.value)} rows={3} className={cn(field, "min-h-24 py-3")} /><FieldError id="description" text={errors.description} /></div>
         <div><label htmlFor="f-assignee" className={label}>Responsable</label>
           <select id="f-assignee" value={v.assigneeId} onChange={(e) => { const a = e.target.value; setV((p) => ({ ...p, assigneeId: a, validatorId: p.validatorId === a ? firstOther([a]) : p.validatorId })); }} className={field}>{members.map((x) => <option key={x.id} value={x.id}>{x.name}{x.id === actor.memberId ? " (moi)" : ""}</option>)}</select>
-          {proposal && <p role="note" className="mt-2 text-[0.88rem] leading-snug text-sky">Proposition : vous restez responsable jusqu&apos;à l&apos;approbation de {name(v.assigneeId)} par un administrateur.</p>}<FieldError id="assigneeId" text={errors.assigneeId} /></div>
+          <FieldError id="assigneeId" text={errors.assigneeId} /></div>
         <div><label htmlFor="f-validator" className={label}>Validation par</label><select id="f-validator" value={v.validatorId} onChange={(e) => set("validatorId", e.target.value)} className={field}>{validators.filter((x) => !avoid.includes(x.id)).map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select><FieldError id="validatorId" text={errors.validatorId} /></div>
         <div><label htmlFor="f-due" className={label}>Échéance</label><input id="f-due" type="date" value={v.dueDate ?? ""} onChange={(e) => set("dueDate", e.target.value || null)} className={field} /><FieldError id="dueDate" text={errors.dueDate} /></div>
         <PriorityPicker value={v.priority} onChange={(p) => set("priority", p)} />
