@@ -20,7 +20,7 @@ export function V3Club() {
   const nReq = c.pendingRequests.length;
   const msgBadge = c.eligible && nReq + c.unreadTotal > 0 ? t("common.new") : undefined;
   const rise = (d: number) => ({ initial: reduce ? false : { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.8, ease, delay: d } } as const);
-  const locked = !c.eligible;
+  const real = authActive(identity); const locked = real ? false : !c.eligible;
 
   return (
     <>
@@ -33,7 +33,7 @@ export function V3Club() {
       </section>
 
       <section className="px-5 pt-7">
-        {locked ? (
+        {real ? null : locked ? (
           <Link href="/v3/club/community" className="group block rounded-[6px] border border-sky/50 bg-jet/60 p-5 backdrop-blur-sm transition active:scale-[0.99]">
             <span className="font-display block text-[1.1rem]">{t("club.join")}</span>
             <span className="mt-1.5 block text-[0.86rem] leading-snug text-cloud/75">{t("club.join.text")}</span>
@@ -47,7 +47,7 @@ export function V3Club() {
       <nav aria-label={t("club.title")} className="space-y-2.5 px-5 pt-5">
         <NavTile href="/v3/club/space" title="My Space" sub={t("club.tile.space")} visual={visuals.ceiling} />
         <NavTile href="/v3/club/members" title="Members" sub={locked ? t("club.tile.locked") : t("club.tile.members")} visual={visuals.airport} locked={locked} />
-        <NavTile href="/v3/club/messages" title="Messages" sub={locked ? t("club.tile.locked") : nReq ? t("messages.tab.requests.n", { n: nReq }) : c.unreadTotal ? t("messages.unread", { count: c.unreadTotal }) : t("club.tile.messages")} visual={visuals.sunset} badge={msgBadge} locked={locked} />
+        <NavTile href="/v3/club/messages" title="Messages" sub={real ? "Bientôt" : locked ? t("club.tile.locked") : nReq ? t("messages.tab.requests.n", { n: nReq }) : c.unreadTotal ? t("messages.unread", { count: c.unreadTotal }) : t("club.tile.messages")} visual={visuals.sunset} badge={real ? undefined : msgBadge} locked={locked} />
         <NavTile href="/v3/club/memories" title="Souvenirs" sub={t("club.tile.souvenirs")} visual={visuals.warm} />
       </nav>
 

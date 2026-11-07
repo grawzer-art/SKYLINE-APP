@@ -1,4 +1,6 @@
 "use client";
+import { ClubSoon } from "@/components/participant/ClubSoon";
+import { authActive, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowLeft, BellOff, Search, X } from "lucide-react";
@@ -10,7 +12,7 @@ import { useCommunity } from "@/lib/useCommunity";
 import { cn } from "@/lib/cn";
 
 /** MESSAGES : conversations et demandes. Sobre, lisible, adulte — l'état de chaque échange se lit d'un coup d'œil. */
-export function V3Messages() {
+function V3MessagesDemo() {
   const c = useCommunity();
   const { t, state } = c;
   const [tab, setTab] = useState<"chats" | "requests">("chats");
@@ -96,4 +98,11 @@ export function V3Messages() {
       <p className="px-5 pb-4 pt-6 text-[0.75rem] text-dim">{t("messages.footer")}</p>
     </CommunityGate>
   );
+}
+
+/** Mode réel : aucune conversation ni demande fictive ; fonction annoncée « bientôt ». */
+export function V3Messages() {
+  const identity = useParticipantIdentity();
+  if (identity.status === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
+  return authActive(identity) ? <ClubSoon eyebrow="MESSAGES" title="Messages" /> : <V3MessagesDemo  />;
 }

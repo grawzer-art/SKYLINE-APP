@@ -1,4 +1,6 @@
 "use client";
+import { ClubSoon } from "@/components/participant/ClubSoon";
+import { authActive, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
@@ -10,7 +12,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import { useCommunity } from "@/lib/useCommunity";
 
 /** Activation volontaire des fonctions communautaires (messagerie incluse) — pas une liste de tâches : trois attestations et un bouton. */
-export function V3Community() {
+function V3CommunityDemo() {
   const c = useCommunity();
   const { t, state } = c;
   const [sheet, setSheet] = useState<null | "charter" | "leave">(null);
@@ -72,4 +74,11 @@ export function V3Community() {
       </Sheet>
     </>
   );
+}
+
+/** Mode réel : aucune conversation ni demande fictive ; fonction annoncée « bientôt ». */
+export function V3Community() {
+  const identity = useParticipantIdentity();
+  if (identity.status === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
+  return authActive(identity) ? <ClubSoon eyebrow="COMMUNITY" title="Communauté" /> : <V3CommunityDemo  />;
 }

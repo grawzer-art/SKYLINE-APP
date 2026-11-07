@@ -7,7 +7,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import { ChangeSpaceLink, SpaceSwitcher } from "@/components/staff/SpaceSwitcher";
 import { locales } from "@/i18n";
 import { useCommunity } from "@/lib/useCommunity";
-import { identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
+import { authActive, identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 import { cn } from "@/lib/cn";
 
 /** Profil & paramètres du compte (via l'avatar) : langue, notifications, blocages, données. La visibilité et le contact se règlent dans My Space. */
@@ -15,6 +15,7 @@ export function V3Profile() {
   const c = useCommunity();
   const { t, state, update, reset } = c;
   const [info, setInfo] = useState<null | "export" | "delete" | "help">(null);
+  const identity = useParticipantIdentity(); const real = authActive(identity); const shownName = real ? identityName(identity) ?? "" : state.me.pseudo;
   const s = state.settings;
   const setS = (patch: Partial<typeof s>) => update((p) => ({ ...p, settings: { ...p.settings, ...patch } }));
   const texts = {
@@ -28,7 +29,7 @@ export function V3Profile() {
       <ScreenTitle eyebrow="Compte" title="Profil" />
       <AccountBlock />
       <Block>
-        <div className="flex items-center gap-4"><Initials name={state.me.pseudo} size={64} /><div><p className="font-display text-[1.15rem]">{state.me.pseudo}</p><Link href="/v3/club/space" className="font-mono text-[0.72rem] uppercase tracking-[0.18em] text-sky">{t("space.title")} →</Link></div></div>
+        <div className="flex items-center gap-4"><Initials name={shownName || "?"} size={64} /><div><p className="font-display text-[1.15rem]" data-testid="profile-name">{shownName || (real ? "—" : "")}</p><Link href="/v3/club/space" className="font-mono text-[0.72rem] uppercase tracking-[0.18em] text-sky">{t("space.title")} →</Link></div></div>
       </Block>
       <Block label={t("profile.language")}>
         <div role="radiogroup" aria-label={t("profile.language")} className="grid grid-cols-2 gap-2">
@@ -38,9 +39,9 @@ export function V3Profile() {
           ))}
         </div>
       </Block>
-      <Block label="Communauté">
+      {!real && <Block label="Communauté">
         <Link href="/v3/club/community" className="flex min-h-14 items-center justify-between border-y border-line text-[0.95rem]">{c.eligible ? t("gate.done.title") : t("gate.title")}<span aria-hidden className="text-silver">→</span></Link>
-      </Block>
+      </Block>}
       <Block label="Membres bloqués">
         {state.blocked.length === 0 ? <p className="text-[0.88rem] text-dim">Aucun membre bloqué.</p> : (
           <ul className="divide-y divide-line border-y border-line">

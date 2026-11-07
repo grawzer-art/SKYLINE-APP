@@ -1,4 +1,5 @@
 "use client";
+import { ClubMemberReal } from "@/components/participant/ClubDirectoryReal";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -9,13 +10,14 @@ import { ReportForm } from "./ReportForm";
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { LIMITS, commonGenres, validateIntro } from "@/domain/community";
+import { authActive, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 import { useCommunity } from "@/lib/useCommunity";
 import { closeThenGo } from "@/lib/sheetNav";
 
 type Panel = null | "request" | "block" | "report" | "done";
 
 /** Fiche membre : demande de contact (mot d'introduction facultatif), blocage, signalement — une seule modale, contenu variable. */
-export function V3Member({ id }: { id: string }) {
+function V3MemberDemo({ id }: { id: string }) {
   const c = useCommunity();
   const { t, state } = c;
   const router = useRouter();
@@ -90,4 +92,11 @@ export function V3Member({ id }: { id: string }) {
       })()}
     </CommunityGate>
   );
+}
+
+/** Mode réel (authentification participants active) : données Supabase du compte connecté ; sinon prototype de démonstration inchangé. */
+export function V3Member({ id }: { id: string }) {
+  const identity = useParticipantIdentity();
+  if (identity.status === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
+  return authActive(identity) ? <ClubMemberReal id={id} /> : <V3MemberDemo id={id} />;
 }

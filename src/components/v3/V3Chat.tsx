@@ -1,4 +1,6 @@
 "use client";
+import { ClubSoon } from "@/components/participant/ClubSoon";
+import { authActive, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Flag, MoreHorizontal, X } from "lucide-react";
@@ -20,7 +22,7 @@ const subscribeOnline = (cb: () => void) => { window.addEventListener("online", 
 const useOnline = () => useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
 
 /** Conversation privée : texte seul, règles appliquées à l'envoi, menu (silence, suppression, blocage, signalement), signalement d'un message précis. */
-export function V3Chat({ id }: { id: string }) {
+function V3ChatDemo({ id }: { id: string }) {
   const c = useCommunity();
   const { t, state } = c;
   const router = useRouter();
@@ -116,4 +118,11 @@ export function V3Chat({ id }: { id: string }) {
       )}
     </CommunityGate>
   );
+}
+
+/** Mode réel : aucune conversation ni demande fictive ; fonction annoncée « bientôt ». */
+export function V3Chat({ id }: { id: string }) {
+  const identity = useParticipantIdentity();
+  if (identity.status === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
+  return authActive(identity) ? <ClubSoon eyebrow="MESSAGES" title="Messages" /> : <V3ChatDemo id={id} />;
 }

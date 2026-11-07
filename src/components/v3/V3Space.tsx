@@ -1,4 +1,5 @@
 "use client";
+import { ClubSpaceReal } from "@/components/participant/ClubSpaceReal";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
@@ -11,6 +12,7 @@ import { cities, genres } from "@/data/v3";
 import { images } from "@/data/demo";
 import { LIMITS } from "@/domain/community";
 import { ease } from "@/design/motion";
+import { authActive, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 import { useCommunity } from "@/lib/useCommunity";
 import { cn } from "@/lib/cn";
 
@@ -21,7 +23,7 @@ const TYPES = ["image/jpeg", "image/png", "image/webp"];
  * MY SPACE : d'abord le profil, tel que les autres le voient. La modification existe, mais dans un panneau secondaire.
  * Persistant d'une édition à l'autre.
  */
-export function V3Space() {
+function V3SpaceDemo() {
   const c = useCommunity();
   const { t, state } = c;
   const me = state.me;
@@ -146,4 +148,11 @@ export function V3Space() {
       </Sheet>
     </>
   );
+}
+
+/** Mode réel (authentification participants active) : données Supabase du compte connecté ; sinon prototype de démonstration inchangé. */
+export function V3Space() {
+  const identity = useParticipantIdentity();
+  if (identity.status === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
+  return authActive(identity) ? <ClubSpaceReal  /> : <V3SpaceDemo  />;
 }

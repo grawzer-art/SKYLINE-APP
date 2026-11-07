@@ -1,4 +1,5 @@
 "use client";
+import { ClubDirectoryReal } from "@/components/participant/ClubDirectoryReal";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
@@ -8,10 +9,11 @@ import { CommunityGate } from "./community";
 import { Button } from "@/components/ui/Button";
 import { cities, genres, members } from "@/data/v3";
 import { LIMITS, commonGenres, searchDirectory } from "@/domain/community";
+import { authActive, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 import { useCommunity } from "@/lib/useCommunity";
 
 /** MEMBERS : annuaire des profils VISIBLES. Réciprocité, ordre alphabétique (aucun classement), pagination. */
-export function V3Members() {
+function V3MembersDemo() {
   const c = useCommunity();
   const { t, state } = c;
   const [q, setQ] = useState("");
@@ -84,4 +86,11 @@ export function V3Members() {
       )}
     </CommunityGate>
   );
+}
+
+/** Mode réel (authentification participants active) : données Supabase du compte connecté ; sinon prototype de démonstration inchangé. */
+export function V3Members() {
+  const identity = useParticipantIdentity();
+  if (identity.status === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
+  return authActive(identity) ? <ClubDirectoryReal  /> : <V3MembersDemo  />;
 }
