@@ -31,3 +31,21 @@ Avec `PARTICIPANT_AUTH=supabase` (visiteur non connecté) :
 Appliquer la migration `supabase/proposals/B4_1_participant_profiles.sql`, préparer un compte participant (invitation + accès « members »), puis tester : connexion, profil, nom affiché sur l'accueil / le pass, déconnexion.
 ## 5. Retour arrière
 Supprimer `PARTICIPANT_AUTH` (ou `off`) et redéployer : l'application participants redevient identique à `staff-preview`. Rien n'est à défaire côté base.
+
+---
+
+## B4.3 — Identité privée & profil CLUB
+
+**Deux structures distinctes** : `participant_profiles` (B4.1, privé : prénom, nom, nom affiché) et `club_profiles` (B4.3, communautaire : pseudo, ville, bio, goûts, photo, visibilité). Aucune colonne commune, aucune clé entre elles.
+
+### Migration à valider (NON appliquée)
+`supabase/proposals/B4_3_club_profiles.sql` — table `club_profiles` sans aucun accès direct (RLS sans politique), 6 fonctions `SECURITY DEFINER` (`get_my_club_profile`, `upsert_my_club_profile`, `set_my_club_visibility`, `set_my_club_avatar`, `list_club_directory`, `get_club_member`), bucket privé `club-avatars` (512 Ko, JPEG/WebP) et ses politiques de stockage. Indépendante de B4.1 et de B3 ; dépend seulement de B0. Validée sur Postgres local (`tests/club-profiles.test.mts`, deux jeux de privilèges Supabase).
+
+Ordre d'application suggéré (après validation explicite) : B4.1 → B4.3, sur la base de **Preview** d'abord. Tant qu'elle n'est pas appliquée, My Space affiche « Le profil CLUB n'est pas encore disponible » (aucune erreur brute).
+
+### Vérifier sur la Preview (avec `PARTICIPANT_AUTH=supabase`)
+1. Deux comptes invités (`members`) : se connecter avec chacun (deux navigateurs/profils).
+2. My Space : « Créer mon profil CLUB » → profil **privé** (interrupteur éteint). L'autre compte ne le voit pas.
+3. Publier les deux profils → chacun apparaît dans Members de l'autre, jamais soi-même. Masquer → disparaît immédiatement.
+4. Photo : import JPEG/PNG/WebP → recadrée/compressée (512 px) → stockage privé, affichée par URL signée.
+5. Messages / demandes de contact : « Bientôt disponible » (pas de conversation fictive). Pass : « Réservation à confirmer », aucun QR.
