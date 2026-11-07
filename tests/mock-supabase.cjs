@@ -10,7 +10,7 @@ const slugOf = (id) => Object.keys(U).find((k) => U[k] === id);
 const coord = (slug) => ROLES[slug].platform.includes("super_admin") || ROLES[slug].staff.includes("admin");
 const isStaff = (slug) => ROLES[slug].spaces.includes("staff");
 let S;
-const reset = () => { S = { missions: [], events: [], comments: [], seq: 1, ctl: { delay: 0, fail: {} } }; };
+const reset = () => { S = { missions: [], events: [], comments: [], profiles: {}, seq: 1, ctl: { delay: 0, fail: {} } }; };
 reset();
 const now = () => new Date().toISOString();
 const uid = () => "aaaaaaaa-" + String(Date.now() % 1e4).padStart(4, "0") + "-4" + String(S.seq).padStart(3, "0") + "-8" + String(++S.seq).padStart(3, "0") + "-" + String(Math.floor(Math.random() * 1e12)).padStart(12, "0");
@@ -26,6 +26,13 @@ const FORB = E("42501", "forbidden"); const NOTF = E("P0001", "not_found");
 
 function rpc(fn, a, me) {
   if (fn === "list_team") return { body: Object.keys(U).filter(isStaff).map((s) => ({ id: U[s], slug: s, display_name: NAMES[s], function_title: "Fonction " + s, platform_roles: ROLES[s].platform, staff_roles: ROLES[s].staff })) };
+  if (fn === "upsert_my_participant_profile") {
+    if (S.ctl.profileTable === "missing") return { status: 404, body: { code: "PGRST202", message: "Could not find the function public.upsert_my_participant_profile in the schema cache" } };
+    if (!ROLES[me].spaces.includes("members")) return FORB;
+    const good = (v) => typeof v === "string" && v.trim() && v.trim().length <= 60 && !/[\u0000-\u001f\u007f]/.test(v);
+    if (!good(a.p_first_name)) return E("P0001", "invalid_first_name"); if (!good(a.p_last_name)) return E("P0001", "invalid_last_name"); if (!good(a.p_display_name)) return E("P0001", "invalid_display_name");
+    const prev = S.profiles[me]; S.profiles[me] = { user_id: U[me], first_name: a.p_first_name.trim(), last_name: a.p_last_name.trim(), display_name: a.p_display_name.trim(), avatar_path: null, created_at: prev ? prev.created_at : now(), updated_at: now() }; return { body: S.profiles[me] };
+  }
   if (!isStaff(me)) return FORB;
   const find = () => S.missions.find((x) => x.id === a.p_id && visible(x, me));
   const c = coord(me);
@@ -72,6 +79,7 @@ function select(table, q, me) {
   else if (table === "staff_profiles") rows = isStaff(me) ? [{ user_id: U[me], slug: me }] : [];
   else if (table === "missions") rows = isStaff(me) ? S.missions.filter((m) => visible(m, me)) : [];
   else if (table === "mission_events") rows = isStaff(me) ? S.events.filter((e) => { const m = S.missions.find((x) => x.id === e.mission_id); return m && visible(m, me); }) : [];
+  else if (table === "participant_profiles") { if (S.ctl.profileTable === "missing") return "MISSING"; rows = ROLES[me].spaces.includes("members") && S.profiles[me] ? [S.profiles[me]] : []; }
   else if (table === "mission_comments") rows = isStaff(me) ? S.comments.filter((c) => { const m = S.missions.find((x) => x.id === c.mission_id); return m && visible(m, me); }) : [];
   else return null;
   for (const [k, v] of q.entries()) if (typeof v === "string" && v.startsWith("eq.")) rows = rows.filter((r) => String(r[k]) === v.slice(3));
@@ -81,22 +89,29 @@ function select(table, q, me) {
 }
 
 const server = http.createServer((req, res) => {
-  const url = new URL(req.url, "http://x"); const cors = { "access-control-allow-origin": req.headers.origin || "*", "access-control-allow-credentials": "true", "access-control-allow-headers": "authorization,apikey,content-type,accept,accept-profile,content-profile,prefer,x-client-info,range", "access-control-allow-methods": "GET,POST,PATCH,DELETE,OPTIONS", "access-control-expose-headers": "content-range" };
+  const url = new URL(req.url, "http://x"); const cors = { "access-control-allow-origin": req.headers.origin || "*", "access-control-allow-credentials": "true", "access-control-allow-headers": req.headers["access-control-request-headers"] || "authorization,apikey,content-type,accept,accept-profile,content-profile,prefer,x-client-info,x-supabase-api-version,range", "access-control-allow-methods": "GET,POST,PATCH,DELETE,OPTIONS", "access-control-expose-headers": "content-range" };
   if (req.method === "OPTIONS") { res.writeHead(204, cors); return res.end(); }
   let raw = ""; req.on("data", (d) => (raw += d)); req.on("end", () => {
     const send = (status, body, extra = {}) => { res.writeHead(status, { "content-type": "application/json", ...cors, ...extra }); res.end(body === undefined ? "" : JSON.stringify(body)); };
     const run = () => {
       const p = url.pathname;
-      if (p === "/__control") { const b = raw ? JSON.parse(raw) : {}; if (b.reset) { reset(); seed(); } if (b.delay !== undefined) S.ctl.delay = b.delay; if (b.fail) S.ctl.fail = b.fail; if (b.bump) { const m = S.missions.find((x) => x.title === b.bump); if (m) { m.version++; m.title += " (modifiée ailleurs)"; } } if (b.emptyTeam !== undefined) S.ctl.emptyTeam = b.emptyTeam; return send(200, { ok: true, missions: S.missions.length, comments: S.comments.length }); }
+      if (p === "/__control") { const b = raw ? JSON.parse(raw) : {}; if (b.reset) { reset(); seed(); } if (b.delay !== undefined) S.ctl.delay = b.delay; if (b.profileTable !== undefined) S.ctl.profileTable = b.profileTable; if (b.setAccount) { /* {who, spaces} : change les accès (test) */ ROLES[b.setAccount.who].spaces = b.setAccount.spaces; } if (b.fail) S.ctl.fail = b.fail; if (b.bump) { const m = S.missions.find((x) => x.title === b.bump); if (m) { m.version++; m.title += " (modifiée ailleurs)"; } } if (b.emptyTeam !== undefined) S.ctl.emptyTeam = b.emptyTeam; return send(200, { ok: true, missions: S.missions.length, comments: S.comments.length }); }
       if (p === "/__state") return send(200, S);
       const bearer = (req.headers.authorization || "").replace(/^Bearer /, ""); const me = bearer.startsWith("tok-") ? bearer.slice(4) : null;
+      if (p === "/auth/v1/otp" && req.method === "POST") { return send(200, {}); }
+      if (p === "/auth/v1/verify" && req.method === "POST") {
+        const b = raw ? JSON.parse(raw) : {}; const who = String(b.email || "").split("@")[0];
+        if (!U[who] || String(b.token) !== "123456") return send(403, { code: 403, error_code: "otp_expired", msg: "Token has expired or is invalid" });
+        const exp = Math.floor(Date.now() / 1000) + 3600; return send(200, { access_token: "tok-" + who, token_type: "bearer", expires_in: 3600, expires_at: exp, refresh_token: "r-" + who, user: { id: U[who], aud: "authenticated", role: "authenticated", email: who + "@example.test", app_metadata: {}, user_metadata: {}, created_at: now() } });
+      }
+      if (p === "/auth/v1/logout") return send(204, undefined);
       if (p === "/auth/v1/user") { if (!me || !U[me]) return send(401, { code: 401, msg: "invalid JWT" }); return send(200, { id: U[me], aud: "authenticated", role: "authenticated", email: me + "@example.test", app_metadata: {}, user_metadata: {}, created_at: now() }); }
       if (p.startsWith("/auth/v1/")) return send(200, {});
       if (!me || !U[me]) return send(401, { code: "PGRST301", message: "JWT expired" });
       const key = p.startsWith("/rest/v1/rpc/") ? p.slice(13) : p.slice(9);
       const f = S.ctl.fail[key]; if (f) { if (f.once !== false) delete S.ctl.fail[key]; if (f.destroy) return req.socket.destroy(); return send(f.status || 500, f.body || { message: "boom" }); }
       if (p.startsWith("/rest/v1/rpc/")) { const out = rpc(key, raw ? JSON.parse(raw) : {}, me); return out.status ? send(out.status, out.body) : send(200, out.body); }
-      if (p.startsWith("/rest/v1/")) { const rows = select(key, url.searchParams, me); if (!rows) return send(404, { message: "unknown" }); const single = (req.headers.accept || "").includes("pgrst.object"); return single ? (rows.length === 1 ? send(200, rows[0]) : send(406, { message: "no rows" })) : send(200, rows, { "content-range": `0-${Math.max(rows.length - 1, 0)}/*` }); }
+      if (p.startsWith("/rest/v1/")) { const rows = select(key, url.searchParams, me); if (rows === "MISSING") return send(404, { code: "PGRST205", message: "Could not find the table 'public.participant_profiles' in the schema cache" }); if (!rows) return send(404, { message: "unknown" }); const single = (req.headers.accept || "").includes("pgrst.object"); return single ? (rows.length === 1 ? send(200, rows[0]) : send(406, { message: "no rows" })) : send(200, rows, { "content-range": `0-${Math.max(rows.length - 1, 0)}/*` }); }
       return send(404, { message: "not found" });
     };
     const d = S.ctl.delay; if (d && !url.pathname.startsWith("/__") && !url.pathname.startsWith("/auth/")) setTimeout(run, d); else run();
