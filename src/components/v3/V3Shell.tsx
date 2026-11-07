@@ -35,7 +35,7 @@ export function V3Shell({ children }: { children: React.ReactNode }) {
   return (
     <>
       <header className={cn("fixed inset-x-0 top-0 z-50 mx-auto w-full max-w-[480px] border-b px-5 pt-[var(--safe-top)] transition-[background-color,backdrop-filter,border-color] duration-300", scrolled ? "border-line bg-jet/85 backdrop-blur-xl" : "border-transparent bg-gradient-to-b from-jet/80 to-transparent")}>
-        {pathname !== "/v3/account" && <p className="pt-1.5 whitespace-nowrap font-mono text-[0.72rem] uppercase tracking-[0.06em] text-sunset/85">Prototype · données fictives</p>}
+        {pathname !== "/v3/account" && <p className="pt-1.5 whitespace-nowrap font-mono text-[0.72rem] uppercase tracking-[0.06em] text-sunset/85"data-testid="proto-banner">{real ? "Compte réel · programme à confirmer" : "Prototype · données fictives"}</p>}
         <div className="flex h-12 items-center justify-between">
           <Link href="/v3" aria-label="SKYLINE — accueil du prototype" className="flex min-h-11 items-center"><Wordmark /></Link>
           <div className="flex items-center gap-1.5">

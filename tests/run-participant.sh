@@ -13,5 +13,6 @@ for p in 3199 3105 3106 3107; do fuser -k $p/tcp >/dev/null 2>&1 || true; done
 sleep 8
 set +e
 PART_A=http://localhost:3105 PART_OFF=http://localhost:3106 PART_BAD=http://localhost:3107 MOCK=http://127.0.0.1:3199 node tests/e2e-participant.cjs; code=$?
+if [ "${SKIP_CLUB:-0}" != 1 ]; then PART_A=http://localhost:3105 PART_OFF=http://localhost:3106 MOCK=http://127.0.0.1:3199 node tests/e2e-club.cjs || code=$?; fi
 for p in 3199 3105 3106 3107; do fuser -k $p/tcp >/dev/null 2>&1 || true; done
 exit $code
