@@ -85,7 +85,6 @@ function Assignment({ m, actor, M }: { m: Mission; actor: Actor; M: MissionsApi 
   const assign = useAction((to: string) => M.assign(m.id, to, actor));
   const resolve = useAction((approve: boolean) => M.resolve(m.id, approve, actor, note));
   const options = members.filter((x) => x.id !== m.assigneeId && x.id !== m.validatorId);
-  const direct = actor.coordinator;
   return (
     <Section id="assign" title="Attribution">
       <dl className="mt-3 divide-y divide-line border-y border-line text-[0.95rem]">
@@ -107,13 +106,12 @@ function Assignment({ m, actor, M }: { m: Mission; actor: Actor; M: MissionsApi 
 
       {canAssign(actor, m) && options.length > 0 && (
         <div className="mt-5">
-          <label htmlFor={`as-${m.id}`} className={label}>{direct ? "Attribuer à" : "Proposer une attribution à"}</label>
+          <label htmlFor={`as-${m.id}`} className={label}>Attribuer à</label>
           <select id={`as-${m.id}`} value={target} onChange={(e) => setTarget(e.target.value)} disabled={assign.pending} className={field}><option value="">Choisir une personne</option>{options.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
-          {!direct && <p className="mt-2 text-[0.85rem] leading-snug text-cloud/72">Une proposition ne change rien tant qu&apos;un administrateur ne l&apos;a pas approuvée.</p>}
-          <button type="button" disabled={!target || assign.pending} onClick={() => assign.run(target).then((r) => { if (r?.ok) setTarget(""); })} className={cn(btn, "mt-3 min-h-11 border border-silver/45 px-5")}>{direct ? "Attribuer" : "Proposer"}</button>
+          <button type="button" disabled={!target || assign.pending} onClick={() => assign.run(target).then((r) => { if (r?.ok) setTarget(""); })} className={cn(btn, "mt-3 min-h-11 border border-silver/45 px-5")}>Attribuer</button>
         </div>
       )}
-      <ActionNotice pending={assign.pending} result={assign.result} doing={direct ? "Attribution en cours…" : "Envoi de la proposition…"} done={direct ? "Mission attribuée." : "Proposition envoyée."} onReload={M.refresh} />
+      <ActionNotice pending={assign.pending} result={assign.result} doing="Attribution en cours…" done="Mission attribuée." onReload={M.refresh} />
     </Section>
   );
 }
