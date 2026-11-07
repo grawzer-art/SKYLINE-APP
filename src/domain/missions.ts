@@ -67,8 +67,8 @@ export function daysLate(m: Pick<Mission, "dueDate">, today: string) {
 export const canViewAll = (a: Actor) => a.coordinator;
 export const canView = (a: Actor, m: Mission) => a.coordinator || m.assigneeId === a.memberId || m.creatorId === a.memberId || m.validatorId === a.memberId || m.proposedAssigneeId === a.memberId;
 export const isMine = (a: Actor, m: Mission) => m.assigneeId === a.memberId;
-/** Attribuer DIRECTEMENT : soi-même, ou n'importe qui pour un coordinateur. Un membre peut seulement PROPOSER une mission pour un autre (voir `createMission`). */
-export const canCreateFor = (a: Actor, assigneeId: string) => a.coordinator || assigneeId === a.memberId;
+/** Tous les membres STAFF peuvent attribuer directement une mission à un membre actif. */
+export const canCreateFor = (_a: Actor, assigneeId: string) => !!assigneeId;
 export const canEdit = (a: Actor, m: Mission) => a.coordinator || m.creatorId === a.memberId;
 export const canDelete = (a: Actor, m: Mission) => a.coordinator || m.creatorId === a.memberId;
 export const canArchive = (a: Actor, m: Mission) => !m.archivedAt && (a.coordinator || m.creatorId === a.memberId);
@@ -97,14 +97,11 @@ const entry = (id: string, at: string, by: string, kind: HistoryKind, extra: Par
 export function createMission(i: MissionInput, a: Actor, memberIds: readonly string[], now: string, id: string, validatorIds: readonly string[] = memberIds): Res<Mission> {
   const v = validateMissionInput(i, memberIds, validatorIds); if (!v.ok) return { ok: false, reason: Object.values(v.errors)[0] ?? "Mission invalide." };
   if (!a.coordinator && v.value.status === "done") return { ok: false, reason: "Une mission ne peut pas être créée directement terminée." };
-  const other = v.value.assigneeId !== a.memberId;
-  // Un membre qui crée pour quelqu'un d'autre fait une PROPOSITION : il reste responsable tant qu'un administrateur n'a pas approuvé.
-  const proposal = other && !a.coordinator;
-  const assigneeId = proposal ? a.memberId : v.value.assigneeId;
+  const assigneeId = v.value.assigneeId;
   if (v.value.validatorId === assigneeId) return { ok: false, reason: "La validation doit être faite par une autre personne." };
   const history = [entry(`${id}-h0`, now, a.memberId, "created")];
-  if (proposal) history.push(entry(`${id}-h1`, now, a.memberId, "assignment_proposed", { note: v.value.assigneeId }));
-  return { ok: true, value: { id, ...v.value, assigneeId, proposedAssigneeId: proposal ? v.value.assigneeId : null, archivedAt: null, creatorId: a.memberId, createdAt: now, updatedAt: now, history } };
+
+  return { ok: true, value: { id, ...v.value, assigneeId, proposedAssigneeId: null, archivedAt: null, creatorId: a.memberId, createdAt: now, updatedAt: now, history } };
 }
 
 /** Attribuer / réattribuer. Coordinateur : effet immédiat. Créateur ou responsable non coordinateur : PROPOSITION à valider. */
@@ -114,9 +111,8 @@ export function assignMission(m: Mission, assigneeId: string, a: Actor, memberId
   if (assigneeId === m.assigneeId) return { ok: false, reason: "Cette personne est déjà responsable." };
   if (assigneeId === m.validatorId) return { ok: false, reason: "Le responsable ne peut pas être aussi le validateur." };
   const h = (kind: HistoryKind, note?: string) => entry(`${m.id}-h${m.history.length}`, now, a.memberId, kind, { note });
-  if (a.coordinator) return { ok: true, value: { ...m, assigneeId, proposedAssigneeId: null, updatedAt: now, history: [...m.history, h("reassigned", assigneeId)] } };
-  if (m.creatorId !== a.memberId && m.assigneeId !== a.memberId) return { ok: false, reason: "Vous ne pouvez pas proposer d'attribution pour cette mission." };
-  return { ok: true, value: { ...m, proposedAssigneeId: assigneeId, updatedAt: now, history: [...m.history, h("assignment_proposed", assigneeId)] } };
+  if (!canAssign(a, m)) return { ok: false, reason: "Vous ne pouvez pas attribuer cette mission." };
+  return { ok: true, value: { ...m, assigneeId, proposedAssigneeId: null, updatedAt: now, history: [...m.history, h("reassigned", assigneeId)] } };
 }
 
 /** Approuver ou refuser une proposition d'attribution : coordinateurs uniquement. */
