@@ -15,7 +15,7 @@ const label = "font-mono text-[0.75rem] uppercase tracking-[0.16em] text-cloud/7
  * Connexion PARTICIPANTS : même mécanisme que STAFF HQ (code à 6 chiffres reçu par e-mail ; lien magique aussi accepté). Aucun mot de passe.
  * Aucun compte n'est créé ici : seuls les comptes préparés par l'organisation peuvent se connecter. Messages neutres (jamais d'indice sur l'existence d'une adresse).
  */
-export function ParticipantLogin() {
+export function ParticipantLogin({ signupEnabled = false }: { signupEnabled?: boolean }) {
   const q = useSearchParams(); const next = safeParticipantNext(q.get("next"));
   const denied = q.get("denied") === "1"; const failed = q.get("error") === "1";
   const { email, setEmail, code, setCode, step, busy, msg, err, cool, send, verify, changeEmail } = useEmailCodeLogin({ next, onVerified: () => { rememberSpace("members"); window.location.assign(next); } });
@@ -52,7 +52,8 @@ export function ParticipantLogin() {
       )}
 
       {denied && <form method="post" action="/auth/signout" className="mt-6"><input type="hidden" name="to" value="/v3/login" /><button type="submit" className="min-h-11 font-mono text-[0.75rem] uppercase tracking-[0.14em] text-dim underline underline-offset-4">Se déconnecter</button></form>}
-      <Link href="/v3" className="mt-6 inline-flex min-h-11 items-center font-mono text-[0.78rem] uppercase tracking-[0.16em] text-sky">Retour à l&apos;application →</Link>
+      {signupEnabled && <Link href="/v3/signup" data-testid="signup-link" className="mt-6 inline-flex min-h-11 items-center font-mono text-[0.78rem] uppercase tracking-[0.16em] text-sky">Créer un compte →</Link>}
+      <Link href="/v3" className="mt-2 inline-flex min-h-11 items-center font-mono text-[0.78rem] uppercase tracking-[0.16em] text-sky">Retour à l&apos;application →</Link>
     </main>
   );
 }

@@ -16,3 +16,12 @@ export function evaluateParticipantConfig(env: { PARTICIPANT_AUTH?: string; supa
   return { mode: "supabase", issue: null };
 }
 export const participantConfig = (): ParticipantConfig => evaluateParticipantConfig({ PARTICIPANT_AUTH: process.env.PARTICIPANT_AUTH, supabaseConfigured: !!supabaseEnv() });
+
+import { evaluateSignupConfig, type SignupConfig } from "./signupConfig.ts";
+/** Configuration de l'inscription publique (fermée par défaut) — lue à la requête. */
+export const signupConfig = (): SignupConfig => evaluateSignupConfig({
+  participantMode: participantConfig().mode,
+  PARTICIPANT_SIGNUP: process.env.PARTICIPANT_SIGNUP, PARTICIPANT_TERMS_VERSION: process.env.PARTICIPANT_TERMS_VERSION, PARTICIPANT_TERMS_URL: process.env.PARTICIPANT_TERMS_URL,
+  PARTICIPANT_CHARTER_URL: process.env.PARTICIPANT_CHARTER_URL, PARTICIPANT_MIN_AGE: process.env.PARTICIPANT_MIN_AGE,
+  PARTICIPANT_CAPTCHA_PROVIDER: process.env.PARTICIPANT_CAPTCHA_PROVIDER, PARTICIPANT_CAPTCHA_SITE_KEY: process.env.PARTICIPANT_CAPTCHA_SITE_KEY,
+});

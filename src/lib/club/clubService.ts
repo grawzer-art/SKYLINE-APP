@@ -7,14 +7,16 @@ const MESSAGES: Record<string, string> = {
   forbidden: "Accès non autorisé : votre compte n'a pas accès à l'espace participants.",
   invalid_pseudo: "Pseudo invalide.", invalid_city: "Ville invalide.", invalid_bio: "Bio invalide.", invalid_genres: "Goûts musicaux invalides.",
   no_profile: "Créez d'abord votre profil CLUB.", invalid_avatar: "Photo invalide.",
+  traveler_required: "Réservé aux voyageurs dont la réservation est vérifiée par l'équipe.",
   reciprocity_required: "Publiez votre profil CLUB pour consulter les autres membres.",
 };
-export type Kind = "invalid" | "forbidden" | "network" | "unavailable" | "no_profile" | "reciprocity" | "unknown";
+export type Kind = "traveler" | "invalid" | "forbidden" | "network" | "unavailable" | "no_profile" | "reciprocity" | "unknown";
 export type Fail = { ok: false; kind: Kind; message: string; fields?: ClubErrors };
 export type Res<T> = ({ ok: true } & T) | Fail;
 
 export function mapError(error: { message?: string; code?: string; status?: number } | null | undefined): Fail {
   const raw = (error?.message ?? "").trim().toLowerCase();
+  if (raw === "traveler_required") return { ok: false, kind: "traveler", message: MESSAGES.traveler_required };
   if (raw === "reciprocity_required") return { ok: false, kind: "reciprocity", message: MESSAGES.reciprocity_required };
   if (raw === "no_profile") return { ok: false, kind: "no_profile", message: MESSAGES.no_profile };
   if (MESSAGES[raw]) return { ok: false, kind: raw === "forbidden" ? "forbidden" : "invalid", message: MESSAGES[raw] };

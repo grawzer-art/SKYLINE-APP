@@ -21,7 +21,7 @@ const L = {
     none: "Vous n'avez pas encore de profil CLUB", noneText: "Créez un profil communautaire : un pseudo, une ville, quelques goûts. Il reste privé tant que vous ne le publiez pas.", create: "Créer mon profil CLUB",
     edit: "Modifier", private: "Profil privé", public: "Profil publié", privText: "Personne d'autre ne peut voir ce profil.", pubText: "Les autres membres publiés peuvent voir votre pseudo, ville, bio, goûts et photo.",
     publish: "Publier mon profil", visLabel: "Visible par les membres", noBio: "Ajoutez une courte bio.", noCity: "Ville non renseignée", vibes: "Goûts musicaux", noVibes: "Aucun goût renseigné.",
-    publicList: "Ce que les autres voient : pseudo, photo, ville, bio, goûts. Jamais votre e-mail, votre nom ni votre réservation.",
+    travelerOnly: "La publication de votre profil et l'annuaire s'ouvrent avec une réservation vérifiée par l'équipe. Votre profil reste privé en attendant.", publicList: "Ce que les autres voient : pseudo, photo, ville, bio, goûts. Jamais votre e-mail, votre nom ni votre réservation.",
     editTitle: "Mon profil CLUB", pseudo: "Pseudo", pseudoHint: "2 à 24 caractères, visible par les membres.", city: "Ville", noCityOpt: "Non renseignée", bio: "Bio courte", bioPh: "Une phrase sur vous", genres: "Goûts musicaux",
     photo: "Photo de profil", addPhoto: "Ajouter une photo", changePhoto: "Changer la photo", removePhoto: "Retirer", photoHint: `Recadrée et compressée automatiquement (${AVATAR.maxPixels} px max). Stockage privé.`,
     save: "Enregistrer", saving: "Enregistrement…", saved: "Profil enregistré.", cancel: "Annuler" },
@@ -30,7 +30,7 @@ const L = {
     none: "You don't have a CLUB profile yet", noneText: "Create a community profile: a nickname, a city, a few tastes. It stays private until you publish it.", create: "Create my CLUB profile",
     edit: "Edit", private: "Private profile", public: "Published profile", privText: "Nobody else can see this profile.", pubText: "Other published members can see your nickname, city, bio, tastes and photo.",
     publish: "Publish my profile", visLabel: "Visible to members", noBio: "Add a short bio.", noCity: "City not set", vibes: "Music tastes", noVibes: "No tastes set.",
-    publicList: "What others see: nickname, photo, city, bio, tastes. Never your email, your name or your booking.",
+    travelerOnly: "Publishing your profile and the directory open with a booking verified by the team. Your profile stays private until then.", publicList: "What others see: nickname, photo, city, bio, tastes. Never your email, your name or your booking.",
     editTitle: "My CLUB profile", pseudo: "Nickname", pseudoHint: "2 to 24 characters, visible to members.", city: "City", noCityOpt: "Not set", bio: "Short bio", bioPh: "One sentence about you", genres: "Music tastes",
     photo: "Profile photo", addPhoto: "Add a photo", changePhoto: "Change photo", removePhoto: "Remove", photoHint: `Cropped and compressed automatically (${AVATAR.maxPixels} px max). Private storage.`,
     save: "Save", saving: "Saving…", saved: "Profile saved.", cancel: "Cancel" },
@@ -84,7 +84,7 @@ export function ClubSpaceReal() {
       <section aria-labelledby="vis-title" className="px-5 pt-9">
         <h2 id="vis-title" className="sr-only">{l.visLabel}</h2>
         <div className={cn("rounded-[6px] border p-4", p.visible ? "border-sky/50" : "border-cloud/15")} data-testid="club-visibility" data-visible={p.visible}>
-          <Switch on={p.visible} onChange={(v) => void club.setVisible(v)} label={p.visible ? l.public : l.private} hint={p.visible ? l.pubText : l.privText} />
+          {identity.traveler === "none" && !p.visible ? <div data-testid="club-traveler-only"><p className="text-[0.95rem]">{l.private}</p><p className="mt-1 text-[0.78rem] text-dim">{l.travelerOnly}</p></div> : <Switch on={p.visible} onChange={(v) => void club.setVisible(v)} label={p.visible ? l.public : l.private} hint={p.visible ? l.pubText : l.privText} />}
           <p className="mt-3 text-[0.78rem] text-dim">{l.publicList}</p>
         </div>
       </section>

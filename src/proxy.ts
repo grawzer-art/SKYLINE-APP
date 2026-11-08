@@ -9,7 +9,7 @@ import { staffAuthMode } from "@/lib/staff/mode";
 import { staffConfigIssue } from "@/lib/staff/data-source";
 import { loadStaffIdentity } from "@/lib/staff/session";
 import { updateSession } from "@/lib/supabase/proxy";
-import { participantConfig } from "@/lib/participant/config";
+import { participantConfig, signupConfig } from "@/lib/participant/config";
 import { loadParticipantAccess } from "@/lib/participant/access";
 
 /**
@@ -46,6 +46,21 @@ export async function proxy(request: NextRequest) {
     if (!user || !supabase) return go(`?next=${encodeURIComponent(pathname)}`);
     // Vérification CÔTÉ SERVEUR : compte actif ET accès « members » (jamais un état d'interface, jamais les métadonnées de l'utilisateur).
     if (!(await loadParticipantAccess(supabase, user.id))) return go("?denied=1");
+    return noStore(response());
+  }
+
+  // INSCRIPTION PUBLIQUE (B4.2) : fermée par défaut (PARTICIPANT_SIGNUP=off → 404). La finalisation exige une session (adresse confirmée) ; un membre déjà actif va à son compte.
+  if (pathname === "/v3/signup" || pathname === "/v3/signup/complete") {
+    const pc = participantConfig(); const sc = signupConfig();
+    if (pc.mode === "off" || sc.mode === "off") return NextResponse.rewrite(new URL("/signal-introuvable", request.url));
+    if (pc.mode === "misconfigured") return configErrorPage(pc.issue ?? "Configuration invalide.", "Espace participants");
+    if (sc.mode === "misconfigured") return configErrorPage(sc.issue, "Inscription");
+    const noStore = (res: NextResponse) => { res.headers.set("Cache-Control", "private, no-store"); res.headers.set("X-Robots-Tag", "noindex, nofollow"); return res; };
+    if (pathname === "/v3/signup") return noStore(NextResponse.next());
+    const { response, supabase, user } = await updateSession(request);
+    const to = (path: string) => NextResponse.redirect(new URL(path, request.url), { status: 307, headers: { "Cache-Control": "no-store" } });
+    if (!user || !supabase) return to("/v3/signup");
+    if (await loadParticipantAccess(supabase, user.id)) return to("/v3/account");
     return noStore(response());
   }
 
@@ -97,4 +112,4 @@ function configErrorPage(issue: string, scope = "STAFF HQ") {
   return new NextResponse(html, { status: 503, headers: { "content-type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" } });
 }
 
-export const config = { matcher: ["/", "/signal/:slug", "/staff", "/staff/:path*", "/v3/login", "/v3/account", "/v3/account/:path*"] };
+export const config = { matcher: ["/", "/signal/:slug", "/staff", "/staff/:path*", "/v3/login", "/v3/signup", "/v3/signup/complete", "/v3/account", "/v3/account/:path*"] };

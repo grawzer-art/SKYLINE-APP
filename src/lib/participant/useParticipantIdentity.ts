@@ -9,7 +9,8 @@ import type { ParticipantProfile } from "./access";
  */
 export type ParticipantIdentity =
   | { status: "loading" } | { status: "off" } | { status: "misconfigured"; configError: string } | { status: "anonymous" } | { status: "no_access" } | { status: "error" }
-  | { status: "ready"; email: string; profile: ParticipantProfile | null; profileAvailable: boolean };
+  | { status: "ready"; email: string; profile: ParticipantProfile | null; profileAvailable: boolean; /** Preuve serveur d'une réservation confirmée (jamais déduit côté navigateur). */ traveler?: Traveler };
+export type Traveler = "none" | "verified" | "unknown";
 
 const LOADING: ParticipantIdentity = { status: "loading" };
 let snap: ParticipantIdentity = LOADING; let started = false; const subs = new Set<() => void>();
@@ -20,7 +21,7 @@ async function load() {
     const j = await r.json();
     if (j.mode === "off") set({ status: "off" });
     else if (j.mode === "misconfigured") set({ status: "misconfigured", configError: String(j.configError ?? "") });
-    else if (j.status === "ready") set({ status: "ready", email: String(j.email ?? ""), profile: j.profile ?? null, profileAvailable: j.profileAvailable !== false });
+    else if (j.status === "ready") set({ status: "ready", email: String(j.email ?? ""), profile: j.profile ?? null, profileAvailable: j.profileAvailable !== false, traveler: j.traveler === "verified" ? "verified" : j.traveler === "none" ? "none" : "unknown" });
     else if (j.status === "anonymous" || j.status === "no_access") set({ status: j.status });
     else set({ status: "error" });
   } catch { set({ status: "error" }); }

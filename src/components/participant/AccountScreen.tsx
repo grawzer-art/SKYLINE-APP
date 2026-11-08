@@ -22,12 +22,12 @@ export function AccountScreen() {
       {id.status === "loading" && <Block><p role="status" aria-live="polite" className="font-mono text-[0.78rem] uppercase tracking-[0.14em] text-sky">Chargement…</p><div aria-hidden className="mt-4 space-y-3"><div className="h-14 animate-pulse rounded-[8px] bg-surface-1 motion-reduce:animate-none" /><div className="h-14 animate-pulse rounded-[8px] bg-surface-1 motion-reduce:animate-none" /></div></Block>}
       {(id.status === "error" || id.status === "misconfigured") && <Block><div role="alert" className="rounded-[10px] border border-sunset/60 p-4"><p className="font-display text-[1.2rem]">Compte indisponible</p><p className="mt-2 text-[0.95rem] text-cloud/80">{id.status === "misconfigured" ? id.configError : "Impossible de charger votre compte pour le moment."}</p><button type="button" onClick={() => void refreshParticipantIdentity()} className={cn(btn, "mt-4 bg-cloud text-jet")}>Réessayer</button></div></Block>}
       {(id.status === "anonymous" || id.status === "no_access" || id.status === "off") && <Block><div role="status" className="rounded-[10px] border border-line p-4"><p className="font-display text-[1.2rem]">{id.status === "no_access" ? "Accès non activé" : "Vous n'êtes pas connecté"}</p><p className="mt-2 text-[0.95rem] text-cloud/80">{id.status === "no_access" ? "Ce compte n'a pas accès à l'espace participants. Contactez l'organisation SKYLINE." : "Connectez-vous pour consulter votre compte."}</p>{id.status !== "off" && <Link href="/v3/login?next=/v3/account" className={cn(btn, "mt-4 bg-cloud text-jet")}>Se connecter</Link>}</div></Block>}
-      {id.status === "ready" && <Ready email={id.email} profile={id.profile} available={id.profileAvailable} />}
+      {id.status === "ready" && <Ready email={id.email} profile={id.profile} available={id.profileAvailable} traveler={id.traveler ?? "unknown"} />}
     </>
   );
 }
 
-function Ready({ email, profile, available }: { email: string; profile: ParticipantProfile | null; available: boolean }) {
+function Ready({ email, profile, available, traveler }: { email: string; profile: ParticipantProfile | null; available: boolean; traveler: "none" | "verified" | "unknown" }) {
   const [first, setFirst] = useState(profile?.firstName ?? ""); const [last, setLast] = useState(profile?.lastName ?? ""); const [display, setDisplay] = useState(profile?.displayName ?? "");
   const [touched, setTouched] = useState(!!profile); // le nom affiché suit le prénom tant que l'utilisateur ne l'a pas modifié
   const [errors, setErrors] = useState<ProfileErrors>({}); const [busy, setBusy] = useState(false); const [res, setRes] = useState<{ ok: boolean; message: string } | null>(null);
@@ -41,7 +41,7 @@ function Ready({ email, profile, available }: { email: string; profile: Particip
   const err = (k: keyof ProfileErrors) => errors[k] && <p role="alert" className="mt-1.5 text-[0.88rem] text-sunset">{errors[k]}</p>;
   return (
     <>
-      <Block label="Connexion"><dl className="divide-y divide-line border-y border-line text-[0.95rem]"><div className="flex justify-between gap-4 py-3.5"><dt className="text-dim">Adresse e-mail</dt><dd className="min-w-0 break-all text-right" data-testid="account-email">{email || "—"}</dd></div></dl></Block>
+      <Block label="Connexion"><dl className="divide-y divide-line border-y border-line text-[0.95rem]"><div className="flex justify-between gap-4 py-3.5"><dt className="text-dim">Adresse e-mail</dt><dd className="min-w-0 break-all text-right" data-testid="account-email">{email || "—"}</dd></div>{traveler !== "unknown" && <div className="flex justify-between gap-4 py-3.5"><dt className="text-dim">Statut</dt><dd className="min-w-0 text-right" data-testid="account-status">{traveler === "verified" ? "Voyageur · réservation vérifiée" : "Compte membre · réservation non vérifiée"}</dd></div>}</dl></Block>
       <Block label="Mon profil">
         {!available ? <p role="status" className="rounded-[10px] border border-line p-4 text-[0.95rem] leading-snug text-cloud/85">Le profil n&apos;est pas encore disponible pour le moment. Revenez bientôt.</p> : (
           <form onSubmit={submit} noValidate className="space-y-5" aria-busy={busy}>
