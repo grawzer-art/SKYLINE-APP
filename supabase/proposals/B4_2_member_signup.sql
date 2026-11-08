@@ -16,13 +16,44 @@
 --    ou modifié (décision d'un administrateur) · membre suspendu (jamais réactivé par ce chemin).
 --  * Atomique : verrou de ligne sur le compte (concurrence) ; idempotent : second appel d'un membre actif → « already_member » sans rien modifier.
 --  * N'accorde JAMAIS `staff`, `super_admin` ni aucune permission STAFF.
+--
+-- CE QUI EST VÉRIFIÉ PAR LA BASE  /  CE QUI RESTE UNE DÉCLARATION
+--  Vérifié techniquement : propriété de l'adresse e-mail (code OTP : email_confirmed_at, posé par Supabase Auth), identité de session (auth.uid()), état du compte,
+--  version des CGU = une version ENREGISTRÉE et non retirée par un super admin (table terms_versions, jamais une valeur libre du client), horodatages (now() serveur).
+--  Déclaration de l'utilisateur, NON vérifiable : l'âge (case « j'atteste » ; la base enregistre l'âge minimum de la version acceptée, pas l'âge réel), l'exactitude
+--  des prénom / nom, le fait d'avoir lu les CGU (la case cochée + version + date servent de preuve de consentement, pas de preuve de lecture).
 -- ============================================================================
+
+-- Versions de CGU / charte AUTORISÉES (le texte lui-même reste hors du code et hors de la base). Seul un super admin enregistre ou retire une version.
+create table public.terms_versions (
+  version      text primary key check (version ~ '^[A-Za-z0-9._-]{1,40}$'),
+  min_age      int not null default 18 check (min_age between 16 and 99),
+  published_at timestamptz not null default now(),
+  retired_at   timestamptz,
+  registered_by uuid references public.accounts (id) on delete set null
+);
+alter table public.terms_versions enable row level security;
+create policy terms_versions_select_admin on public.terms_versions for select to authenticated using (public.is_super_admin());
+create function public.manage_register_terms_version(p_version text, p_min_age int default 18) returns void language plpgsql security definer set search_path = '' as $$
+begin
+  if not public.is_super_admin() then raise exception 'forbidden' using errcode = '42501'; end if;
+  if p_version is null or p_version !~ '^[A-Za-z0-9._-]{1,40}$' then raise exception 'invalid_version'; end if;
+  if p_min_age is null or p_min_age not between 16 and 99 then raise exception 'invalid_min_age'; end if;
+  insert into public.terms_versions (version, min_age, registered_by) values (p_version, p_min_age, auth.uid());   -- une version publiée n'est jamais réécrite (PK)
+end $$;
+create function public.manage_retire_terms_version(p_version text) returns void language plpgsql security definer set search_path = '' as $$
+begin
+  if not public.is_super_admin() then raise exception 'forbidden' using errcode = '42501'; end if;
+  update public.terms_versions set retired_at = coalesce(retired_at, now()) where version = p_version;
+  if not found then raise exception 'unknown_version'; end if;
+end $$;
 
 -- Trace d'une inscription autonome (origine, version des CGU acceptée, attestation d'âge). Jamais écrite directement par un utilisateur.
 create table public.member_accounts (
   user_id            uuid primary key references public.accounts (id) on delete cascade,
   source             text not null default 'self_signup' check (source = 'self_signup'),
-  terms_version      text not null check (char_length(btrim(terms_version)) between 1 and 40 and terms_version !~ '[[:cntrl:]]'),
+  terms_version      text not null references public.terms_versions (version),
+  attested_min_age   int not null check (attested_min_age between 16 and 99),   -- âge minimum DÉCLARÉ (défini par la version, pas par le client)
   adult_attested_at  timestamptz not null default now(),
   created_at         timestamptz not null default now()
 );
@@ -52,7 +83,7 @@ create function public.claim_member_account(p_first_name text, p_last_name text,
 returns table (outcome text)
 language plpgsql security definer set search_path = '' as $$
 declare
-  me uuid := auth.uid(); u record; acc record;
+  me uuid := auth.uid(); u record; acc record; ma int;
   f text := btrim(coalesce(p_first_name, '')); l text := btrim(coalesce(p_last_name, '')); d text := btrim(coalesce(p_display_name, '')); tv text := btrim(coalesce(p_terms_version, ''));
 begin
   if me is null then raise exception 'forbidden' using errcode = '42501'; end if;
@@ -80,12 +111,14 @@ begin
   -- 5) Saisies (revalidées ici : le client n'est pas de confiance).
   if p_adult is distinct from true then raise exception 'adult_required'; end if;
   if tv = '' or char_length(tv) > 40 or tv ~ '[[:cntrl:]]' then raise exception 'terms_required'; end if;
+  select t.min_age into ma from public.terms_versions t where t.version = tv and t.retired_at is null;      -- version AUTORISÉE côté serveur
+  if ma is null then raise exception 'terms_version_invalid'; end if;
   if f = '' or char_length(f) > 60 or f ~ '[[:cntrl:]]' then raise exception 'invalid_first_name'; end if;
   if l = '' or char_length(l) > 60 or l ~ '[[:cntrl:]]' then raise exception 'invalid_last_name'; end if;
   if d = '' or char_length(d) > 60 or d ~ '[[:cntrl:]]' then raise exception 'invalid_display_name'; end if;
   -- 6) Création atomique (une seule transaction : tout ou rien).
   insert into public.participant_profiles (user_id, first_name, last_name, display_name) values (me, f, l, d);
-  insert into public.member_accounts (user_id, terms_version) values (me, tv);
+  insert into public.member_accounts (user_id, terms_version, attested_min_age) values (me, tv, ma);
   insert into public.space_access (user_id, space, granted_by) values (me, 'members', null);
   update public.accounts set active = true, display_name = d where id = me;
   outcome := 'created'; return next;
@@ -93,7 +126,9 @@ end $$;
 
 -- ----------------------------------------------------------------------------
 -- Privilèges : aucune écriture directe pour les utilisateurs ; fonctions réservées aux connectés (jamais `anon`).
-revoke all on public.member_accounts, public.traveler_reservations from anon, authenticated;
-grant select on public.member_accounts, public.traveler_reservations to authenticated;
-revoke execute on function public.is_verified_traveler(), public.get_my_traveler_status(), public.claim_member_account(text, text, text, text, boolean) from public, anon;
-grant execute on function public.is_verified_traveler(), public.get_my_traveler_status(), public.claim_member_account(text, text, text, text, boolean) to authenticated;
+revoke all on public.member_accounts, public.traveler_reservations, public.terms_versions from anon, authenticated;
+grant select on public.member_accounts, public.traveler_reservations, public.terms_versions to authenticated;
+revoke execute on function public.is_verified_traveler(), public.get_my_traveler_status(), public.claim_member_account(text, text, text, text, boolean),
+  public.manage_register_terms_version(text, int), public.manage_retire_terms_version(text) from public, anon;
+grant execute on function public.is_verified_traveler(), public.get_my_traveler_status(), public.claim_member_account(text, text, text, text, boolean),
+  public.manage_register_terms_version(text, int), public.manage_retire_terms_version(text) to authenticated;

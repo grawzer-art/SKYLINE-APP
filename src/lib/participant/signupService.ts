@@ -8,6 +8,7 @@ const MSG: Record<string, [Extract<ClaimResult, { ok: false }>["kind"], string]>
   email_not_confirmed: ["email_not_confirmed", "Votre adresse e-mail n'est pas encore confirmée. Saisissez le code reçu."],
   not_eligible: ["not_eligible", "Ce compte existe déjà ou ne peut pas être créé ici."],
   suspended: ["suspended", "Ce compte est désactivé. Contactez l'organisation SKYLINE."],
+  terms_version_invalid: ["invalid", "Les conditions d'utilisation ont changé ou sont indisponibles. Rechargez la page puis réessayez."],
   adult_required: ["invalid", "Vous devez attester être majeur."], terms_required: ["invalid", "Vous devez accepter les conditions."],
   invalid_first_name: ["invalid", "Prénom invalide."], invalid_last_name: ["invalid", "Nom invalide."], invalid_display_name: ["invalid", "Nom affiché invalide."],
 };

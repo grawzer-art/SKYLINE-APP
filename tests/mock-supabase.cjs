@@ -136,12 +136,13 @@ const server = http.createServer((req, res) => {
     const send = (status, body, extra = {}) => { res.writeHead(status, { "content-type": "application/json", ...cors, ...extra }); res.end(body === undefined ? "" : JSON.stringify(body)); };
     const run = () => {
       const p = url.pathname;
-      if (p === "/__control") { const b = raw ? JSON.parse(raw) : {}; if (b.reset) { reset(); seed(); } if (b.delay !== undefined) S.ctl.delay = b.delay; if (b.profileTable !== undefined) S.ctl.profileTable = b.profileTable; if (b.clubTable !== undefined) S.ctl.clubTable = b.clubTable; if (b.suspend) S.suspended[b.suspend] = true; if (b.signupTable !== undefined) S.ctl.signupTable = b.signupTable; if (b.travelers) S.travelers = b.travelers; if (b.otpRate !== undefined) S.ctl.otpRate = b.otpRate; if (b.created) S.created[b.created] = true; if (b.setAccount) { /* {who, spaces} : change les accès (test) */ ROLES[b.setAccount.who].spaces = b.setAccount.spaces; } if (b.fail) S.ctl.fail = b.fail; if (b.bump) { const m = S.missions.find((x) => x.title === b.bump); if (m) { m.version++; m.title += " (modifiée ailleurs)"; } } if (b.emptyTeam !== undefined) S.ctl.emptyTeam = b.emptyTeam; return send(200, { ok: true, missions: S.missions.length, comments: S.comments.length }); }
+      if (p === "/__control") { const b = raw ? JSON.parse(raw) : {}; if (b.reset) { reset(); seed(); } if (b.delay !== undefined) S.ctl.delay = b.delay; if (b.profileTable !== undefined) S.ctl.profileTable = b.profileTable; if (b.clubTable !== undefined) S.ctl.clubTable = b.clubTable; if (b.suspend) S.suspended[b.suspend] = true; if (b.signupTable !== undefined) S.ctl.signupTable = b.signupTable; if (b.travelers) S.travelers = b.travelers; if (b.otpRate !== undefined) S.ctl.otpRate = b.otpRate; if (b.otpFail !== undefined) S.ctl.otpFail = b.otpFail; if (b.verifyFail !== undefined) S.ctl.verifyFail = b.verifyFail; if (b.created) S.created[b.created] = true; if (b.setAccount) { /* {who, spaces} : change les accès (test) */ ROLES[b.setAccount.who].spaces = b.setAccount.spaces; } if (b.fail) S.ctl.fail = b.fail; if (b.bump) { const m = S.missions.find((x) => x.title === b.bump); if (m) { m.version++; m.title += " (modifiée ailleurs)"; } } if (b.emptyTeam !== undefined) S.ctl.emptyTeam = b.emptyTeam; return send(200, { ok: true, missions: S.missions.length, comments: S.comments.length }); }
       if (p === "/__state") return send(200, S);
       const bearer = (req.headers.authorization || "").replace(/^Bearer /, ""); const me = bearer.startsWith("tok-") ? bearer.slice(4) : null;
       if (p === "/auth/v1/otp" && req.method === "POST") {
         const b = raw ? JSON.parse(raw) : {}; const who = String(b.email || "").split("@")[0];
         S.otpLog.push({ email: b.email, create_user: b.create_user, captcha: (b.gotrue_meta_security || {}).captcha_token || null });
+        if (S.ctl.otpFail) { const f = S.ctl.otpFail; if (f.destroy) return req.socket.destroy(); return send(f.status || 500, { code: f.status || 500, error_code: f.code, msg: f.msg || "boom" }); }
         if (S.ctl.otpRate) return send(429, { code: 429, error_code: "over_email_send_rate_limit", msg: "email rate limit exceeded" });
         if (exists(who)) return send(200, {});
         if (NEWBIES.includes(who) && b.create_user === true) { S.created[who] = true; return send(200, {}); }
@@ -149,6 +150,7 @@ const server = http.createServer((req, res) => {
       }
       if (p === "/auth/v1/verify" && req.method === "POST") {
         const b = raw ? JSON.parse(raw) : {}; const who = String(b.email || "").split("@")[0];
+        if (S.ctl.verifyFail) { const f = S.ctl.verifyFail; if (f.destroy) return req.socket.destroy(); return send(f.status || 500, { code: f.status || 500, error_code: f.code, msg: f.msg || "boom" }); }
         if (!exists(who) || String(b.token) !== "123456") return send(403, { code: 403, error_code: "otp_expired", msg: "Token has expired or is invalid" });
         const exp = Math.floor(Date.now() / 1000) + 3600; return send(200, { access_token: "tok-" + who, token_type: "bearer", expires_in: 3600, expires_at: exp, refresh_token: "r-" + who, user: { id: U[who], aud: "authenticated", role: "authenticated", email: who + "@example.test", app_metadata: {}, user_metadata: {}, created_at: now() } });
       }

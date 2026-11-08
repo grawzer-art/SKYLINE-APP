@@ -67,7 +67,7 @@ export function SignupFlow({ view }: { view: SignupView }) {
     e.preventDefault(); const v = validateSignupInput({ firstName: f.first, lastName: f.last, displayName: f.display, email: login.email, acceptTerms: terms, adult }, { minAge: view.minAge });
     if (!v.ok) { setErrs(v.errors); return; } setErrs({});
     if (view.captcha && !token) { setErrs({ email: "Validez d'abord le contrôle anti-robot." }); return; }
-    void login.send().finally(() => { setCapReset((n) => n + 1); });
+    void login.send().finally(() => { setCapReset((n) => n + 1); });   // le jeton CAPTCHA est à usage unique : toujours renouvelé
   };
   const busy = login.busy || claiming;
   return (

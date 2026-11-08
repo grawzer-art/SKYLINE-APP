@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import { LOGIN_NEXT_COOKIE } from "@/lib/staff/paths";
+import { classifySendError, classifyVerifyError, type AuthErrLike } from "./otpErrors";
 
 /**
  * Connexion par code e-mail (OTP) — UN SEUL mécanisme pour STAFF HQ et les participants (Supabase Auth).
@@ -18,17 +19,19 @@ export function useEmailCodeLogin({ next, onVerified, allowCreate = false, captc
   const [cool, setCool] = useState(0);
   useEffect(() => { if (cool <= 0) return; const t = setTimeout(() => setCool((c) => c - 1), 1000); return () => clearTimeout(t); }, [cool]);
 
-  const send = async (e?: React.FormEvent) => {
+  /** Retourne true seulement si Supabase n'a PAS retourné d'erreur, ou une erreur de la classe NEUTRE (compte inconnu : même message et même étape que le succès). */
+  const send = async (e?: React.FormEvent): Promise<boolean> => {
     e?.preventDefault(); setErr(null); setMsg(null);
-    const addr = email.trim().toLowerCase(); if (!/^\S+@\S+\.\S+$/.test(addr)) { setErr("Saisissez une adresse e-mail valide."); return; }
+    const addr = email.trim().toLowerCase(); if (!/^\S+@\S+\.\S+$/.test(addr)) { setErr("Saisissez une adresse e-mail valide."); return false; }
     setBusy(true);
     try {
       document.cookie = `${LOGIN_NEXT_COOKIE}=${encodeURIComponent(next)}; Path=/; Max-Age=900; SameSite=Lax${location.protocol === "https:" ? "; Secure" : ""}`;
       const { error } = await createBrowserSupabase().auth.signInWithOtp({ email: addr, options: { shouldCreateUser: allowCreate === true, emailRedirectTo: `${location.origin}/auth/callback`, ...(captchaToken ? { captchaToken } : {}) } });
-      if (error && (error.status === 429 || /rate|too many|seconds/i.test(error.message))) { setErr("Trop de tentatives. Réessayez dans quelques minutes."); }
-      else { setStep("code"); setMsg("Si ce compte existe, un code vient d'être envoyé par e-mail."); setCool(60); }
-    } catch { setErr("Connexion impossible pour le moment. Réessayez."); }
-    setBusy(false);
+      const r = classifySendError(error, allowCreate === true ? "signup" : "login");
+      if (r.kind === "sent" || r.kind === "neutral") { setStep("code"); setMsg(r.message); setCool(60); setBusy(false); return true; }
+      setErr(r.message); if (r.kind === "rate") setCool(60);   // jamais d'étape « code » ni de message d'envoi quand Supabase a retourné une erreur
+      setBusy(false); return false;
+    } catch (x) { setErr(classifySendError(x as AuthErrLike, allowCreate === true ? "signup" : "login").message); setBusy(false); return false; }
   };
   const verify = async (e: React.FormEvent) => {
     e.preventDefault(); setErr(null);
@@ -36,9 +39,9 @@ export function useEmailCodeLogin({ next, onVerified, allowCreate = false, captc
     setBusy(true);
     try {
       const { error } = await createBrowserSupabase().auth.verifyOtp({ email: email.trim().toLowerCase(), token, type: "email" });
-      if (error) { setErr("Code invalide ou expiré."); setBusy(false); return; }
+      if (error) { setErr(classifyVerifyError(error).message); setBusy(false); return; }
       onVerified(); // navigation complète : le serveur relit la session fraîche
-    } catch { setErr("Vérification impossible pour le moment. Réessayez."); setBusy(false); }
+    } catch (x) { setErr(classifyVerifyError(x as AuthErrLike).message); setBusy(false); }
   };
   const changeEmail = () => { setStep("email"); setCode(""); setErr(null); setMsg(null); };
   return { email, setEmail, code, setCode, step, busy, msg, err, cool, send, verify, changeEmail };

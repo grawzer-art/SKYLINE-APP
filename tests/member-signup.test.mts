@@ -60,6 +60,7 @@ for (const [scenario, defaults] of Object.entries(defaultsBy)) {
   const counts = async (slug: string) => { const q = async (s: string) => (await db.query<any>(`select count(*)::int c from ${s} where user_id = $1`, [ids[slug]])).rows[0].c; return { profile: await q("public.participant_profiles"), member: await q("public.member_accounts"), spaces: await q("public.space_access"), roles: await q("public.platform_roles") + await q("public.staff_roles") }; };
 
   await mkUser("root"); await grant("root", { spaces: ["staff", "members"], platform: ["super_admin"] });
+  assert.ok((await call("root", `select public.manage_register_terms_version($1, 18)`, [TV])).ok);                               // version autorisée côté serveur
   await mkUser("tom", { invited: true }); await grant("tom", { spaces: ["staff"], staff: ["admin"] });
   await mkUser("invitee", { invited: true }); await grant("invitee", { spaces: ["members"] });
 
@@ -109,6 +110,20 @@ for (const [scenario, defaults] of Object.entries(defaultsBy)) {
     assert.deepEqual(await counts("val"), { profile: 0, member: 0, spaces: 0, roles: 0 });
     assert.deepEqual((await db.query<any>(`select active from public.accounts where id = $1`, [ids.val])).rows, [{ active: false }]);
   });
+  await t("VERSIONS DE CGU : seule une version ENREGISTRÉE et non retirée est acceptée (contrôle serveur) ; seul un super admin les gère ; l'âge minimum vient de la version, pas du client", async () => {
+    await mkUser("terms");
+    for (const bad of ["cgu-inconnue", "cgu-2026-1", "CGU-2026-11", "'; drop table x; --"]) { const r = await claim("terms", "A", "B", "C", bad); assert.ok(!r.ok && /terms_version_invalid|terms_required/.test(r.msg), bad); }
+    assert.deepEqual(await counts("terms"), { profile: 0, member: 0, spaces: 0, roles: 0 });
+    for (const w of ["terms", "tom"]) { const r = await call(w, `select public.manage_register_terms_version('mine', 18)`); assert.ok(!r.ok && r.code === "42501", w); assert.ok(!(await call(w, `select public.manage_retire_terms_version($1)`, [TV])).ok); }
+    assert.ok(!(await call("terms", `insert into public.terms_versions (version) values ('direct')`)).ok); assert.deepEqual((await call("terms", `select * from public.terms_versions`)).rows, []);       // illisible hors super admin
+    assert.ok(!(await call("root", `select public.manage_register_terms_version($1, 18)`, [TV])).ok);                                  // une version publiée n'est jamais réécrite
+    assert.ok(!(await call("root", `select public.manage_register_terms_version('bad version', 18)`)).ok); assert.ok(!(await call("root", `select public.manage_register_terms_version('ok-v', 12)`)).ok);
+    assert.ok((await call("root", `select public.manage_register_terms_version('cgu-21', 21)`)).ok); assert.ok((await call("root", `select public.manage_register_terms_version('cgu-old', 18)`)).ok);
+    assert.ok((await call("root", `select public.manage_retire_terms_version('cgu-old')`)).ok); const old = await claim("terms", "A", "B", "C", "cgu-old"); assert.ok(!old.ok && /terms_version_invalid/.test(old.msg));      // retirée ⇒ refusée
+    assert.ok((await claim("terms", "A", "B", "C", "cgu-21")).ok);
+    assert.deepEqual((await db.query<any>(`select terms_version, attested_min_age from public.member_accounts where user_id = $1`, [ids.terms])).rows, [{ terms_version: "cgu-21", attested_min_age: 21 }]);   // âge DÉCLARÉ = celui de la version
+    assert.ok(!(await call("terms", `update public.member_accounts set attested_min_age = 16`)).ok);
+  });
   await t("MÉTADONNÉES CLIENT non fiables : { role: super_admin, spaces: [staff], name } n'accorde rien ; le nom affiché vient de la saisie validée", async () => {
     await mkUser("hacker", { meta: { role: "super_admin", spaces: ["members", "staff"], is_admin: true, name: "ROOT" } });
     assert.ok((await claim("hacker", "Hugo", "Martin", "Hugo")).ok);
@@ -146,10 +161,10 @@ for (const [scenario, defaults] of Object.entries(defaultsBy)) {
     assert.ok((await call("tom", `select * from public.list_team()`)).ok); assert.deepEqual((await call("tom", `select public.is_staff_coordinator() c`)).rows, [{ c: true }]);
     const after = await catalog(); const map = new Map(after.map((c) => [`${c.proname}(${c.args})`, c]));
     for (const b of before) assert.deepEqual(map.get(`${b.proname}(${b.args})`), b, `${b.proname} modifiée`);
-    assert.deepEqual(after.filter((c) => !before.some((b) => b.proname === c.proname && b.args === c.args)).map((c) => c.proname).sort(), ["claim_member_account", "get_my_traveler_status", "is_verified_traveler"]);
+    assert.deepEqual(after.filter((c) => !before.some((b) => b.proname === c.proname && b.args === c.args)).map((c) => c.proname).sort(), ["claim_member_account", "get_my_traveler_status", "is_verified_traveler", "manage_register_terms_version", "manage_retire_terms_version"]);
     const pol = (await db.query<any>(`select tablename, policyname, md5(coalesce(qual,'')||coalesce(with_check,'')) m from pg_policies where schemaname = 'public' order by 1, 2`)).rows;
     for (const b of polBefore) assert.deepEqual(pol.find((p: any) => p.tablename === b.tablename && p.policyname === b.policyname), b);
-    assert.deepEqual(pol.filter((p: any) => !polBefore.some((b: any) => b.tablename === p.tablename && b.policyname === p.policyname)).map((p: any) => p.policyname).sort(), ["member_accounts_select_own", "traveler_reservations_select_own"]);
+    assert.deepEqual(pol.filter((p: any) => !polBefore.some((b: any) => b.tablename === p.tablename && b.policyname === p.policyname)).map((p: any) => p.policyname).sort(), ["member_accounts_select_own", "terms_versions_select_admin", "traveler_reservations_select_own"]);
   });
 
   /* ===== B4.3 + adaptation B4.2b : annuaire réservé aux voyageurs vérifiés ===== */

@@ -1,0 +1,78 @@
+{
+  "schema": 1,
+  "purpose": "Reconstruire un projet Supabase de TEST isolé, dans cet ordre. Ne jamais appliquer ces étapes sur le projet partagé sans autorisation.",
+  "steps": [
+    {
+      "order": 1,
+      "file": "supabase/migrations/20261101000100_b0_accounts_access.sql",
+      "kind": "migration",
+      "sharedDbVersion": "20261031141912",
+      "sharedDbStatus": "applied",
+      "sha256": "d150cfa8ec4482ecc0f2293ecdc0ac2544affeecbae3c8e8f04e47334c1dbc70"
+    },
+    {
+      "order": 2,
+      "file": "supabase/migrations/20261101000200_b0_missions.sql",
+      "kind": "migration",
+      "sharedDbVersion": "20261106111620",
+      "sharedDbStatus": "applied",
+      "sha256": "c398be7256ad335ab3ebada0a0ea5102489ffe68ab0ec4a92b0bba22e822b33a"
+    },
+    {
+      "order": 3,
+      "file": "supabase/migrations/20261101000300_b0_rls_policies.sql",
+      "kind": "migration",
+      "sharedDbVersion": "20261106111740",
+      "sharedDbStatus": "applied",
+      "sha256": "ff32401eff5f0254fc37497464e9590723f0a809eb0247ec4697d48b1279c8e7"
+    },
+    {
+      "order": 4,
+      "file": "supabase/preview/shared-db-drift/20261107123121_direct_staff_mission_assignment.sql",
+      "kind": "shared-db-export",
+      "sharedDbVersion": "20261107123121",
+      "sharedDbStatus": "applied",
+      "sha256": "963671bb44a6e26d4c187fc5c781853d4d083237920ff9bd669d51c7775ac538"
+    },
+    {
+      "order": 5,
+      "file": "supabase/proposals/B4_1_participant_profiles.sql",
+      "kind": "proposal",
+      "sharedDbVersion": "20261107161509",
+      "sharedDbStatus": "applied",
+      "sha256": "2b85f764cd713e584b11c42baedf6e32e0c7f8d2cb5fd2ce4a9873ee65a229fb"
+    },
+    {
+      "order": 6,
+      "file": "supabase/proposals/B4_2_member_signup.sql",
+      "kind": "proposal",
+      "sharedDbVersion": null,
+      "sharedDbStatus": "not_applied",
+      "sha256": "03759e9a4b24e53641bf104ede4b996ab27e01d0f6fed220d26f9f0afdb9b418"
+    },
+    {
+      "order": 7,
+      "file": "supabase/proposals/B4_3_club_profiles.sql",
+      "kind": "proposal",
+      "sharedDbVersion": null,
+      "sharedDbStatus": "not_applied",
+      "sha256": "8285797c414ffdc597a48021bf5c003cf55266cb02c040a6f53211a3d8cc752c"
+    },
+    {
+      "order": 8,
+      "file": "supabase/proposals/B4_2b_club_traveler_gate.sql",
+      "kind": "proposal",
+      "sharedDbVersion": null,
+      "sharedDbStatus": "not_applied",
+      "sha256": "15fdf197e4cfd97a7126dc4afa4d5ba823322712e52726ab7e4ad4e4ec0b3007"
+    },
+    {
+      "order": 9,
+      "file": "supabase/proposals/B4_2c_revoke_rls_auto_enable.sql",
+      "kind": "proposal",
+      "sharedDbVersion": null,
+      "sharedDbStatus": "not_applied",
+      "sha256": "e55a2539f097f4def7d4bce1d504ead73fc5b5504c5e9915c71b35b614abb58f"
+    }
+  ]
+}
