@@ -15,8 +15,10 @@ t("aucun champ de mot de passe dans l'interface STAFF", () => { assert.deepEqual
 t("l'authentification Supabase n'utilise que le code e-mail / lien magique, sans création de compte", () => {
   // Mécanisme UNIQUE (hook partagé STAFF + participants) : code e-mail, jamais de création de compte.
   const login = readFileSync("src/lib/auth/useEmailCodeLogin.ts", "utf8");
-  assert.match(login, /signInWithOtp/); assert.match(login, /shouldCreateUser:\s*false/); assert.match(login, /verifyOtp/);
-  for (const f of ["src/components/staff/LoginScreen.tsx", "src/components/participant/ParticipantLogin.tsx"]) { const s = readFileSync(f, "utf8"); assert.match(s, /useEmailCodeLogin\(/, f); assert.doesNotMatch(s, /signInWithOtp|verifyOtp|signUp/, `${f} : pas de second mécanisme`); }
+  assert.match(login, /signInWithOtp/); assert.match(login, /allowCreate = false/); assert.match(login, /shouldCreateUser:\s*allowCreate === true/); assert.match(login, /verifyOtp/);
+  for (const f of ["src/components/staff/LoginScreen.tsx", "src/components/participant/ParticipantLogin.tsx"]) { const s = readFileSync(f, "utf8"); assert.match(s, /useEmailCodeLogin\(/, f); assert.doesNotMatch(s, /signInWithOtp|verifyOtp|signUp/, `${f} : pas de second mécanisme`); assert.doesNotMatch(s, /allowCreate/, `${f} : la connexion ne crée JAMAIS de compte`); }
+  // Seul le parcours d'inscription (B4.2) peut autoriser la création.
+  const users = hits(/allowCreate\s*:\s*true|allowCreate\s*=\s*\{?true/); assert.deepEqual(users.map((u) => u.split(":")[0]), ["src/components/participant/SignupFlow.tsx"]);
 });
 t("aucune clé secrète (service_role / secret) référencée dans le code", () => { assert.deepEqual(hits(/SERVICE_ROLE|service_role|sb_secret_/i), []); });
 t("la clé Supabase lue côté client est la clé PUBLIQUE", () => { const m = readFileSync("src/lib/staff/mode.ts", "utf8"); assert.match(m, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/); });

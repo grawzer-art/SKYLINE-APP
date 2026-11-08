@@ -56,7 +56,7 @@ t("SÉCURITÉ du code : jamais getSession pour décider, jamais les métadonnée
     assert.doesNotMatch(s, /user_metadata|raw_user_meta_data|app_metadata/, `${f} : métadonnées`); assert.doesNotMatch(s, /auth\.getSession\(|getSession\(\)/, `${f} : getSession`);
     assert.doesNotMatch(s, /service_role|SERVICE_ROLE|sb_secret|SUPABASE_SECRET/, `${f} : secret`); assert.doesNotMatch(s, /signInWithPassword|signUp\(|resetPasswordForEmail|updateUser\(/, `${f} : mot de passe / inscription`); }
   assert.match(read("src/app/api/participant/me/route.ts"), /auth\.getUser\(\)/); assert.match(read("src/proxy.ts"), /loadParticipantAccess\(supabase, user\.id\)/);
-  assert.match(read("src/lib/auth/useEmailCodeLogin.ts"), /shouldCreateUser: false/);
+  assert.match(read("src/lib/auth/useEmailCodeLogin.ts"), /shouldCreateUser: allowCreate === true/); assert.match(read("src/lib/auth/useEmailCodeLogin.ts"), /allowCreate = false/);
 });
 t("pages personnelles : protégées CÔTÉ SERVEUR (proxy) — session vérifiée + compte actif + accès « members » ; inexistantes si désactivées ; erreur explicite si mal configurées", () => {
   const p = read("src/proxy.ts");
