@@ -3,5 +3,7 @@ import { connection } from "next/server";
 import { ParticipantLogin } from "@/components/participant/ParticipantLogin";
 import { signupConfig } from "@/lib/participant/config";
 
-/** Connexion participants (protégée par src/proxy.ts : inexistante si PARTICIPANT_AUTH est désactivée). Le lien « Créer un compte » n'existe que si l'inscription est ouverte. */
-export default async function Page() { await connection(); return <Suspense fallback={null}><ParticipantLogin signupEnabled={signupConfig().mode === "on"} /></Suspense>; }
+/** Le lien « Créer un compte » n'existe que si l'inscription est ouverte : configuration relue à CHAQUE requête (jamais figée au build). */
+async function Login() { await connection(); return <ParticipantLogin signupEnabled={signupConfig().mode === "on"} />; }
+/** Connexion participants (protégée par src/proxy.ts : inexistante si PARTICIPANT_AUTH est désactivée). */
+export default function Page() { return <Suspense fallback={null}><Login /></Suspense>; }

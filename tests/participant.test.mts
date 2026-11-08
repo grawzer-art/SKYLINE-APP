@@ -60,7 +60,7 @@ t("SÉCURITÉ du code : jamais getSession pour décider, jamais les métadonnée
 });
 t("pages personnelles : protégées CÔTÉ SERVEUR (proxy) — session vérifiée + compte actif + accès « members » ; inexistantes si désactivées ; erreur explicite si mal configurées", () => {
   const p = read("src/proxy.ts");
-  assert.match(p, /matcher: \[[^\]]*"\/v3\/login", "\/v3\/account", "\/v3\/account\/:path\*"/);
+  assert.match(p, /matcher: \[[^\]]*"\/v3\/login", "\/v3\/signup", "\/v3\/signup\/complete", "\/v3\/account", "\/v3\/account\/:path\*"/);
   assert.match(p, /cfg\.mode === "off"\) return NextResponse\.rewrite/); assert.match(p, /cfg\.mode === "misconfigured"\) return configErrorPage/);
   assert.match(p, /if \(!user \|\| !supabase\) return go\(/); assert.match(p, /if \(!\(await loadParticipantAccess\(supabase, user\.id\)\)\) return go\("\?denied=1"\)/);
   assert.doesNotMatch(p.split('pathname === "/v3/login"')[1]?.split('pathname.startsWith("/staff")')[0] ?? "", /localStorage|sessionStorage|document\.cookie/);

@@ -85,7 +85,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   await p1.getByRole("button", { name: "Annuler" }).click();
 
   /* ===== 7. Identité privée vs CLUB : écrans ===== */
-  await go(p1, "/v3/profile", p1.getByTestId("profile-name")); ok("PROFIL : le nom affiché vient du COMPTE (jamais de pseudo de démonstration) ; pas de bloc de simulation", !FICTIVE.test(await p1.locator("body").innerText()) && (await p1.getByText("Communauté", { exact: true }).count()) === 0);
+  await go(p1, "/v3/profile", p1.getByTestId("profile-name").filter({ hasText: /\S/ })); ok("PROFIL : le nom affiché vient du COMPTE (jamais de pseudo de démonstration) ; pas de bloc de simulation", !FICTIVE.test(await p1.locator("body").innerText()) && (await p1.getByText("Communauté", { exact: true }).count()) === 0);
   await go(p1, "/v3/club", p1.getByRole("heading", { level: 1 })); ok("CLUB : tuiles réelles (My Space, Members) accessibles ; Messages « Bientôt » ; pas d'invitation simulée", (await vis(p1.getByText("Bientôt").first())) && (await p1.getByText(/Rejoindre|Join/i).count()) === 0);
   await go(p1, "/v3/flight", p1.getByRole("heading", { level: 1 })); ok("PASS : aucun QR code valide sans réservation vérifiée (emplacement « à la confirmation »)", (await p1.locator("svg[aria-label*=QR], canvas, img[alt*=QR]").count()) === 0 && (await vis(p1.getByText(/à la confirmation/))) && (await vis(p1.getByText(/Réservation à confirmer/))));
 

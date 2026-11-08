@@ -15,7 +15,7 @@ export function V3Profile() {
   const c = useCommunity();
   const { t, state, update, reset } = c;
   const [info, setInfo] = useState<null | "export" | "delete" | "help">(null);
-  const identity = useParticipantIdentity(); const real = authActive(identity); const shownName = real ? identityName(identity) ?? "" : state.me.pseudo;
+  const identity = useParticipantIdentity(); const real = authActive(identity); const loading = identity.status === "loading"; const shownName = loading ? "" : real ? identityName(identity) ?? "" : state.me.pseudo;   // jamais d'identité de démonstration pendant le chargement
   const s = state.settings;
   const setS = (patch: Partial<typeof s>) => update((p) => ({ ...p, settings: { ...p.settings, ...patch } }));
   const texts = {
@@ -39,7 +39,7 @@ export function V3Profile() {
           ))}
         </div>
       </Block>
-      {!real && <Block label="Communauté">
+      {!real && !loading && <Block label="Communauté">
         <Link href="/v3/club/community" className="flex min-h-14 items-center justify-between border-y border-line text-[0.95rem]">{c.eligible ? t("gate.done.title") : t("gate.title")}<span aria-hidden className="text-silver">→</span></Link>
       </Block>}
       <Block label="Membres bloqués">
