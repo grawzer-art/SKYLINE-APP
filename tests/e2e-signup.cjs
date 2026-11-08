@@ -3,7 +3,7 @@
 // comptes existants / STAFF / suspendu, aucune création de compte par la connexion STAFF, isolation entre comptes, ergonomie iPhone. FAUX serveur Supabase local.
 // Serveurs (tests/run-participant.sh) : A=3105 (inscription désactivée) · D=3108 (inscription ouverte, CAPTCHA « none ») · E=3109 (ouverte, CAPTCHA manquant → erreur) · F=3110 (CAPTCHA Turnstile configuré).
 const { chromium } = require("playwright");
-const A = process.env.PART_A || "http://localhost:3105", D = process.env.SIGNUP_ON || "http://localhost:3108", E = process.env.SIGNUP_BAD || "http://localhost:3109", F = process.env.SIGNUP_CAP || "http://localhost:3110", MOCK = process.env.MOCK || "http://127.0.0.1:3199";
+const A = process.env.PART_A || "http://localhost:3105", D = process.env.SIGNUP_ON || "http://localhost:3108", E = process.env.SIGNUP_BAD || "http://localhost:3109", F = process.env.SIGNUP_CAP || "http://localhost:3110", G = process.env.SIGNUP_PREVIEW || "http://localhost:3111", MOCK = process.env.MOCK || "http://127.0.0.1:3199";
 let fails = 0; const ok = (n, c, d = "") => { console.log(`${c ? "PASS" : "FAIL"} ${n}${!c && d ? " — " + d : ""}`); if (!c) fails++; };
 const ctl = (b) => fetch(MOCK + "/__control", { method: "POST", body: JSON.stringify(b) }).then((r) => r.json());
 const state = () => fetch(MOCK + "/__state").then((r) => r.json());
@@ -25,6 +25,9 @@ const state = () => fetch(MOCK + "/__state").then((r) => r.json());
   { const { ctx, p } = await mk(E); const r = await ctx.request.get(E + "/v3/signup", { maxRedirects: 0 }); const body = await r.text();
     ok("MAL CONFIGURÉE : erreur explicite 503 (variable citée, aucune valeur), jamais d'ouverture silencieuse", r.status() === 503 && /PARTICIPANT_CAPTCHA_PROVIDER/.test(body) && !/sb_publishable|secret/i.test(body));
     await p.goto(E + "/v3/login", { waitUntil: "domcontentloaded" }); await vis(p.locator("#login-email")); ok("MAL CONFIGURÉE : aucun lien d'inscription", (await p.getByTestId("signup-link").count()) === 0); await ctx.close(); }
+
+  { const { ctx } = await mk(G); const r = await ctx.request.get(G + "/v3/signup", { maxRedirects: 0 }); const body = await r.text();
+    ok("PREVIEW / PRODUCTION : CAPTCHA « none » refusé quand l'inscription est ouverte (503 explicite, aucun formulaire)", r.status() === 503 && /interdit sur un déploiement Preview ou Production/.test(body) && !/s-first/.test(body)); await ctx.close(); }
 
   /* ===== 2. Formulaire ===== */
   const N1 = await mk(D); const p = N1.p;

@@ -2,7 +2,8 @@
  * INSCRIPTION PUBLIQUE des participants (B4.2). FERMÉE par défaut.
  *  - PARTICIPANT_SIGNUP absente ou « off » : /v3/signup n'existe pas (404), aucun lien d'inscription, aucune création de compte possible depuis l'interface.
  *  - PARTICIPANT_SIGNUP=on : exige PARTICIPANT_AUTH=supabase, la version et l'adresse des CGU (PARTICIPANT_TERMS_VERSION / PARTICIPANT_TERMS_URL) et un CAPTCHA
- *    (PARTICIPANT_CAPTCHA_PROVIDER=turnstile|hcaptcha + PARTICIPANT_CAPTCHA_SITE_KEY ; « none » explicite pour un environnement local / de test uniquement).
+ *    (PARTICIPANT_CAPTCHA_PROVIDER=turnstile|hcaptcha + PARTICIPANT_CAPTCHA_SITE_KEY ; « none » explicite pour un environnement local / de test uniquement :
+ *    REFUSÉ dès que VERCEL_ENV vaut preview ou production — et tout VERCEL_ENV inconnu est traité comme un déploiement).
  * Les textes juridiques (CGU, charte) ne sont PAS dans le code : seules leurs adresses et leur version sont configurées. Aucune valeur par défaut inventée.
  * RÈGLE (comme B2 / B4.1) : une configuration demandée mais incorrecte n'est jamais corrigée en silence : erreur explicite, limitée aux pages d'inscription.
  */
@@ -15,6 +16,8 @@ export type SignupEnv = {
   PARTICIPANT_SIGNUP?: string; participantMode: "off" | "supabase" | "misconfigured";
   PARTICIPANT_TERMS_VERSION?: string; PARTICIPANT_TERMS_URL?: string; PARTICIPANT_CHARTER_URL?: string; PARTICIPANT_MIN_AGE?: string;
   PARTICIPANT_CAPTCHA_PROVIDER?: string; PARTICIPANT_CAPTCHA_SITE_KEY?: string;
+  /** Environnement de déploiement Vercel (VERCEL_ENV : production | preview | development). Absent hors Vercel (local, tests). */
+  VERCEL_ENV?: string;
 };
 /** Adresse de document : https:// ou chemin interne. Jamais javascript:, data:, // ni caractère de contrôle. */
 export const safeDocUrl = (u: string | undefined): string | null => {
@@ -36,6 +39,7 @@ export function evaluateSignupConfig(e: SignupEnv): SignupConfig {
   const prov = (e.PARTICIPANT_CAPTCHA_PROVIDER ?? "").trim(); let captcha: CaptchaConfig = null;
   if (prov === "") return bad("PARTICIPANT_CAPTCHA_PROVIDER est requis (turnstile ou hcaptcha ; « none » uniquement pour un environnement local ou de test).");
   if (prov === "turnstile" || prov === "hcaptcha") { const key = (e.PARTICIPANT_CAPTCHA_SITE_KEY ?? "").trim(); if (!/^[A-Za-z0-9_-]{8,100}$/.test(key)) return bad("PARTICIPANT_CAPTCHA_SITE_KEY est absente ou invalide."); captcha = { provider: prov, siteKey: key }; }
-  else if (prov !== "none") return bad("PARTICIPANT_CAPTCHA_PROVIDER a une valeur non reconnue (attendu : turnstile, hcaptcha ou none).");
+  else if (prov === "none") { const dep = (e.VERCEL_ENV ?? "").trim().toLowerCase(); if (dep !== "" && dep !== "development") return bad("PARTICIPANT_CAPTCHA_PROVIDER=none est interdit sur un déploiement Preview ou Production : configurez turnstile ou hcaptcha."); }
+  else return bad("PARTICIPANT_CAPTCHA_PROVIDER a une valeur non reconnue (attendu : turnstile, hcaptcha ou none).");
   return { mode: "on", issue: null, termsVersion, termsUrl, charterUrl, minAge, captcha };
 }

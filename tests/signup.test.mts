@@ -30,6 +30,14 @@ await t("configuration : CAPTCHA « none » explicite (local / test), charte fac
   assert.equal(c.mode, "on"); if (c.mode === "on") assert.deepEqual([c.captcha, c.charterUrl, c.minAge, c.termsUrl], [null, "/legal/charte", 21, "/legal/cgu"]);
   assert.equal(safeDocUrl("https://a.example/x?y=1"), "https://a.example/x?y=1"); assert.equal(safeDocUrl("/a/../b"), null); assert.equal(safeDocUrl("ftp://x"), null); assert.equal(safeDocUrl("/ok path"), null);
 });
+await t("CAPTCHA « none » : INTERDIT sur Preview et Production (et tout environnement de déploiement inconnu), autorisé en local / test seulement ; CAPTCHA réel accepté partout", () => {
+  const none = { PARTICIPANT_CAPTCHA_PROVIDER: "none", PARTICIPANT_CAPTCHA_SITE_KEY: undefined };
+  for (const dep of ["preview", "production", "Preview", "PRODUCTION", "staging", "x"]) { const c = cfg({ ...none, VERCEL_ENV: dep }); assert.equal(c.mode, "misconfigured", dep); assert.match(c.issue ?? "", /interdit sur un déploiement Preview ou Production/); }
+  for (const dep of [undefined, "", "development"]) assert.equal(cfg({ ...none, VERCEL_ENV: dep }).mode, "on", String(dep));
+  for (const dep of ["preview", "production", undefined]) assert.equal(cfg({ VERCEL_ENV: dep }).mode, "on", `captcha réel / ${dep}`);
+  assert.equal(cfg({ ...none, VERCEL_ENV: "production", PARTICIPANT_SIGNUP: "off" }).mode, "off");
+  assert.match(read("src/lib/participant/config.ts"), /VERCEL_ENV: process\.env\.VERCEL_ENV/);
+});
 await t("validation : identité + e-mail + CGU + âge ; la finalisation n'exige pas d'e-mail", () => {
   const ok = validateSignupInput({ firstName: " Élodie ", lastName: "Cruz", displayName: "Élo", email: " Elo@Example.TEST ", acceptTerms: true, adult: true }); assert.ok(ok.ok && ok.value.email === "elo@example.test" && ok.value.firstName === "Élodie");
   const bad = validateSignupInput({ firstName: "", lastName: "", displayName: "", email: "pas-un-mail", acceptTerms: false, adult: false }, { minAge: 21 });

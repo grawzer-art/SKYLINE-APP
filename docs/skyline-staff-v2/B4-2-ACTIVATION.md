@@ -15,7 +15,7 @@ Migrations : `b0_accounts_access`, `b0_missions`, `b0_rls_policies`, `direct_sta
 Ordre : **B4.2 → (B4.3 → B4.2b)**. B4.2 seule suffit pour l'inscription ; B4.3/B4.2b ne sont nécessaires que pour le CLUB. Tester d'abord sur une **branche Supabase / projet de Preview**, pas sur le projet partagé avec STAFF.
 
 ## Variables d'environnement (Preview uniquement, jamais Production avant validation)
-`PARTICIPANT_AUTH=supabase` · `PARTICIPANT_SIGNUP=on` · `PARTICIPANT_TERMS_VERSION` · `PARTICIPANT_TERMS_URL` · `PARTICIPANT_CHARTER_URL` (facultative) · `PARTICIPANT_MIN_AGE` (18) · `PARTICIPANT_CAPTCHA_PROVIDER=turnstile|hcaptcha` · `PARTICIPANT_CAPTCHA_SITE_KEY` (publique). Une configuration incomplète affiche une erreur 503 explicite (jamais d'ouverture silencieuse). Les **textes** CGU / charte ne sont pas dans le code : seules leur version et leur adresse sont configurées ; la version est enregistrée à l'inscription (`member_accounts.terms_version`).
+`PARTICIPANT_AUTH=supabase` · `PARTICIPANT_SIGNUP=on` · `PARTICIPANT_TERMS_VERSION` · `PARTICIPANT_TERMS_URL` · `PARTICIPANT_CHARTER_URL` (facultative) · `PARTICIPANT_MIN_AGE` (18) · `PARTICIPANT_CAPTCHA_PROVIDER=turnstile|hcaptcha` (la valeur `none` est **refusée** par l'application dès que `VERCEL_ENV` vaut `preview` ou `production` : erreur 503, formulaire non servi) · `PARTICIPANT_CAPTCHA_SITE_KEY` (publique). Une configuration incomplète affiche une erreur 503 explicite (jamais d'ouverture silencieuse). Les **textes** CGU / charte ne sont pas dans le code : seules leur version et leur adresse sont configurées ; la version est enregistrée à l'inscription (`member_accounts.terms_version`).
 
 ## Réglages Supabase Auth (À FAIRE PAR VOUS — non modifiés)
 Sur le projet de Preview d'abord :
