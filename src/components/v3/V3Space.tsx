@@ -12,7 +12,8 @@ import { cities, genres } from "@/data/v3";
 import { images } from "@/data/demo";
 import { LIMITS } from "@/domain/community";
 import { ease } from "@/design/motion";
-import { authActive, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
+import { ClubUnavailable } from "@/components/participant/ClubSoon";
+import { useExperience } from "@/lib/experience/useExperience";
 import { useCommunity } from "@/lib/useCommunity";
 import { cn } from "@/lib/cn";
 
@@ -152,7 +153,9 @@ function V3SpaceDemo() {
 
 /** Mode réel (authentification participants active) : données Supabase du compte connecté ; sinon prototype de démonstration inchangé. */
 export function V3Space() {
-  const identity = useParticipantIdentity();
-  if (identity.status === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
-  return authActive(identity) ? <ClubSpaceReal  /> : <V3SpaceDemo  />;
+  const x = useExperience();
+  if (x.surface === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
+  if (x.surface === "review") return <V3SpaceDemo  />;   // prototype complet : revue locale uniquement
+  if (x.surface === "account") return <ClubSpaceReal  />;
+  return <ClubUnavailable eyebrow="MY SPACE" title="My Space" />;   // application sans comptes : aucune fonction communautaire, aucune donnée fictive
 }

@@ -1,6 +1,6 @@
 "use client";
-import { ClubSoon } from "@/components/participant/ClubSoon";
-import { authActive, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
+import { ClubSoon, ClubUnavailable } from "@/components/participant/ClubSoon";
+import { useExperience } from "@/lib/experience/useExperience";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Flag, MoreHorizontal, X } from "lucide-react";
@@ -122,7 +122,9 @@ function V3ChatDemo({ id }: { id: string }) {
 
 /** Mode réel : aucune conversation ni demande fictive ; fonction annoncée « bientôt ». */
 export function V3Chat({ id }: { id: string }) {
-  const identity = useParticipantIdentity();
-  if (identity.status === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
-  return authActive(identity) ? <ClubSoon eyebrow="MESSAGES" title="Messages" /> : <V3ChatDemo id={id} />;
+  const x = useExperience();
+  if (x.surface === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
+  if (x.surface === "review") return <V3ChatDemo id={id} />;   // prototype complet : revue locale uniquement
+  if (x.surface === "account") return <ClubSoon eyebrow="MESSAGES" title="Messages" />;
+  return <ClubUnavailable eyebrow="MESSAGES" title="Messages" />;   // application sans comptes : aucune fonction communautaire, aucune donnée fictive
 }

@@ -17,3 +17,18 @@ export function ClubSoon({ eyebrow, title }: { eyebrow: string; title: string })
     </>
   );
 }
+
+/** Application SANS comptes (authentification désactivée, hors revue) : aucune fonction communautaire, aucun profil, aucune donnée fictive. */
+export function ClubUnavailable({ eyebrow, title }: { eyebrow: string; title: string }) {
+  return (
+    <>
+      <ScreenTitle eyebrow={eyebrow} title={title} back={{ href: "/v3/club", label: "Club" }} />
+      <Block>
+        <div role="status" data-testid="club-unavailable" className="rounded-[8px] border border-silver/40 p-5">
+          <p className="font-display text-[1.1rem]">Bientôt disponible</p>
+          <p className="mt-2 text-[0.9rem] leading-relaxed text-cloud/80">Les profils et la communauté ouvriront avec les comptes participants.</p>
+        </div>
+      </Block>
+    </>
+  );
+}

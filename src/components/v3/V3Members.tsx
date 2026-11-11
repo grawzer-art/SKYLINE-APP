@@ -9,7 +9,8 @@ import { CommunityGate } from "./community";
 import { Button } from "@/components/ui/Button";
 import { cities, genres, members } from "@/data/v3";
 import { LIMITS, commonGenres, searchDirectory } from "@/domain/community";
-import { authActive, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
+import { ClubUnavailable } from "@/components/participant/ClubSoon";
+import { useExperience } from "@/lib/experience/useExperience";
 import { useCommunity } from "@/lib/useCommunity";
 
 /** MEMBERS : annuaire des profils VISIBLES. Réciprocité, ordre alphabétique (aucun classement), pagination. */
@@ -90,7 +91,9 @@ function V3MembersDemo() {
 
 /** Mode réel (authentification participants active) : données Supabase du compte connecté ; sinon prototype de démonstration inchangé. */
 export function V3Members() {
-  const identity = useParticipantIdentity();
-  if (identity.status === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
-  return authActive(identity) ? <ClubDirectoryReal  /> : <V3MembersDemo  />;
+  const x = useExperience();
+  if (x.surface === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
+  if (x.surface === "review") return <V3MembersDemo  />;   // prototype complet : revue locale uniquement
+  if (x.surface === "account") return <ClubDirectoryReal  />;
+  return <ClubUnavailable eyebrow="MEMBERS" title="Members" />;   // application sans comptes : aucune fonction communautaire, aucune donnée fictive
 }

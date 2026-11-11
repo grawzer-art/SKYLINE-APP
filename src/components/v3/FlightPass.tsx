@@ -6,14 +6,15 @@ import { MetalSurface, type useMetal } from "./metal";
 import { cn } from "@/lib/cn";
 
 /** `to_confirm` : aucune donnée de réservation réelle n'est encore reliée au compte → « à confirmer » (jamais présenté comme confirmé). */
-export type PassStatus = "confirmed" | "pending" | "ended" | "to_confirm";
-const statusText: Record<PassStatus, string> = { confirmed: "Réservation confirmée", pending: "En attente de confirmation", ended: "Édition terminée", to_confirm: "Réservation à confirmer" };
+export type PassStatus = "confirmed" | "pending" | "ended" | "to_confirm" | "verified";
+const statusText: Record<PassStatus, string> = { confirmed: "Réservation confirmée", pending: "En attente de confirmation", ended: "Édition terminée", to_confirm: "Réservation à confirmer", verified: "Réservation vérifiée" };
 
 /**
  * MY FLIGHT PASS : accès personnel à l'événement. Distinct de la carte membre CLUB et de la carte d'embarquement de la compagnie.
- * Aucun faux numéro, aucun faux QR : l'emplacement du QR d'accès reste vide tant que l'équipe ne le délivre pas.
+ * Aucun faux numéro, aucun faux QR : l'emplacement du QR d'accès reste vide tant que l'équipe ne le délivre pas — y compris pour une réservation VÉRIFIÉE
+ * (« verified » = preuve serveur d'une réservation ; le QR exigera un jeton signé côté serveur, pas encore émis).
  */
-export function FlightPass({ name, status, metal, demo }: { name: string; status: PassStatus; metal: ReturnType<typeof useMetal>; demo?: boolean }) {
+export function FlightPass({ name, status, metal, demo, origin = "France" }: { name: string; status: PassStatus; metal: ReturnType<typeof useMetal>; demo?: boolean; /** Point de départ : jamais inventé hors revue (« À confirmer »). */ origin?: string }) {
   return (
     <MetalSurface metal={metal} depth label={`Pass SKYLINE Ibiza 2027 — ${name}`} delay={0.1}>
       <div className="relative">
@@ -28,7 +29,7 @@ export function FlightPass({ name, status, metal, demo }: { name: string; status
         <div className="px-5 pt-7">
           <p className="metal-text font-display truncate text-[clamp(2rem,10.4vw,2.8rem)] uppercase leading-[1.02]" style={{ transform: "translate3d(calc(var(--nx,0) * 3px), calc(var(--ny,0) * 2px), 0)", transition: "transform 220ms cubic-bezier(0.22,1,0.36,1)" }}>{name}</p>
           <div className="mt-5 flex items-center gap-3 font-mono text-[0.78rem] uppercase tracking-[0.2em]">
-            <span className="text-cloud/90">France</span>
+            <span className="text-cloud/90">{origin}</span>
             <span aria-hidden className="relative h-px flex-1 bg-gradient-to-r from-silver/60 via-sky/60 to-silver/60"><Plane size={13} strokeWidth={1.5} className="absolute left-1/2 top-1/2 size-[13px] -translate-x-1/2 -translate-y-1/2 rotate-45 bg-[#0a0c10] px-px text-sky" /></span>
             <span className="text-cloud/90">Ibiza</span>
           </div>
@@ -41,10 +42,10 @@ export function FlightPass({ name, status, metal, demo }: { name: string; status
         </div>
 
         <div className="flex items-center justify-between gap-4 p-5 pt-6">
-          <p className="flex min-w-0 items-center gap-2.5 font-mono text-[0.85rem] uppercase leading-snug tracking-[0.1em]"><span aria-hidden className={cn("size-2 shrink-0 rounded-full", status === "confirmed" ? "bg-sky" : status === "ended" ? "bg-silver" : "bg-cloud/35")} />{statusText[status]}</p>
+          <p className="flex min-w-0 items-center gap-2.5 font-mono text-[0.85rem] uppercase leading-snug tracking-[0.1em]"><span aria-hidden className={cn("size-2 shrink-0 rounded-full", status === "confirmed" || status === "verified" ? "bg-sky" : status === "ended" ? "bg-silver" : "bg-cloud/35")} />{statusText[status]}</p>
           <div role="img" aria-label="Emplacement du QR code d'accès, non disponible dans le prototype" className="relative grid size-[6rem] shrink-0 place-items-center rounded-[4px] bg-jet/70">
             {["left-0 top-0 border-l border-t", "right-0 top-0 border-r border-t", "bottom-0 left-0 border-b border-l", "bottom-0 right-0 border-b border-r"].map((c) => <span key={c} aria-hidden className={cn("absolute size-3.5 border-sky/70", c)} />)}
-            <p className="px-2 text-center leading-tight text-cloud/70"><span className="font-mono text-[0.9rem] tracking-[0.1em] text-cloud/85">QR</span><span className="mt-1 block text-[0.72rem]">à la confirmation</span></p>
+            <p className="px-2 text-center leading-tight text-cloud/70"><span className="font-mono text-[0.9rem] tracking-[0.1em] text-cloud/85">QR</span><span className="mt-1 block text-[0.72rem]">{status === "verified" ? "remis par l'équipe" : "à la confirmation"}</span></p>
           </div>
         </div>
         <div className="flex items-center justify-between gap-3 border-t border-silver/10 px-5 py-3"><p className="font-mono text-[0.7rem] uppercase tracking-[0.18em] text-cloud/60">Pas un titre de transport</p>{demo && <DemoTag />}</div>

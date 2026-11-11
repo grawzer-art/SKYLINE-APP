@@ -6,6 +6,7 @@ import { Pause, Play, X } from "lucide-react";
 import { useCommunity } from "@/lib/useCommunity";
 import { testToneUrl } from "@/lib/testTone";
 import { announceAudio, onOtherAudio } from "@/lib/audioBus";
+import { useExperience } from "@/lib/experience/useExperience";
 
 export type PlayerItem = { id: string; title: string; by: string; href?: string };
 type Ctx = {
@@ -22,7 +23,7 @@ const fmt = (t: number) => (Number.isFinite(t) && t >= 0 ? `${Math.floor(t / 60)
  * persistant pendant la navigation, « indisponible » sans source autorisée.
  */
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
-  const { state, t } = useCommunity();
+  const { t } = useCommunity(); const x = useExperience();
   const audio = useRef<HTMLAudioElement>(null);
   const [current, setCurrent] = useState<PlayerItem | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -30,7 +31,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [duration, setDuration] = useState(0);
   const [failed, setFailed] = useState(false);
   const pathname = usePathname();
-  const hasSource = state.sim.tone; // aucune autre source autorisée n'existe pour l'instant
+  const hasSource = x.demoTone; // source de TEST : revue locale uniquement (aucune source autorisée en live)
   const unavailable = !hasSource || failed;
 
   useEffect(() => { const a = audio.current; return () => a?.pause(); }, []);

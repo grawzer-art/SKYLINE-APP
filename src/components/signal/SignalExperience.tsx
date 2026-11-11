@@ -45,7 +45,7 @@ function Experience({ signal }: { signal: Signal }) {
   const close = () => {
     if (closing) return;
     setClosing(true);
-    const go = () => (internal ? router.back() : router.push("/explore"));
+    const go = () => (internal ? router.back() : router.push("/v3/explore"));
     window.setTimeout(go, reduce ? 0 : 220);
   };
   useEffect(() => {

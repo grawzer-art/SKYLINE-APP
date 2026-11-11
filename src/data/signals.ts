@@ -25,7 +25,7 @@ const signals: Signal[] = [
     locationName: "Lieu à confirmer",
     facts: [{ label: "Statut", value: "À confirmer" }],
     image: { src: images.airport, alt: "Arrivée à l'aéroport d'Ibiza, de nuit, photographie de la première édition", position: "50% 55%", slot: "Photo officielle du lieu · 4:5" },
-    link: { label: "Toutes les révélations", href: "/explore" },
+    link: { label: "Toutes les révélations", href: "/v3/explore" },
   },
   {
     id: "sig-artist-demo", slug: "un-premier-nom-rejoint-la-line-up", type: "artist", status: "published", demo: true,

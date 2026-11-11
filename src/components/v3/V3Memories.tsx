@@ -4,7 +4,7 @@ import { ScreenTitle, Block, DemoTag } from "./ui";
 import { Photo } from "@/components/ui/Photo";
 import { Sheet } from "@/components/ui/Sheet";
 import { images } from "@/data/demo";
-import { useProto } from "@/lib/useProto";
+import { useExperience } from "@/lib/experience/useExperience";
 
 const archive = [
   { src: images.dj, alt: "DJ set à bord de l'avion", pos: "50% 40%" },
@@ -17,14 +17,14 @@ const archive = [
 
 /** SOUVENIRS : archives officielles des éditions. Aperçu avec les photographies de la première édition. */
 export function V3Memories() {
-  const { state } = useProto();
+  const x = useExperience();
   const [view, setView] = useState<(typeof archive)[number] | null>(null);
   return (
     <>
       <ScreenTitle eyebrow="Club" title="Souvenirs" back={{ href: "/v3/club", label: "Club" }}>
         <p className="mt-3 flex items-center gap-2 text-[0.85rem] text-cloud/70">Archives officielles <DemoTag>Aperçu</DemoTag></p>
       </ScreenTitle>
-      {state.phase !== "after" && <Block><p className="border-l border-sky pl-4 text-[0.85rem] text-cloud/80">Les souvenirs d&apos;Ibiza 2027 s&apos;ajouteront ici après l&apos;événement. En attendant : l&apos;édition précédente.</p></Block>}
+      {x.phase !== "after" && <Block><p className="border-l border-sky pl-4 text-[0.85rem] text-cloud/80">Les souvenirs d&apos;Ibiza 2027 s&apos;ajouteront ici après l&apos;événement. En attendant : l&apos;édition précédente.</p></Block>}
       <Block label="Édition précédente">
         <ul className="grid grid-cols-2 gap-2">
           {archive.map((a, i) => (

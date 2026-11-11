@@ -10,7 +10,8 @@ import { ReportForm } from "./ReportForm";
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { LIMITS, commonGenres, validateIntro } from "@/domain/community";
-import { authActive, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
+import { ClubUnavailable } from "@/components/participant/ClubSoon";
+import { useExperience } from "@/lib/experience/useExperience";
 import { useCommunity } from "@/lib/useCommunity";
 import { closeThenGo } from "@/lib/sheetNav";
 
@@ -96,7 +97,9 @@ function V3MemberDemo({ id }: { id: string }) {
 
 /** Mode réel (authentification participants active) : données Supabase du compte connecté ; sinon prototype de démonstration inchangé. */
 export function V3Member({ id }: { id: string }) {
-  const identity = useParticipantIdentity();
-  if (identity.status === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
-  return authActive(identity) ? <ClubMemberReal id={id} /> : <V3MemberDemo id={id} />;
+  const x = useExperience();
+  if (x.surface === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
+  if (x.surface === "review") return <V3MemberDemo id={id} />;   // prototype complet : revue locale uniquement
+  if (x.surface === "account") return <ClubMemberReal id={id} />;
+  return <ClubUnavailable eyebrow="MEMBER" title="Membre" />;   // application sans comptes : aucune fonction communautaire, aucune donnée fictive
 }

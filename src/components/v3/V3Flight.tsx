@@ -6,13 +6,14 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Backdrop } from "./visual";
 import { DemoTag } from "./ui";
 import { FlightPass, type PassStatus } from "./FlightPass";
-import { authActive, identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
+import { identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 import { TiltToggle, useMetal } from "./metal";
 import { Sheet } from "@/components/ui/Sheet";
 import { images } from "@/data/demo";
 import { demoTrip, noTrip, type Trip } from "@/data/v3";
 import { ease } from "@/design/motion";
 import { useProto } from "@/lib/useProto";
+import { useExperience } from "@/lib/experience/useExperience";
 import { cn } from "@/lib/cn";
 
 type Tab = "flight" | "stay" | "live";
@@ -78,19 +79,19 @@ const InfoRow = ({ onClick }: { onClick: () => void }) => (
 
 /** MY FLIGHT : le voyage du membre. Pass personnel en premier écran, puis trois univers simples, selon la phase. */
 export function V3Flight() {
-  const { state } = useProto();
+  const { state } = useProto();   // uniquement le pseudo de revue (jamais utilisé hors revue)
   const reduce = useReducedMotion();
   const metal = useMetal(1.7);
-  const phase = state.phase;
-  // Authentification participants active : AUCUNE donnée de voyage réelle n'est encore reliée au compte → pas de voyage de démonstration, pass « à confirmer ».
-  const identity = useParticipantIdentity(); const realMode = authActive(identity); const passName = realMode ? identityName(identity) ?? "Participant" : state.me.pseudo;
-  const demo = !realMode && state.sim.trip;
+  // Vérité résolue : la phase et la réservation viennent du serveur (ou de la revue locale étiquetée). Un état local simulé n'est JAMAIS une réservation.
+  const x = useExperience(); const identity = useParticipantIdentity(); const phase = x.phase;
+  const passName = x.surface === "account" ? identityName(identity) ?? "Participant" : x.surface === "review" ? state.me.pseudo : "Participant";
+  const demo = x.demoTrip;
   const trip = demo ? demoTrip : noTrip;
   const initial: Tab = phase === "during" ? "live" : "flight";
   const [pick, setPick] = useState<{ phase: string; tab: Tab } | null>(null);
   const tab = pick && pick.phase === phase ? pick.tab : initial;
   const [info, setInfo] = useState<null | "root" | (typeof docs)[number]>(null);
-  const status: PassStatus = realMode ? "to_confirm" : phase === "after" ? "ended" : state.sim.reservation === "confirmed" ? "confirmed" : "pending";
+  const status: PassStatus = x.review ? (phase === "after" ? "ended" : x.reservation === "simulated_confirmed" ? "confirmed" : "pending") : x.reservation === "verified" ? "verified" : "to_confirm";
   const doc = info && info !== "root" ? info : null;
 
   return (
@@ -98,7 +99,7 @@ export function V3Flight() {
       <section aria-labelledby="flight-title" className="relative isolate px-5 pt-[calc(var(--safe-top)+5.25rem)]">
         <Backdrop src={images.before} position="30% 62%" className="!bottom-auto !h-[21rem]" />
         <h1 id="flight-title" className="font-display text-[clamp(1.9rem,9.5vw,2.6rem)] leading-[0.92]">My Flight</h1>
-        <div className="mt-5"><FlightPass name={passName} status={status} metal={metal} demo={!realMode} /></div>
+        <div className="mt-5"><FlightPass name={passName} status={status} metal={metal} demo={x.demoContent} origin={x.demoContent ? "France" : "À confirmer"} /></div>
         <TiltToggle metal={metal} label="Activer le reflet au mouvement" labelOn="Reflet au mouvement actif" />
       </section>
 
@@ -149,9 +150,9 @@ export function V3Flight() {
           <>
             <p className="text-[0.92rem] leading-relaxed text-cloud/80">Le pass SKYLINE donne accès à l&apos;événement. Ce n&apos;est <strong className="font-medium text-cloud">pas un titre de transport</strong> et il ne remplace pas la carte d&apos;embarquement de la compagnie aérienne. Les détails de vol officiels sont ceux de la compagnie.</p>
             <p className="mt-3 text-[0.92rem] leading-relaxed text-cloud/80">Seules les informations confirmées par SKYLINE s&apos;affichent dans MY FLIGHT.</p>
-            <ul className="mt-4 divide-y divide-line border-y border-line">
+            {x.demoContent && <ul className="mt-4 divide-y divide-line border-y border-line">
               {docs.map((d) => <li key={d.id}><button type="button" onClick={() => setInfo(d)} className="flex min-h-14 w-full items-center justify-between text-left text-[0.95rem]">{d.title}<ArrowRight size={16} strokeWidth={1.5} aria-hidden className="text-silver" /></button></li>)}
-            </ul>
+            </ul>}
           </>
         )}
       </Sheet>

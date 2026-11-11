@@ -1,6 +1,6 @@
 "use client";
-import { ClubSoon } from "@/components/participant/ClubSoon";
-import { authActive, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
+import { ClubSoon, ClubUnavailable } from "@/components/participant/ClubSoon";
+import { useExperience } from "@/lib/experience/useExperience";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowLeft, BellOff, Search, X } from "lucide-react";
@@ -102,7 +102,9 @@ function V3MessagesDemo() {
 
 /** Mode réel : aucune conversation ni demande fictive ; fonction annoncée « bientôt ». */
 export function V3Messages() {
-  const identity = useParticipantIdentity();
-  if (identity.status === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
-  return authActive(identity) ? <ClubSoon eyebrow="MESSAGES" title="Messages" /> : <V3MessagesDemo  />;
+  const x = useExperience();
+  if (x.surface === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
+  if (x.surface === "review") return <V3MessagesDemo  />;   // prototype complet : revue locale uniquement
+  if (x.surface === "account") return <ClubSoon eyebrow="MESSAGES" title="Messages" />;
+  return <ClubUnavailable eyebrow="MESSAGES" title="Messages" />;   // application sans comptes : aucune fonction communautaire, aucune donnée fictive
 }

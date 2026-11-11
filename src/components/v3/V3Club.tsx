@@ -8,19 +8,21 @@ import { images } from "@/data/demo";
 import { visuals } from "@/data/visuals";
 import { ease } from "@/design/motion";
 import { useCommunity } from "@/lib/useCommunity";
-import { authActive, identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
+import { identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
+import { useExperience } from "@/lib/experience/useExperience";
 
 /** CLUB : l'entrée du membership. Un héros photographique, la carte membre comme objet, puis les quatre espaces. */
 export function V3Club() {
   const c = useCommunity();
-  const identity = useParticipantIdentity(); const cardName = authActive(identity) ? identityName(identity) ?? "Participant" : c.state.me.pseudo;
+  const identity = useParticipantIdentity(); const x = useExperience();
+  const cardName = x.review ? c.state.me.pseudo : x.surface === "account" ? identityName(identity) ?? "Participant" : "Participant";   // jamais de nom de démonstration hors revue
   const { t, state } = c;
   const reduce = useReducedMotion();
   const metal = useMetal();
   const nReq = c.pendingRequests.length;
-  const msgBadge = c.eligible && nReq + c.unreadTotal > 0 ? t("common.new") : undefined;
+  const msgBadge = !x.review ? undefined : c.eligible && nReq + c.unreadTotal > 0 ? t("common.new") : undefined;
   const rise = (d: number) => ({ initial: reduce ? false : { opacity: 0, y: 16 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.8, ease, delay: d } } as const);
-  const real = authActive(identity); const locked = real ? false : !c.eligible;
+  const real = !x.review; const locked = real ? false : !c.eligible;
 
   return (
     <>
@@ -29,7 +31,7 @@ export function V3Club() {
         <motion.p {...rise(0.05)} className="font-mono text-[0.72rem] uppercase tracking-[0.24em] text-sky">{t("club.eyebrow")}</motion.p>
         <motion.h1 id="club-title" {...rise(0.12)} className="font-display mt-2 text-[clamp(2.4rem,13vw,3.6rem)] leading-[0.9]">{t("club.title")}</motion.h1>
         <motion.p {...rise(0.2)} className="font-tagline mt-3 text-[0.75rem] text-cloud/85">{t("club.tagline")}</motion.p>
-        <div className="mt-9"><MembershipCard name={cardName} since={t("club.card.since.value")} number={t("club.card.pending")} member={t("club.card.member")} sinceLabel={t("club.card.since")} numberLabel={t("club.card.number")} demo metal={metal} /><TiltToggle metal={metal} label={t("club.card.tilt")} labelOn={t("club.card.tilt.on")} /></div>
+        <div className="mt-9"><MembershipCard name={cardName} since={t("club.card.since.value")} number={t("club.card.pending")} member={t("club.card.member")} sinceLabel={t("club.card.since")} numberLabel={t("club.card.number")} demo={x.demoContent} metal={metal} /><TiltToggle metal={metal} label={t("club.card.tilt")} labelOn={t("club.card.tilt.on")} /></div>
       </section>
 
       <section className="px-5 pt-7">
@@ -45,13 +47,13 @@ export function V3Club() {
       </section>
 
       <nav aria-label={t("club.title")} className="space-y-2.5 px-5 pt-5">
-        <NavTile href="/v3/club/space" title="My Space" sub={t("club.tile.space")} visual={visuals.ceiling} />
-        <NavTile href="/v3/club/members" title="Members" sub={locked ? t("club.tile.locked") : t("club.tile.members")} visual={visuals.airport} locked={locked} />
+        <NavTile href="/v3/club/space" title="My Space" sub={x.surface === "open" ? "Bientôt" : t("club.tile.space")} visual={visuals.ceiling} />
+        <NavTile href="/v3/club/members" title="Members" sub={x.surface === "open" ? "Bientôt" : locked ? t("club.tile.locked") : t("club.tile.members")} visual={visuals.airport} locked={locked} />
         <NavTile href="/v3/club/messages" title="Messages" sub={real ? "Bientôt" : locked ? t("club.tile.locked") : nReq ? t("messages.tab.requests.n", { n: nReq }) : c.unreadTotal ? t("messages.unread", { count: c.unreadTotal }) : t("club.tile.messages")} visual={visuals.sunset} badge={real ? undefined : msgBadge} locked={locked} />
         <NavTile href="/v3/club/memories" title="Souvenirs" sub={t("club.tile.souvenirs")} visual={visuals.warm} />
       </nav>
 
-      {state.phase !== "before" && (
+      {x.phase !== "before" && (
         <section className="px-5 pt-10">
           <h2 className="font-mono text-[0.72rem] uppercase tracking-[0.22em] text-cloud/72">{t("club.history")}</h2>
           <p className="mt-3 flex items-baseline justify-between border-b border-line pb-3 text-[0.95rem]"><span>Ibiza 2027</span><span className="font-mono text-[0.72rem] uppercase tracking-[0.14em] text-dim">{t("club.history.dates")}</span></p>

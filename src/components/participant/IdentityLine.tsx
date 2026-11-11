@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { user } from "@/data/demo";
 import { identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
+import { useExperience } from "@/lib/experience/useExperience";
 
 /**
  * Ligne d'identité de l'accueil. AUCUNE identité inventée quand l'authentification participants est active :
@@ -9,10 +10,12 @@ import { identityName, useParticipantIdentity } from "@/lib/participant/useParti
  * Authentification inactive (par défaut) : l'accueil de démonstration est inchangé (page déjà étiquetée « données de démonstration »).
  */
 export function IdentityLine({ variant }: { variant: "legacy" | "v3" }) {
-  const id = useParticipantIdentity(); const name = identityName(id);
+  const id = useParticipantIdentity(); const name = identityName(id); const x = useExperience();
   const wrap = variant === "legacy" ? "font-display text-[1.1rem] leading-tight" : "font-mono text-[0.72rem] uppercase leading-relaxed tracking-[0.22em] text-cloud/80";
   const sub = variant === "legacy" ? "mt-0.5 block font-mono text-[0.72rem] uppercase tracking-[0.18em] text-cloud/72" : "text-cloud/68";
   const link = "inline-flex min-h-11 items-center underline decoration-cloud/40 underline-offset-4 transition hover:decoration-sky";
+  // Authentification désactivée : l'identité de démonstration n'existe QU'en revue locale ; sinon (application sans comptes) aucune identité.
+  if (id.status === "off" && !x.review) return <p className={wrap} aria-hidden>&nbsp;</p>;
   if (id.status === "off") return variant === "legacy" ? <p className={wrap}>{user.fullName}</p> : <p className={wrap}>{user.fullName}<br /><span className={sub}>{user.memberLine}</span></p>;
   if (id.status === "loading") return <p className={wrap} aria-hidden>&nbsp;</p>;
   if (id.status === "misconfigured" || id.status === "error") return <p className={wrap} aria-hidden>&nbsp;</p>;

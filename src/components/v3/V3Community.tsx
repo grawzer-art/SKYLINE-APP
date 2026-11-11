@@ -1,6 +1,6 @@
 "use client";
-import { ClubSoon } from "@/components/participant/ClubSoon";
-import { authActive, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
+import { ClubSoon, ClubUnavailable } from "@/components/participant/ClubSoon";
+import { useExperience } from "@/lib/experience/useExperience";
 import Link from "next/link";
 import { useState } from "react";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
@@ -18,7 +18,7 @@ function V3CommunityDemo() {
   const [sheet, setSheet] = useState<null | "charter" | "leave">(null);
   // Brouillon : rien n'est enregistré tant que la personne n'a pas confirmé explicitement.
   const [draft, setDraft] = useState({ adult: false, charter: false, consent: false });
-  const confirmed = state.sim.reservation === "confirmed";
+  const confirmed = useExperience().reservationConfirmed;   // revue locale : réservation simulée ; jamais lu hors revue (composant de démonstration)
   const ready = confirmed && draft.adult && draft.charter && draft.consent;
 
   const promises = [["gate.p1.t", "gate.p1.d"], ["gate.p2.t", "gate.p2.d"], ["gate.p3.t", "gate.p3.d"]] as const;
@@ -78,7 +78,9 @@ function V3CommunityDemo() {
 
 /** Mode réel : aucune conversation ni demande fictive ; fonction annoncée « bientôt ». */
 export function V3Community() {
-  const identity = useParticipantIdentity();
-  if (identity.status === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
-  return authActive(identity) ? <ClubSoon eyebrow="COMMUNITY" title="Communauté" /> : <V3CommunityDemo  />;
+  const x = useExperience();
+  if (x.surface === "loading") return <p role="status" className="px-5 pt-32 text-cloud/75">…</p>;
+  if (x.surface === "review") return <V3CommunityDemo  />;   // prototype complet : revue locale uniquement
+  if (x.surface === "account") return <ClubSoon eyebrow="COMMUNITY" title="Communauté" />;
+  return <ClubUnavailable eyebrow="COMMUNITY" title="Communauté" />;   // application sans comptes : aucune fonction communautaire, aucune donnée fictive
 }

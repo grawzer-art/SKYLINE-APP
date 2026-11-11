@@ -10,6 +10,7 @@ import { staffConfigIssue } from "@/lib/staff/data-source";
 import { loadStaffIdentity } from "@/lib/staff/session";
 import { updateSession } from "@/lib/supabase/proxy";
 import { participantConfig, signupConfig } from "@/lib/participant/config";
+import { reviewModeFromProcess } from "@/lib/experience/reviewMode";
 import { loadParticipantAccess } from "@/lib/participant/access";
 
 /**
@@ -22,15 +23,25 @@ import { loadParticipantAccess } from "@/lib/participant/access";
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 0) Ouverture de l'application (vrai chargement de page de « / », pas une navigation interne) : choix de l'espace.
-  //    Aucun choix mémorisé → écran de choix ; STAFF mémorisé → STAFF HQ (accès vérifié ci-dessous). La préférence ne donne aucun droit.
+  // 0) Ouverture de l'application (« / ») : choix de l'espace d'abord, puis l'accueil V3.
+  //    Chargement de page sans choix mémorisé → écran de choix ; STAFF mémorisé → STAFF HQ (accès vérifié plus bas) ; sinon (et pour toute navigation interne) → SKYLINE V3 (`/v3`),
+  //    requête conservée. La préférence d'espace ne donne AUCUN droit. `/v3` ne redirige jamais vers « / » : aucune boucle possible.
   if (pathname === "/") {
     const isPageLoad = request.headers.get("sec-fetch-dest") === "document" && !request.headers.get("rsc");
-    if (!isPageLoad) return NextResponse.next();
-    const space = request.cookies.get(SPACE_COOKIE)?.value;
-    if (!space) return NextResponse.redirect(new URL("/start", request.url), { status: 307, headers: { "Cache-Control": "no-store" } });
-    if (space === "staff") return NextResponse.redirect(new URL("/staff", request.url), { status: 307, headers: { "Cache-Control": "no-store" } });
-    return NextResponse.next();
+    const to = (path: string, keepQuery = false) => { const u = new URL(path, request.url); if (keepQuery) u.search = request.nextUrl.search; return NextResponse.redirect(u, { status: 307, headers: { "Cache-Control": "no-store" } }); };
+    if (isPageLoad) {
+      const space = request.cookies.get(SPACE_COOKIE)?.value;
+      if (!space) return to("/start");
+      if (space === "staff") return to("/staff");
+    }
+    return to("/v3", true);
+  }
+
+  // MODE REVUE (plan des écrans, wireframes) : LOCAL uniquement (voir src/lib/experience/reviewMode.ts). Ailleurs : page inexistante (404).
+  if (pathname === "/v3/screens" || pathname === "/v3/wireframes") {
+    return reviewModeFromProcess({ host: request.headers.get("host"), forwardedHost: request.headers.get("x-forwarded-host") })
+      ? NextResponse.next({ headers: { "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" } })
+      : NextResponse.rewrite(new URL("/signal-introuvable", request.url));
   }
 
   // PARTICIPANTS : pages personnelles (/v3/account) et connexion (/v3/login). Authentification Supabase RÉUTILISÉE (même session que STAFF).
@@ -112,4 +123,4 @@ function configErrorPage(issue: string, scope = "STAFF HQ") {
   return new NextResponse(html, { status: 503, headers: { "content-type": "text/html; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" } });
 }
 
-export const config = { matcher: ["/", "/signal/:slug", "/staff", "/staff/:path*", "/v3/login", "/v3/signup", "/v3/signup/complete", "/v3/account", "/v3/account/:path*"] };
+export const config = { matcher: ["/", "/signal/:slug", "/staff", "/staff/:path*", "/v3/login", "/v3/screens", "/v3/wireframes", "/v3/signup", "/v3/signup/complete", "/v3/account", "/v3/account/:path*"] };

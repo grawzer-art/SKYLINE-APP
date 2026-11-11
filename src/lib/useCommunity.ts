@@ -8,6 +8,7 @@ import {
 import { translate, type TKey, type Vars } from "@/i18n";
 import { useClock } from "@/lib/useClock";
 import { useProto, type Proto } from "@/lib/useProto";
+import { useExperience } from "@/lib/experience/useExperience";
 
 /** Horloge injectable : les tests et le futur serveur contrôlent le temps. */
 const now = () => Date.now();
@@ -21,14 +22,15 @@ export type RequestResult = { ok: true } | { ok: false; reason: RequestBlock | M
  */
 export function useCommunity() {
   const { state, update, reset } = useProto();
+  const x = useExperience();   // la réservation / le compte actif viennent de la preuve serveur (ou de la revue locale étiquetée), JAMAIS de l'état local simulé en production
 
   const eligibility: Eligibility = useMemo(() => ({
-    reservationConfirmed: state.sim.reservation === "confirmed",
-    accountActive: true,
+    reservationConfirmed: x.reservationConfirmed,
+    accountActive: x.accountActive,
     adult: state.community.adult,
     charter: state.community.charter,
     consent: state.community.consent,
-  }), [state.sim.reservation, state.community]);
+  }), [x.reservationConfirmed, x.accountActive, state.community]);
   const eligible = isEligible(eligibility);
   const missing = missingConditions(eligibility);
 
@@ -63,7 +65,7 @@ export function useCommunity() {
     return { ...s, me: { ...s.me, genres: has ? s.me.genres.filter((x) => x !== g) : [...s.me.genres, g] } };
   });
   const setVisible = (visible: boolean) => update((s) => ({ ...s, me: { ...s.me, visible: visible && eligibleOf(s) } }));
-  const eligibleOf = (s: Proto) => isEligible({ reservationConfirmed: s.sim.reservation === "confirmed", accountActive: true, ...s.community });
+  const eligibleOf = (s: Proto) => isEligible({ reservationConfirmed: x.reservationConfirmed, accountActive: x.accountActive, ...s.community });
 
   /* ----- Activation / retrait de la communauté ----- */
   const setCommunity = (patch: Partial<Proto["community"]>) => update((s) => ({ ...s, community: { ...s.community, ...patch } }));

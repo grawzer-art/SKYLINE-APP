@@ -4,9 +4,11 @@ import { ArrowRight } from "lucide-react";
 import { ScreenTitle, Block, Empty } from "./ui";
 import { Photo } from "@/components/ui/Photo";
 import { images } from "@/data/demo";
+import { useExperience } from "@/lib/experience/useExperience";
 
 /** EXPLORE : SKYLINE SOUND en tête, puis line-up, artistes et contenus (emplacements tant que rien n'est confirmé). */
 export function V3Explore({ signals }: { signals: React.ReactNode }) {
+  const x = useExperience();
   return (
     <>
       <ScreenTitle eyebrow="Skyline culture" title="Explore" />
@@ -20,9 +22,10 @@ export function V3Explore({ signals }: { signals: React.ReactNode }) {
           </span>
         </Link>
       </Block>
-      <Block label="Line-up"><Empty title="Line-up à annoncer" text="Les artistes confirmés apparaîtront ici, avec leur profil officiel." /></Block>
+      {/* Blocs sans contenu officiel : présents seulement en revue locale (jamais de page creuse pour un participant). */}
+      {x.demoContent && <Block label="Line-up"><Empty title="Line-up à annoncer" text="Les artistes confirmés apparaîtront ici, avec leur profil officiel." /></Block>}
       {signals}
-      <Block label="Expériences à Ibiza"><Empty title="À venir" text="Lieux et expériences confirmés par l'équipe." /></Block>
+      {x.demoContent && <Block label="Expériences à Ibiza"><Empty title="À venir" text="Lieux et expériences confirmés par l'équipe." /></Block>}
       <div className="h-8" />
     </>
   );
