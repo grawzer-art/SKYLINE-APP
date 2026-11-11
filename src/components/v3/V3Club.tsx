@@ -16,7 +16,7 @@ export function V3Club() {
   const c = useCommunity();
   const identity = useParticipantIdentity(); const x = useExperience();
   const cardName = x.review ? c.state.me.pseudo : x.surface === "account" ? identityName(identity) ?? "Participant" : "Participant";   // jamais de nom de démonstration hors revue
-  const { t, state } = c;
+  const { t } = c;
   const reduce = useReducedMotion();
   const metal = useMetal();
   const nReq = c.pendingRequests.length;

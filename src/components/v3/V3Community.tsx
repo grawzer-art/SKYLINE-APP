@@ -14,7 +14,7 @@ import { useCommunity } from "@/lib/useCommunity";
 /** Activation volontaire des fonctions communautaires (messagerie incluse) — pas une liste de tâches : trois attestations et un bouton. */
 function V3CommunityDemo() {
   const c = useCommunity();
-  const { t, state } = c;
+  const { t } = c;
   const [sheet, setSheet] = useState<null | "charter" | "leave">(null);
   // Brouillon : rien n'est enregistré tant que la personne n'a pas confirmé explicitement.
   const [draft, setDraft] = useState({ adult: false, charter: false, consent: false });

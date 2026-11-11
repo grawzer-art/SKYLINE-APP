@@ -10,7 +10,7 @@ import { isTabActive, navItems } from "@/components/layout/nav-items";
 import { useExperience } from "@/lib/experience/useExperience";
 import { useCommunity } from "@/lib/useCommunity";
 import { locales } from "@/i18n";
-import { authActive, identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
+import { identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 import { Initials } from "./ui";
 import { cn } from "@/lib/cn";
 

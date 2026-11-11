@@ -114,7 +114,7 @@ const FORGED = { phase: "during", locale: "fr", sim: { reservation: "confirmed",
     ok("REVUE : bandeau « Revue interne », identité de démonstration, phase simulée (pendant), commandes visibles", /Revue interne/i.test(t) && /Alex Martin/i.test(t) && /Bienvenue\s+à Ibiza/i.test(t) && (await p.locator("header button").count()) >= 1);
     await p.locator("header button").first().click(); ok("REVUE : la feuille « Simuler le parcours » s'ouvre", await vis(p.getByText("Simuler le parcours")));
     await p.getByRole("radio", { name: "Avant" }).click(); await p.keyboard.press("Escape"); await p.waitForTimeout(600); ok("REVUE : la phase simulée change l'accueil", await vis(p.getByRole("timer")));
-    await p.goto(REV + "/v3/flight", { waitUntil: "domcontentloaded" }); await vis(p.getByRole("group", { name: /Pass SKYLINE/ })); t = await body(p);
+    await p.goto(REV + "/v3/flight", { waitUntil: "domcontentloaded" }); await vis(p.getByRole("group", { name: /Pass SKYLINE/ })); await vis(p.getByText("Démo", { exact: true })); t = await body(p);
     ok("REVUE : pass simulé étiqueté « Démo » (réservation simulée ≠ vérifiée) ; aucun QR même en revue", /Démo/i.test(t) && !/Réservation vérifiée/i.test(t) && await noQr(p));
     await p.goto(REV + "/v3/club/members", { waitUntil: "domcontentloaded" }); ok("REVUE : annuaire de démonstration (membres fictifs) visible", await vis(p.getByText("Alba")));
     ok("REVUE : plan des écrans et wireframes accessibles", (await get(ctx, REV + "/v3/screens")).status() === 200 && (await get(ctx, REV + "/v3/wireframes")).status() === 200);
