@@ -26,6 +26,11 @@ t("REDIRECTIONS : table unique, une seule étape, aucune boucle ; /v3, /auth, /s
   assert.equal(m.get("/crew"), "/v3/club"); assert.equal(m.get("/explore"), "/v3/explore"); assert.equal(m.get("/flight"), "/v3/flight"); assert.equal(m.get("/club"), "/v3/club"); assert.equal(m.get("/pass"), "/v3/flight"); assert.equal(m.get("/more"), "/v3"); assert.equal(m.get("/v3/explore/radio/:path*"), "/v3/explore/sound");
   assert.match(read("next.config.ts"), /legacyRedirects\.map/);
 });
+t("CODE V1 retiré : plus d'ancien cadre (en-tête, barre, accueil, Crew, Explore V1, lecteur Radio hérité) ; aucune référence résiduelle", () => {
+  for (const f of ["src/components/home", "src/components/screens", "src/components/explore", "src/components/layout/Header.tsx", "src/components/layout/BottomNav.tsx", "src/components/layout/ProfileSheet.tsx", "src/app/explore", "src/app/crew", "src/app/v3/explore/radio", "src/components/v3/PlayerProvider.tsx", "src/components/v3/V3Radio.tsx", "src/lib/testTone.ts"]) assert.ok(!existsSync(f), `${f} devrait être supprimé`);
+  for (const f of walk("src").filter((x) => /\.(ts|tsx)$/.test(x))) assert.doesNotMatch(strip(read(f)), /PlayerProvider|usePlayer|HomeHero|CrewScreen|BottomNav|ProfileSheet|testToneUrl|UpdatesFeed|ConceptCard/, f);
+  assert.doesNotMatch(strip(read("src/components/layout/AppShell.tsx")), /Header|BottomNav/);
+});
 t("« / » : traité par le proxy — choix d'espace (/start) et STAFF mémorisé d'abord, sinon /v3 avec requête conservée ; aucune boucle (/v3 ne renvoie jamais vers /)", () => {
   const p = strip(read("src/proxy.ts")); const i = p.indexOf('pathname === "/"'); const blk = p.slice(i, p.indexOf("MODE REVUE", i) > 0 ? p.indexOf('pathname === "/v3/screens"', i) : i + 900);
   assert.match(blk, /to\("\/start"\)/); assert.match(blk, /to\("\/staff"\)/); assert.match(blk, /to\("\/v3", true\)/); assert.doesNotMatch(p.slice(p.indexOf('pathname === "/v3/screens"')), /to\("\/"/);
@@ -44,7 +49,7 @@ t("MODE REVUE protégé : plan des écrans et wireframes inexistants (404) hors 
   assert.match(strip(read("src/app/api/review-mode/route.ts")), /reviewModeFromProcess/); assert.doesNotMatch(read("src/lib/experience/reviewMode.ts").replace(/\/\*[\s\S]*?\*\//g, ""), /NODE_ENV/);
 });
 t("CONTENUS : aucun texte de remplacement entre crochets visible ; blocs vides masqués hors revue ; messages d'attente conservés", () => {
-  for (const f of [...walk("src/components/v3"), ...walk("src/components/participant"), ...walk("src/components/home").filter(() => existsSync("src/components/home"))].filter((x) => x.endsWith(".tsx"))) {
+  for (const f of [...walk("src/components/v3"), ...walk("src/components/participant")].filter((x) => x.endsWith(".tsx"))) {
     const s = strip(read(f)); const hit = s.match(/>\s*\[[A-Za-zÀ-ÿ'’ ]{4,50}\]\s*</g) ?? s.match(/"\[[A-ZÉ][A-Za-zÀ-ÿ'’ ]{4,50}\]"/g) ?? [];
     if (f.endsWith("V3Home.tsx")) { assert.match(s, /\{phase === "during" && x\.demoContent && <Now \/>\}/); continue; }   // emplacements de revue, jamais rendus en live
     assert.deepEqual(hit, [], f);

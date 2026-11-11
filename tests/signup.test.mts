@@ -71,7 +71,7 @@ await t("proxy : pages d'inscription inexistantes si fermées (404), erreur expl
   assert.match(read("src/app/v3/signup/page.tsx"), /c\.mode !== "on"\) notFound\(\)/);
 });
 await t("membre gratuit ≠ voyageur : le pass reste « à confirmer » en mode réel ; aucun QR ; le statut voyageur vient du serveur, jamais déduit du navigateur", () => {
-  assert.match(read("src/components/v3/V3Flight.tsx"), /realMode \? "to_confirm"/); assert.match(strip(read("src/app/api/participant/me/route.ts")), /rpc\("get_my_traveler_status"\)/);
+  assert.match(read("src/components/v3/V3Flight.tsx"), /x\.reservation === "verified" \? "verified" : "to_confirm"/); assert.match(strip(read("src/app/api/participant/me/route.ts")), /rpc\("get_my_traveler_status"\)/);
   assert.doesNotMatch(strip(read("src/lib/participant/useParticipantIdentity.ts")), /traveler\s*[:=]\s*"verified"[^?]*$/m);
   const sql = read("supabase/proposals/B4_2_member_signup.sql").replace(/--[^\n]*/g, ""); assert.doesNotMatch(sql, /insert into public\.traveler_reservations/i);
   assert.doesNotMatch(sql, /grant (insert|update|delete)/i);

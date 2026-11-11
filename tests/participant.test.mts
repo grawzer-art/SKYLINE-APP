@@ -60,19 +60,18 @@ t("SÉCURITÉ du code : jamais getSession pour décider, jamais les métadonnée
 });
 t("pages personnelles : protégées CÔTÉ SERVEUR (proxy) — session vérifiée + compte actif + accès « members » ; inexistantes si désactivées ; erreur explicite si mal configurées", () => {
   const p = read("src/proxy.ts");
-  assert.match(p, /matcher: \[[^\]]*"\/v3\/login", "\/v3\/signup", "\/v3\/signup\/complete", "\/v3\/account", "\/v3\/account\/:path\*"/);
+  assert.match(p, /matcher: \[[^\]]*"\/v3\/login", "\/v3\/screens", "\/v3\/wireframes", "\/v3\/signup", "\/v3\/signup\/complete", "\/v3\/account", "\/v3\/account\/:path\*"/);
   assert.match(p, /cfg\.mode === "off"\) return NextResponse\.rewrite/); assert.match(p, /cfg\.mode === "misconfigured"\) return configErrorPage/);
   assert.match(p, /if \(!user \|\| !supabase\) return go\(/); assert.match(p, /if \(!\(await loadParticipantAccess\(supabase, user\.id\)\)\) return go\("\?denied=1"\)/);
   assert.doesNotMatch(p.split('pathname === "/v3/login"')[1]?.split('pathname.startsWith("/staff")')[0] ?? "", /localStorage|sessionStorage|document\.cookie/);
   const a = read("src/lib/participant/access.ts"); assert.match(a, /\.eq\("id", userId\)/); assert.match(a, /\.eq\("user_id", userId\)/); assert.match(a, /space === "members"/);
 });
-t("interface : les identités de démonstration (Alex Martin…) n'apparaissent plus que si l'authentification participants est DÉSACTIVÉE ; états « à confirmer »", () => {
-  for (const f of ["src/components/home/HomeHero.tsx", "src/components/v3/V3Home.tsx"]) assert.doesNotMatch(read(f), /user\.fullName/, f);
-  assert.match(read("src/components/participant/IdentityLine.tsx"), /id\.status === "off"\) return variant === "legacy" \? <p className=\{wrap\}>\{user\.fullName\}/);
-  assert.match(read("src/components/v3/V3Flight.tsx"), /realMode \? "to_confirm"/); assert.match(read("src/components/v3/V3Flight.tsx"), /const demo = !realMode && state\.sim\.trip/);
+t("interface : plus aucune identité de démonstration hors revue locale ; états « à confirmer » ; données événementielles non confirmées", () => {
+  assert.doesNotMatch(read("src/components/v3/V3Home.tsx"), /user\.fullName/);
+  assert.match(read("src/components/participant/IdentityLine.tsx"), /id\.status === "off" && !x\.review\) return <p className=\{wrap\} aria-hidden>/);
+  assert.match(read("src/components/v3/V3Flight.tsx"), /x\.reservation === "verified" \? "verified" : "to_confirm"/);
   assert.match(read("src/components/v3/FlightPass.tsx"), /to_confirm: "Réservation à confirmer"/);
   const d = read("src/data/demo.ts"); assert.match(d, /eventConfirmation = \{ dates: false, schedule: false, seats: false, tickets: false \}/);
-  for (const f of ["src/components/v3/V3Home.tsx", "src/components/home/HomeHero.tsx"]) assert.match(read(f), /!eventConfirmation\.dates && <p data-testid="to-confirm"/);
-  assert.match(read("src/components/screens/CrewScreen.tsx"), /eventConfirmation\.seats \? m\.seat : "Siège à confirmer"/);
+  assert.match(read("src/components/v3/V3Home.tsx"), /data-testid="to-confirm"/);
 });
 console.log(`${n} tests PARTICIPANTS : OK`);

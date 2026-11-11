@@ -118,8 +118,8 @@ const b64u = (s) => Buffer.from(s).toString("base64url");
     await c2.p.goto(B + "/staff"); await c2.p.waitForTimeout(700);
     ok("PARTICIPANT : /staff affiche le refus explicite", new URL(c2.p.url()).search.includes("denied=1") && (await c2.p.getByRole("alert").filter({ hasText: /n.a pas accès/ }).count()) === 1);
     await c2.ctx.close();
-    const c3 = await mk(); await login(c3.ctx, "qafard"); await c3.p.goto(B + "/"); await c3.p.waitForTimeout(800); await c3.p.getByRole("button", { name: "Mon profil" }).click().catch(() => {}); await c3.p.waitForTimeout(600);
-    ok("SÉLECTEUR : disponible aussi dans le profil de l'application participant (production)", (await c3.p.getByRole("group", { name: "Espace" }).count()) === 1);
+    const c3 = await mk(); await login(c3.ctx, "qafard"); await c3.p.goto(B + "/v3/profile"); await c3.p.waitForTimeout(1200);   // le profil de l'application participants (V3) porte le sélecteur d'espace
+    ok("SÉLECTEUR : disponible aussi dans le profil de l'application participant (V3)", (await c3.p.getByRole("group", { name: "Espace" }).count()) === 1);
     await c3.ctx.close();
   }
   /* 6. Mobiles, texte, tactile */

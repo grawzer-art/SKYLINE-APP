@@ -39,8 +39,8 @@ t("SÉCURITÉ du code CLUB : pas de clé secrète, de métadonnées utilisateur,
 t("SÉPARATION : le profil CLUB n'expose aucun champ d'identité privée ; le mode réel n'utilise pas l'état de démonstration (state.me, members)", () => {
   const d = read("src/domain/club.ts"); assert.doesNotMatch(strip(d), /firstName|lastName|email|displayName|reservation/i);
   for (const f of ["src/components/participant/ClubSpaceReal.tsx", "src/components/participant/ClubDirectoryReal.tsx"]) { const s = strip(read(f)); assert.doesNotMatch(s, /state\.me\b|\bmembers\b.*from "@\/data\/v3"|c\.member\(/, f); assert.doesNotMatch(s, /Alex|GRAW|GRAWZ/, f); }
-  assert.match(read("src/components/v3/V3Space.tsx"), /authActive\(identity\) \? <ClubSpaceReal/); assert.match(read("src/components/v3/V3Members.tsx"), /authActive\(identity\) \? <ClubDirectoryReal/); assert.match(read("src/components/v3/V3Member.tsx"), /authActive\(identity\) \? <ClubMemberReal/);
-  for (const f of ["V3Messages", "V3Chat", "V3Community"]) assert.match(read(`src/components/v3/${f}.tsx`), /authActive\(identity\) \? <ClubSoon/);
+  assert.match(read("src/components/v3/V3Space.tsx"), /x\.surface === "account"\) return <ClubSpaceReal/); assert.match(read("src/components/v3/V3Members.tsx"), /x\.surface === "account"\) return <ClubDirectoryReal/); assert.match(read("src/components/v3/V3Member.tsx"), /x\.surface === "account"\) return <ClubMemberReal/);
+  for (const f of ["V3Messages", "V3Chat", "V3Community"]) assert.match(read(`src/components/v3/${f}.tsx`), /x\.surface === "account"\) return <ClubSoon/);
   assert.doesNotMatch(read("src/components/participant/ClubSpaceReal.tsx"), /useCommunity/);
 });
 t("PASS : aucun QR code n'est généré (ni bibliothèque, ni image) sans réservation vérifiée", () => {
