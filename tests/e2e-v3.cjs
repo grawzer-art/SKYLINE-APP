@@ -179,11 +179,11 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
     await ctx.close();
   }
 
-  /* 8. Production intacte */
+  /* 8. Anciennes routes → V3 ; SIGNAL conservé */
   {
     const { ctx, p } = await mk(); await p.goto(B + "/"); await p.waitForTimeout(1200);
-    ok("PRODUCTION : navigation d'origine, sans bandeau prototype", (await p.locator("nav[aria-label='Navigation principale']").count()) === 1 && (await p.getByText(/Prototype V3/).count()) === 0);
-    await p.goto(B + "/explore"); await p.waitForTimeout(800); ok("PRODUCTION : EXPLORE d'origine", (await p.getByText("Révélations").locator("visible=true").count()) >= 1);
+    ok("ANCIENNE ROUTE « / » : ouvre l'accueil V3 (/v3), une seule barre de navigation, sans libellé « Prototype V3 »", new URL(p.url()).pathname === "/v3" && (await p.locator("nav[aria-label='Navigation principale']").count()) === 1 && (await p.getByText(/Prototype V3/).count()) === 0);
+    await p.goto(B + "/explore"); await p.waitForTimeout(800); ok("ANCIENNE ROUTE /explore : ouvre EXPLORE V3 (/v3/explore)", new URL(p.url()).pathname === "/v3/explore" && (await p.getByRole("link", { name: /Skyline Sound/ }).count()) >= 1);
     const r = await p.goto(B + "/signal/un-lieu-a-ibiza-se-devoile"); ok("PRODUCTION : SKYLINE SIGNAL intact", r.status() === 200);
     await ctx.close();
   }
@@ -196,8 +196,8 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
     ok("APPLICATION : l'onglet Club mène au nouveau Club", (await p.getByRole("link", { name: /Rejoindre la communauté/ }).count()) === 1);
     await p.getByRole("link", { name: /Rejoindre la communauté/ }).click(); await p.waitForURL("**/v3/club/community"); await p.waitForTimeout(700);
     ok("APPLICATION : Club → Rejoindre la communauté", (await vis("Rejoindre la communauté").count()) >= 1);
-    await p.locator("nav[aria-label='Navigation du prototype']").getByRole("link", { name: "Home" }).click(); await p.waitForURL(B + "/"); await p.waitForTimeout(800);
-    ok("APPLICATION : l'onglet Home ramène à l'accueil", (await p.locator("nav[aria-label='Navigation principale']").count()) === 1);
+    await p.locator("nav[aria-label='Navigation principale']").getByRole("link", { name: "Home" }).click(); await p.waitForURL(B + "/v3"); await p.waitForTimeout(800);
+    ok("APPLICATION : l'onglet Home ouvre le véritable accueil V3 (/v3) et il est ACTIF", new URL(p.url()).pathname === "/v3" && (await p.locator("nav[aria-label='Navigation principale'] a[aria-current='page']").innerText()).trim().toLowerCase() === "home");
     await p.locator("nav[aria-label='Navigation principale']").getByRole("link", { name: "My Flight" }).click(); await p.waitForURL("**/v3/flight"); await p.waitForTimeout(700);
     ok("APPLICATION : l'onglet My Flight mène au nouveau My Flight", (await vis(/pas un titre de transport/i).count()) === 1);
     await p.goto(B + "/explore"); await p.waitForTimeout(900);

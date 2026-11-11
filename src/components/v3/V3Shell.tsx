@@ -47,7 +47,7 @@ export function V3Shell({ children }: { children: React.ReactNode }) {
 
       <div className="min-h-dvh pb-[calc(var(--nav-h)+var(--safe-bottom)+2.5rem)]">{children}</div>
 
-      <nav aria-label="Navigation du prototype" className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[480px] border-t border-cloud/10 bg-jet/85 pb-[var(--safe-bottom)] backdrop-blur-2xl">
+      <nav aria-label="Navigation principale" className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-[480px] border-t border-cloud/10 bg-jet/85 pb-[var(--safe-bottom)] backdrop-blur-2xl">
         <ul className="grid h-[var(--nav-h)] grid-cols-4">
           {navItems.map((t) => (
             <li key={t.href} className="relative">

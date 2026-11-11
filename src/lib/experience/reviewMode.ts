@@ -3,7 +3,8 @@
  * Il n'existe PAS en prévisualisation ni en production : une variable d'environnement seule ne suffit jamais. Conditions cumulatives, toutes vérifiées CÔTÉ SERVEUR :
  *  1. SKYLINE_REVIEW_MODE=on (action explicite) ;
  *  2. aucune plateforme d'hébergement : ni VERCEL ni VERCEL_ENV (donc jamais sur un déploiement Vercel, Preview comme Production) ;
- *  3. la requête vise une adresse de boucle locale (localhost, 127.0.0.1, [::1]) et ne traverse aucun relais (pas d'en-tête x-forwarded-host).
+ *  3. la requête vise une adresse de boucle locale (localhost, 127.0.0.1, [::1]) ; si un en-tête x-forwarded-host est présent (Next.js l'ajoute lui-même), il doit LUI AUSSI être une adresse
+ *     de boucle locale : un relais public (domaine, adresse réseau) est refusé.
  * Fonction pure (testée) : l'hôte et les en-têtes sont fournis par l'appelant.
  */
 export type ReviewEnv = { SKYLINE_REVIEW_MODE?: string; VERCEL?: string; VERCEL_ENV?: string };
@@ -13,7 +14,7 @@ export const isLoopbackHost = (h: string | null | undefined): boolean => LOOPBAC
 export function reviewModeAllowed(env: ReviewEnv, req: ReviewRequest): boolean {
   if (env.SKYLINE_REVIEW_MODE !== "on") return false;
   if ((env.VERCEL ?? "") !== "" || (env.VERCEL_ENV ?? "") !== "") return false;
-  if ((req.forwardedHost ?? "").trim() !== "") return false;
+  if ((req.forwardedHost ?? "").trim() !== "" && !isLoopbackHost(req.forwardedHost)) return false;
   return isLoopbackHost(req.host);
 }
 export const reviewModeFromProcess = (req: ReviewRequest): boolean =>

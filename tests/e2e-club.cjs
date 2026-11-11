@@ -17,7 +17,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
 
   /* ===== 0. Authentification désactivée : prototype de démonstration inchangé ===== */
   { const { ctx, p } = await mk(OFF); await p.goto(OFF + "/v3/club/space", { waitUntil: "domcontentloaded" });
-    ok("DÉSACTIVÉ : My Space = prototype de démonstration (formulaire local), aucun appel au profil réel", (await vis(p.getByRole("heading", { level: 1 }))) && (await p.getByTestId("club-empty").count()) === 0 && (await p.getByRole("button", { name: /modifier|edit/i }).count()) > 0);
+    ok("DÉSACTIVÉ (hors revue) : My Space = « Bientôt disponible » (application sans comptes), aucun formulaire local, aucun appel au profil réel", (await vis(p.getByTestId("club-unavailable"))) && (await p.getByTestId("club-empty").count()) === 0 && (await p.getByRole("button", { name: /modifier|edit/i }).count()) === 0);
     await ctx.close(); }
 
   /* ===== 1. Participant 1 : compte sans profil CLUB ===== */
@@ -87,7 +87,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   /* ===== 7. Identité privée vs CLUB : écrans ===== */
   await go(p1, "/v3/profile", p1.getByTestId("profile-name").filter({ hasText: /\S/ })); ok("PROFIL : le nom affiché vient du COMPTE (jamais de pseudo de démonstration) ; pas de bloc de simulation", !FICTIVE.test(await p1.locator("body").innerText()) && (await p1.getByText("Communauté", { exact: true }).count()) === 0);
   await go(p1, "/v3/club", p1.getByRole("heading", { level: 1 })); ok("CLUB : tuiles réelles (My Space, Members) accessibles ; Messages « Bientôt » ; pas d'invitation simulée", (await vis(p1.getByText("Bientôt").first())) && (await p1.getByText(/Rejoindre|Join/i).count()) === 0);
-  await go(p1, "/v3/flight", p1.getByRole("heading", { level: 1 })); ok("PASS : aucun QR code valide sans réservation vérifiée (emplacement « à la confirmation »)", (await p1.locator("svg[aria-label*=QR], canvas, img[alt*=QR]").count()) === 0 && (await vis(p1.getByText(/à la confirmation/))) && (await vis(p1.getByText(/Réservation à confirmer/))));
+  await go(p1, "/v3/flight", p1.getByRole("heading", { level: 1 })); ok("PASS : aucun QR code, même pour une réservation vérifiée côté serveur (QR « remis par l'équipe »)", (await p1.locator("svg[aria-label*=QR], canvas, img[alt*=QR]").count()) === 0 && (await vis(p1.getByText(/remis par l'équipe/))) && (await vis(p1.getByText(/Réservation vérifiée/))));
 
   /* ===== 8. Indisponible (migration non appliquée) ===== */
   await ctl({ clubTable: "missing" }); await go(p1, "/v3/club/space", p1.getByRole("alert")); ok("MIGRATION NON APPLIQUÉE : message clair « pas encore disponible », aucune erreur brute", (await vis(p1.getByText(/pas encore disponible/))) && !/PGRST|schema cache/.test(await p1.locator("body").innerText())); await ctl({ clubTable: "ok" });

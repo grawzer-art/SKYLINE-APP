@@ -70,7 +70,7 @@ F.Events={READY:'ready',PLAY:'play',PAUSE:'pause',FINISH:'finish',ERROR:'error'}
     const one = async () => (await p.locator("iframe").count()) === 1 && (await p.evaluate(() => window.__made)) === 1;
     ok("CONTINUITÉ : sur SOUND, pas de mini-lecteur (le lecteur est visible)", (await mini(p).count()) === 0);
 
-    await nav(p, "Home").click(); await p.waitForURL(B + "/"); await p.waitForTimeout(500);
+    await nav(p, "Home").click(); await p.waitForURL(B + "/v3"); await p.waitForTimeout(500);
     ok("HOME (/) : mini-lecteur affiché, lecture en cours, même iframe, un seul widget", (await mini(p).count()) === 1 && (await mini(p).getByRole("button", { name: "Pause" }).count()) === 1 && await same() && await one());
     ok("HOME : aucun rechargement (pas de load, un seul play)", !(await calls(p)).some((c) => c.startsWith("load:")) && (await calls(p)).filter((c) => c === "play").length === 1);
     ok("HOME : titre courant affiché + mention SoundCloud", (await mini(p).getByText("Titre 1").count()) === 1 && (await mini(p).getByText(/SoundCloud/).count()) === 1);
@@ -81,7 +81,7 @@ F.Events={READY:'ready',PLAY:'play',PAUSE:'pause',FINISH:'finish',ERROR:'error'}
     ok("CLUB : lecture continue, même iframe", (await mini(p).getByRole("button", { name: "Pause" }).count()) === 1 && await same());
     await nav(p, "Explore").click(); await p.waitForURL("**/v3/explore"); await p.waitForTimeout(500);
     ok("EXPLORE (V3) : lecture continue, même iframe", (await mini(p).getByRole("button", { name: "Pause" }).count()) === 1 && await same());
-    await nav(p, "Home").click(); await p.waitForURL(B + "/"); await p.waitForTimeout(400);
+    await nav(p, "Home").click(); await p.waitForURL(B + "/v3"); await p.waitForTimeout(400);
     await p.locator("nav[aria-label='Navigation principale']").getByRole("link", { name: "Explore" }).click(); await p.waitForURL("**/explore"); await p.waitForTimeout(500);
     ok("EXPLORE (production /explore) : lecture continue, même iframe", (await mini(p).getByRole("button", { name: "Pause" }).count()) === 1 && await same() && await one());
 
@@ -89,7 +89,7 @@ F.Events={READY:'ready',PLAY:'play',PAUSE:'pause',FINISH:'finish',ERROR:'error'}
     const { ctx: c2, p: q, errs: e2 } = await mk({}, true); await q.goto(B + "/v3/explore/sound"); await q.waitForTimeout(800);
     await q.getByRole("button", { name: /Sunset Club/ }).click(); await q.waitForTimeout(900); await q.getByRole("button", { name: "Lecture" }).click(); await q.waitForTimeout(300);
     await q.evaluate(() => { window.__ifr = document.querySelector("iframe"); });
-    await nav(q, "Home").click(); await q.waitForURL(B + "/"); await q.waitForTimeout(500);
+    await nav(q, "Home").click(); await q.waitForURL(B + "/v3"); await q.waitForTimeout(500);
     const m = mini(q);
     await m.getByRole("button", { name: "Pause" }).click(); await q.waitForTimeout(200);
     ok("MINI-LECTEUR : pause → pause() officiel, bouton « Lecture »", (await calls(q)).includes("pause") && (await m.getByRole("button", { name: "Lecture" }).count()) === 1);
@@ -132,7 +132,7 @@ F.Events={READY:'ready',PLAY:'play',PAUSE:'pause',FINISH:'finish',ERROR:'error'}
   {
     const { ctx, p } = await mk({}, true); await p.goto(B + "/v3/explore/sound"); await p.waitForTimeout(800);
     await p.getByRole("button", { name: /Sunset Club/ }).click(); await p.waitForTimeout(900); await p.getByRole("button", { name: "Lecture" }).click(); await p.waitForTimeout(300);
-    await nav(p, "Home").click(); await p.waitForURL(B + "/"); await p.waitForTimeout(500);
+    await nav(p, "Home").click(); await p.waitForURL(B + "/v3"); await p.waitForTimeout(500);
     await mini(p).getByRole("button", { name: "Fermer le mini-lecteur" }).click(); await p.waitForTimeout(300);
     ok("MINI-LECTEUR : fermer met en pause et masque la barre", (await calls(p)).includes("pause") && (await mini(p).count()) === 0);
     await ctx.close();
@@ -143,7 +143,7 @@ F.Events={READY:'ready',PLAY:'play',PAUSE:'pause',FINISH:'finish',ERROR:'error'}
     const { ctx, p } = await mk({ viewport: { width: w, height: 812 } }, true); await p.goto(B + "/v3/explore/sound"); await p.waitForTimeout(800);
     await p.getByRole("button", { name: /Sunset Club/ }).click(); await p.waitForTimeout(900); await p.getByRole("button", { name: "Lecture" }).click(); await p.waitForTimeout(300);
     ok(`MOBILE ${w} px : aucun défilement horizontal sur SOUND (widget hors écran inclus)`, (await p.evaluate(() => document.documentElement.scrollWidth - innerWidth)) <= 0);
-    await nav(p, "Home").click(); await p.waitForURL(B + "/"); await p.waitForTimeout(500);
+    await nav(p, "Home").click(); await p.waitForURL(B + "/v3"); await p.waitForTimeout(500);
     ok(`MOBILE ${w} px : mini-lecteur sans débordement, cibles ≥ 44 px`, (await p.evaluate(() => document.documentElement.scrollWidth - innerWidth)) <= 0 && await p.evaluate(() => [...document.querySelectorAll("[aria-label='Mini-lecteur SKYLINE SOUND'] button, [aria-label='Mini-lecteur SKYLINE SOUND'] a")].every((e) => { const r = e.getBoundingClientRect(); return r.height >= 43 && r.width >= 43; })));
     await ctx.close();
   }

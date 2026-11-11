@@ -10,13 +10,15 @@ const walk = (d: string): string[] => readdirSync(d).flatMap((f) => { const p = 
 const NOT_CONFIRMED = { dates: false, schedule: false, seats: false, tickets: false };
 const base = (o: Partial<ExperienceInput> & { identity: IdentityView }): ExperienceInput => ({ review: false, proto: { phase: "during", sim: { reservation: "confirmed", tone: true, trip: true } }, confirmation: NOT_CONFIRMED, datePhase: "during", ...o });
 
-t("MODE REVUE : local uniquement — variable explicite + aucune plateforme + boucle locale + aucun relais ; jamais Vercel (Preview ni Production)", () => {
+t("MODE REVUE : local uniquement — variable explicite + aucune plateforme + boucle locale (relais public refusé) ; jamais Vercel (Preview ni Production)", () => {
   const on = { SKYLINE_REVIEW_MODE: "on" }; const local = { host: "localhost:3100" };
   assert.equal(reviewModeAllowed(on, local), true); assert.equal(reviewModeAllowed(on, { host: "127.0.0.1:3000" }), true); assert.equal(reviewModeAllowed(on, { host: "[::1]:3000" }), true);
   for (const v of [undefined, "", "off", "ON", "true", "1", " on"]) assert.equal(reviewModeAllowed({ SKYLINE_REVIEW_MODE: v }, local), false, String(v));
   for (const e of [{ VERCEL: "1" }, { VERCEL_ENV: "production" }, { VERCEL_ENV: "preview" }, { VERCEL_ENV: "development" }, { VERCEL: "1", VERCEL_ENV: "preview" }]) assert.equal(reviewModeAllowed({ ...on, ...e }, local), false, JSON.stringify(e));
   for (const h of ["skyline-app.vercel.app", "example.com", "localhost.evil.com", "evil.com#localhost", "192.168.1.5:3000", "0.0.0.0:3000", "", null, undefined, "localhost:abc"]) assert.equal(reviewModeAllowed(on, { host: h }), false, String(h));
-  assert.equal(reviewModeAllowed(on, { host: "localhost:3000", forwardedHost: "skyline-app.vercel.app" }), false);       // derrière un relais : jamais
+  assert.equal(reviewModeAllowed(on, { host: "localhost:3000", forwardedHost: "skyline-app.vercel.app" }), false);       // relais public : jamais
+  assert.equal(reviewModeAllowed(on, { host: "localhost:3000", forwardedHost: "10.0.0.5:3000" }), false);
+  assert.equal(reviewModeAllowed(on, { host: "localhost:3000", forwardedHost: "localhost:3000" }), true);                  // en-tête ajouté par Next.js lui-même
   assert.equal(isLoopbackHost("LOCALHOST:3100"), true); assert.equal(isLoopbackHost("localhost@evil.com"), false);
 });
 t("SURFACES : chargement → rien de simulé ; revue ; compte ; sans comptes", () => {
