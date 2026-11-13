@@ -12,6 +12,8 @@ export function SignalList({ items }: { items: Signal[] }) {
   return (
     <section aria-labelledby="signal-title" className="px-5 pt-10">
       <h2 id="signal-title" className="font-display text-[1.4rem]">Révélations</h2>
+      {items.length === 0 && <p role="status" className="mt-4 border-l border-sky pl-4 text-[1rem] font-light leading-snug text-cloud/85">Les premières révélations seront dévoilées ici, en avant-première pour les membres.</p>}
+      {items.length > 0 &&
       <ul className="mt-4 divide-y divide-line border-y border-line">
         {items.map((s) => {
           const fresh = !isSeen(s.id);
@@ -31,7 +33,7 @@ export function SignalList({ items }: { items: Signal[] }) {
             </li>
           );
         })}
-      </ul>
+      </ul>}
     </section>
   );
 }

@@ -10,6 +10,7 @@
  */
 import { images } from "@/data/demo";
 import type { Signal } from "@/data/signal-types";
+import { demoContentFromProcess } from "@/lib/experience/demoContent";
 
 
 const signals: Signal[] = [
@@ -63,7 +64,9 @@ const signals: Signal[] = [
 
 /** Révélations publiées, de la plus récente à la plus ancienne. */
 export function getPublishedSignals(): Signal[] {
-  return signals.filter((s) => s.status === "published").sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
+  // Les Signaux `demo: true` ne sont servis qu'en revue locale (voir demoContent.ts) : jamais sur Preview ni en production.
+  const demoOk = demoContentFromProcess();
+  return signals.filter((s) => s.status === "published" && (demoOk || !s.demo)).sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
 }
 /** La révélation prioritaire de HOME : la plus récente publiée. */
 export const getFeaturedSignal = (): Signal | undefined => getPublishedSignals()[0];

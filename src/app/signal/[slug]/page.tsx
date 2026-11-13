@@ -5,7 +5,10 @@ import { getPublishedSignals, getSignalBySlug } from "@/data/signals";
 
 /** Seuls les Signaux publiés sont générés ; un brouillon ou un slug inconnu renvoie une 404. */
 export function generateStaticParams() {
-  return getPublishedSignals().map((s) => ({ slug: s.slug }));
+  // Cache Components exige au moins un résultat. Sans Signal publié (cas normal tant qu'aucun contenu officiel n'existe), on génère un paramètre
+  // réservé qui ne correspond à aucun Signal : la page répond 404 comme pour n'importe quel slug inconnu.
+  const slugs = getPublishedSignals().map((s) => ({ slug: s.slug }));
+  return slugs.length > 0 ? slugs : [{ slug: "aucun-signal-publie" }];
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

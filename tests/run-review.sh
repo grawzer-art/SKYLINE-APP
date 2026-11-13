@@ -3,7 +3,8 @@
 # Le mode revue n'existe qu'ici : hors Vercel, adresse localhost, sans relais. Il est impossible en prévisualisation / production (voir src/lib/experience/reviewMode.ts).
 set -uo pipefail
 unset NEXT_DIST_DIR STAFF_AUTH_MODE STAFF_DATA_SOURCE NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY PARTICIPANT_AUTH PARTICIPANT_SIGNUP VERCEL VERCEL_ENV
-rm -rf .next && npx next build >/tmp/build-review.log 2>&1 || { tail -20 /tmp/build-review.log; exit 1; }
+# Les contenus de démonstration (Signaux fictifs, outils SOUND) sont décidés AU BUILD (pages prérendues) : la construction de revue doit porter SKYLINE_REVIEW_MODE=on.
+rm -rf .next && SKYLINE_REVIEW_MODE=on npx next build >/tmp/build-review.log 2>&1 || { tail -20 /tmp/build-review.log; exit 1; }
 for i in 1 2 3; do fuser -k 3100/tcp >/dev/null 2>&1 || true; sleep 1; done
 (SKYLINE_REVIEW_MODE=on nohup npx next start -p 3100 >/tmp/next-review.log 2>&1 &)
 until curl -s -o /dev/null localhost:3100/api/review-mode; do sleep 1; done; code=0

@@ -31,7 +31,23 @@ const FORGED = { phase: "during", locale: "fr", sim: { reservation: "confirmed",
       r = await get(ctx, OFF + src); const l = loc(r); const next = await get(ctx, OFF + l.split("?")[0]);
       ok(`REDIRECTION ${src} → ${dst} : une seule étape, cible servie (aucune chaîne ni boucle)`, [307, 308].includes(r.status()) && l === dst && next.status() === 200, `${r.status()} ${l} puis ${next.status()}`);
     }
-    ok("PAS de redirection sur /v3, /v3/flight, /v3/explore, /v3/club, /start, /signal/…", (await Promise.all(["/v3", "/v3/flight", "/v3/explore", "/v3/club", "/start", "/signal/un-lieu-a-ibiza-se-devoile"].map((x) => get(ctx, OFF + x)))).every((x) => x.status() === 200));
+    ok("PAS de redirection sur /v3, /v3/flight, /v3/explore, /v3/club, /start", (await Promise.all(["/v3", "/v3/flight", "/v3/explore", "/v3/club", "/start"].map((x) => get(ctx, OFF + x)))).every((x) => x.status() === 200));
+    /* LOT 1 — contenus de démonstration MASQUÉS PAR DÉFAUT (construction sans SKYLINE_REVIEW_MODE), même si le mode revue est demandé à l'exécution, y compris sur Preview/Production simulées. */
+    for (const [label, base] of [["défaut", OFF], ["revue demandée à l'exécution seulement", REV], ["revue + VERCEL_ENV=preview", PREV], ["revue + VERCEL_ENV=production", PROD]]) {
+      const slug = await get(ctx, base + "/signal/un-lieu-a-ibiza-se-devoile"); const ex = await get(ctx, base + "/v3/explore"); const snd = await get(ctx, base + "/v3/explore/sound"); const home = await get(ctx, base + "/v3");
+      const bodies = (await ex.text()) + (await snd.text()) + (await home.text());
+      ok(`LOT 1 [${label}] : signal fictif introuvable (404), aucun texte de démonstration, aucune playlist tierce, aucun outil de test dans le HTML servi`, slug.status() === 404 && !/Un lieu à Ibiza se dévoile|Un premier nom rejoint|Un mix à écouter|Ici s.afficherait|andres-jaramillo|Tester une URL SoundCloud|\[Attribué\]/.test(bodies), `${slug.status()}`);
+    }
+    {
+      const q = await browser.newContext(); const pg = await q.newPage();
+      await pg.goto(OFF + "/v3/explore"); await pg.waitForTimeout(1200);
+      ok("LOT 1 : EXPLORE sans signal publié → section « Révélations » conservée avec un état vide sobre, sans date ni badge", (await pg.getByRole("heading", { name: "Révélations" }).count()) === 1 && (await pg.getByText(/premières révélations seront dévoilées/).count()) === 1 && (await pg.getByText(/NEW|New/).count()) === 0);
+      await pg.goto(OFF + "/v3/explore/sound"); await pg.waitForTimeout(1200);
+      ok("LOT 1 : SOUND sans lien autorisé → quatre collections « Bientôt », aucun outil de test ni mention « Prototype »", (await pg.getByText("Bientôt").count()) === 4 && (await pg.getByText(/Tester une URL|Prototype|URL de test/).count()) === 0 && (await pg.locator("iframe").count()) === 0);
+      await pg.goto(OFF + "/v3"); await pg.waitForTimeout(1200);
+      ok("LOT 1 : HOME sans signal → aucune carte de révélation", (await pg.getByText(/Location Reveal|Artist Reveal|Nouvelle révélation/i).count()) === 0);
+      await q.close();
+    }
     await ctx.close(); }
   { const { ctx } = await mk(A);
     const r = await get(ctx, A + "/v3/login?next=%2Fv3%2Fflight"); ok("AUTHENTIFICATION : /v3/login?next=… servie sans redirection (paramètre intact)", r.status() === 200);
@@ -59,7 +75,7 @@ const FORGED = { phase: "during", locale: "fr", sim: { reservation: "confirmed",
     ok("SANS COMPTES : aucune identité de démonstration (Alex Martin), aucune commande de simulation, aucun bandeau « prototype »", !/Alex|Martin|Prototype|Revue interne|données fictives/i.test(t) && !SIM_UI.test(t) && (await p.locator("header button").count()) === 0);
     ok("SANS COMPTES : aucun texte de remplacement entre crochets", !/\[[^\]\n]{3,60}\]/i.test(t), (t.match(/\[[^\]\n]{3,60}\]/) || [""])[0]);
     ok("SANS COMPTES : bandeau sobre « Programme à confirmer »", /Programme à confirmer/i.test(t));
-    ok("SANS COMPTES : SIGNAL publié conservé avec son étiquette actuelle", (await p.getByRole("link", { name: /Un lieu à Ibiza/ }).count()) >= 1);
+    ok("SANS COMPTES : aucun signal fictif sur HOME (Lot 1) ; la section reste cohérente", (await p.getByRole("link", { name: /Un lieu à Ibiza/ }).count()) === 0);
     await p.goto(OFF + "/v3/flight", { waitUntil: "domcontentloaded" }); await vis(p.getByRole("group", { name: /Pass SKYLINE/ })); t = await body(p);
     ok("SANS COMPTES : pass « Réservation à confirmer », origine « À confirmer » (pas de « France »), aucun voyage fictif, aucune étiquette Démo", /Réservation à confirmer/i.test(t) && !/Réservation (confirmée|vérifiée)/i.test(t) && !/France/i.test(t) && !/Aéroport de démonstration|Démo|fictif/i.test(t) && (await vis(p.getByText(/apparaîtront ici dès leur confirmation/))));
     ok("SANS COMPTES : aucun QR code (aucun canvas, image ni SVG de QR)", await noQr(p));

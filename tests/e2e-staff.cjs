@@ -105,10 +105,9 @@ const b64u = (s) => Buffer.from(s).toString("base64url");
   {
     const { ctx, p } = await mk(); await login(ctx, "graw");
     await p.goto(B + "/v3/profile"); await p.waitForTimeout(1000);
-    const sw = p.getByRole("group", { name: "Espace" });
-    ok("SÉLECTEUR : compte staff+participant le voit dans le profil MEMBERS", (await sw.count()) === 1);
-    await sw.getByRole("link", { name: "Staff HQ" }).click(); await p.waitForURL("**/staff"); await p.waitForTimeout(800);
-    ok("SÉLECTEUR : passage à STAFF HQ sans nouvelle connexion", (await p.getByRole("heading", { level: 1, name: "HQ" }).count()) === 1);
+    ok("LOT 1 : le profil MEMBERS n'expose AUCUN sélecteur d'espace, même à un compte staff+participant", (await p.getByRole("group", { name: "Espace" }).count()) === 0 && (await p.getByRole("link", { name: /Changer d'espace|Staff HQ/ }).count()) === 0);
+    await p.goto(B + "/staff"); await p.waitForURL("**/staff"); await p.waitForTimeout(800);   // l'accès STAFF reste possible par l'URL (autorisation serveur inchangée)
+    ok("STAFF : accès direct à STAFF HQ sans nouvelle connexion (compte autorisé)", (await p.getByRole("heading", { level: 1, name: "HQ" }).count()) === 1);
     await p.getByRole("link", { name: "Profil et espaces" }).click(); await p.waitForURL("**/staff/profile"); await p.waitForTimeout(900);
     await p.getByRole("group", { name: "Espace" }).getByRole("link", { name: "Members" }).click(); await p.waitForURL(B + "/v3"); await p.waitForTimeout(1500);
     ok("SÉLECTEUR : retour à MEMBERS, session conservée", (await p.getByRole("heading", { level: 1 }).first().innerText()).toLowerCase().includes("la fête"));
@@ -118,8 +117,8 @@ const b64u = (s) => Buffer.from(s).toString("base64url");
     await c2.p.goto(B + "/staff"); await c2.p.waitForTimeout(700);
     ok("PARTICIPANT : /staff affiche le refus explicite", new URL(c2.p.url()).search.includes("denied=1") && (await c2.p.getByRole("alert").filter({ hasText: /n.a pas accès/ }).count()) === 1);
     await c2.ctx.close();
-    const c3 = await mk(); await login(c3.ctx, "qafard"); await c3.p.goto(B + "/v3/profile"); await c3.p.waitForTimeout(1200);   // le profil de l'application participants (V3) porte le sélecteur d'espace
-    ok("SÉLECTEUR : disponible aussi dans le profil de l'application participant (V3)", (await c3.p.getByRole("group", { name: "Espace" }).count()) === 1);
+    const c3 = await mk(); await login(c3.ctx, "qafard"); await c3.p.goto(B + "/v3/profile"); await c3.p.waitForTimeout(1200);
+    ok("LOT 1 : aucun sélecteur d'espace dans le profil participant V3 (autre compte staff)", (await c3.p.getByRole("group", { name: "Espace" }).count()) === 0);
     await c3.ctx.close();
   }
   /* 6. Mobiles, texte, tactile */

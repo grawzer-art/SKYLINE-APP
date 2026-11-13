@@ -5,11 +5,12 @@ import { motion, useReducedMotion } from "motion/react";
 import { ArrowLeft } from "lucide-react";
 import { Backdrop } from "./visual";
 import { DemoTag } from "./ui";
+import type { SoundCollection } from "@/data/sound";
+import { useExperience } from "@/lib/experience/useExperience";
 import { SoundPlayerCard } from "@/components/sound/SoundPlayerCard";
 import { useSound } from "@/components/sound/SoundProvider";
 import { Photo } from "@/components/ui/Photo";
 import { images } from "@/data/demo";
-import { soundCollections } from "@/data/sound";
 import { visuals } from "@/data/visuals";
 import { parseSoundCloudUrl } from "@/domain/sound";
 import { ease } from "@/design/motion";
@@ -18,7 +19,9 @@ import { cn } from "@/lib/cn";
 const TEST = "test";
 
 /** SKYLINE SOUND : quatre collections, un lecteur SoundCloud officiel affiché dans l'app à la sélection. */
-export function V3Sound() {
+export function V3Sound({ collections: soundCollections, testTools = false }: { collections: SoundCollection[]; testTools?: boolean }) {
+  // Outil de test : build de revue locale (testTools) ET mode revue confirmé côté serveur à l'exécution (x.demoContent). Jamais pour un participant.
+  const x = useExperience(); const showTest = testTools && x.demoContent;
   const reduce = useReducedMotion();
   const snd = useSound();
   // Au retour sur la page, on retrouve la collection en cours : le widget n'a jamais été recréé.
@@ -85,7 +88,7 @@ export function V3Sound() {
         )}
         {picked && (
           <div>
-            <p className="font-mono text-[0.75rem] uppercase tracking-[0.2em] text-sky">{col?.genre ?? "Prototype"}</p>
+            <p className="font-mono text-[0.75rem] uppercase tracking-[0.2em] text-sky">{col?.genre ?? (picked === TEST ? "Test interne" : "")}</p>
             <h2 className="font-display mt-1.5 text-[1.5rem] leading-none">{title}</h2>
             {col && <p className="mt-2 text-[0.95rem] text-cloud/80">{col.tagline}</p>}
             {!parsed.ok && (
@@ -104,7 +107,7 @@ export function V3Sound() {
         )}
       </section>
 
-      <section className="px-5 pt-9" aria-labelledby="test-title">
+      {showTest && <section className="px-5 pt-9" aria-labelledby="test-title">
         <details className="rounded-[10px] border border-line bg-surface-1 px-4" open={!!testErr}>
           <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 text-[0.95rem]"><span id="test-title">Tester une URL SoundCloud</span><DemoTag>Prototype</DemoTag></summary>
           <form onSubmit={loadTest} className="pb-4">
@@ -115,7 +118,7 @@ export function V3Sound() {
             <button type="submit" className="mt-3 inline-flex min-h-12 items-center rounded-full bg-cloud px-6 font-mono text-[0.75rem] uppercase tracking-[0.14em] text-jet">Charger le lecteur</button>
           </form>
         </details>
-      </section>
+      </section>}
 
       <p className="px-5 pb-6 pt-6 text-[0.8rem] leading-relaxed text-dim">Lecteur officiel SoundCloud, lecture sur demande uniquement. La lecture en arrière-plan dépend de votre appareil et n&apos;est pas garantie.</p>
       <p className="font-tagline pb-2 text-center text-[0.7rem] text-silver/70">The journey never ends.</p>
