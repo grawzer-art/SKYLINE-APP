@@ -7,7 +7,8 @@ import { Backdrop } from "./visual";
 import { DemoTag } from "./ui";
 import { FlightPass, type PassStatus } from "./FlightPass";
 import { identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
-import { TiltToggle, useMetal } from "./metal";
+import { useMetal } from "./metal";
+import { useCompactHeader } from "./useHeaderMode";
 import { Sheet } from "@/components/ui/Sheet";
 import { images } from "@/data/demo";
 import { demoTrip, noTrip, type Trip } from "@/data/v3";
@@ -83,7 +84,7 @@ export function V3Flight() {
   const reduce = useReducedMotion();
   const metal = useMetal(1.7);
   // Vérité résolue : la phase et la réservation viennent du serveur (ou de la revue locale étiquetée). Un état local simulé n'est JAMAIS une réservation.
-  const x = useExperience(); const identity = useParticipantIdentity(); const phase = x.phase;
+  const x = useExperience(); const identity = useParticipantIdentity(); const phase = x.phase; const compact = useCompactHeader();
   const passName = x.surface === "account" ? identityName(identity) ?? "Participant" : x.surface === "review" ? state.me.pseudo : "Participant";
   const demo = x.demoTrip;
   const trip = demo ? demoTrip : noTrip;
@@ -93,14 +94,16 @@ export function V3Flight() {
   const [info, setInfo] = useState<null | "root" | (typeof docs)[number]>(null);
   const status: PassStatus = x.review ? (phase === "after" ? "ended" : x.reservation === "simulated_confirmed" ? "confirmed" : "pending") : x.reservation === "verified" ? "verified" : "to_confirm";
   const doc = info && info !== "root" ? info : null;
+  // Onglets sans contenu réel : ni départ, ni séjour, ni annonce. La revue locale garde ses trois onglets.
+  const allWaiting = !x.review && !trip.departure && !trip.stay && trip.updates.length === 0;
 
   return (
     <>
-      <section aria-labelledby="flight-title" className="relative isolate px-5 pt-[calc(var(--safe-top)+5.25rem)]">
+      <section aria-labelledby="flight-title" className={cn("relative isolate px-5", compact ? "pt-[calc(var(--safe-top)+44px+0.875rem)]" : "pt-[calc(var(--safe-top)+5.25rem)]")}>
         <Backdrop src={images.before} position="30% 62%" className="!bottom-auto !h-[21rem]" />
-        <h1 id="flight-title" className="font-display text-[clamp(1.9rem,9.5vw,2.6rem)] leading-[0.92]">My Flight</h1>
-        <div className="mt-5"><FlightPass name={passName} status={status} metal={metal} demo={x.demoContent} origin={x.demoContent ? "France" : "À confirmer"} /></div>
-        <TiltToggle metal={metal} label="Activer le reflet au mouvement" labelOn="Reflet au mouvement actif" />
+        {/* V3.2 : le nom de l'écran vit dans l'en-tête compact ; le <h1> reste pour les lecteurs d'écran. Le reflet est un petit contrôle intégré au pass. */}
+        <h1 id="flight-title" className={cn("font-display text-[clamp(1.9rem,9.5vw,2.6rem)] leading-[0.92]", compact && "sr-only")}>My Flight</h1>
+        <div className={compact ? "" : "mt-5"}><FlightPass name={passName} status={status} metal={metal} demo={x.demoContent} origin={x.demoContent ? "France" : "À confirmer"} /></div>
       </section>
 
       {phase === "after" ? (
@@ -113,6 +116,12 @@ export function V3Flight() {
             <Link href="/v3/club" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-silver/45 px-5 font-mono text-[0.72rem] uppercase tracking-[0.16em]">Mon Club</Link>
           </div>
           <div className="mt-6"><InfoRow onClick={() => setInfo("root")} /></div>
+        </section>
+      ) : allWaiting ? (
+        <section className="px-5 pt-6" aria-label="Informations du voyage">
+          {/* V3.2 : aucun onglet quand les trois n'affichent que le même état d'attente. Dès qu'une information réelle est publiée (vol, séjour, annonce), les onglets reviennent. */}
+          <p role="status" data-testid="trip-waiting" className="border-l border-sky pl-4 text-[0.92rem] leading-relaxed text-cloud/80">Les détails de votre voyage apparaîtront ici dès leur confirmation.</p>
+          <div className="mt-5"><InfoRow onClick={() => setInfo("root")} /></div>
         </section>
       ) : (
         <section className="px-5 pt-7" aria-label="Informations du voyage">

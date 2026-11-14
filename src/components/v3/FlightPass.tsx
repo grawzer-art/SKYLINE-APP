@@ -2,7 +2,7 @@
 import { Plane } from "lucide-react";
 import { Emblem } from "@/components/ui/Emblem";
 import { DemoTag } from "./ui";
-import { MetalSurface, type useMetal } from "./metal";
+import { MetalSurface, TiltButton, type useMetal } from "./metal";
 import { FitName } from "./FitName";
 import { cn } from "@/lib/cn";
 
@@ -45,7 +45,7 @@ export function FlightPass({ name, status, metal, demo, origin = "France" }: { n
         <div className="flex items-center justify-between gap-4 p-5 pt-6">
           <p className="flex min-w-0 items-center gap-2.5 font-mono text-[0.85rem] uppercase leading-snug tracking-[0.1em]"><span aria-hidden className={cn("size-2 shrink-0 rounded-full", status === "confirmed" || status === "verified" ? "bg-sky" : status === "ended" ? "bg-silver" : "bg-cloud/35")} />{statusText[status]}</p>
         </div>
-        <div className="flex items-center justify-between gap-3 border-t border-silver/10 px-5 py-3"><p className="font-mono text-[0.7rem] uppercase tracking-[0.18em] text-cloud/60">Pas un titre de transport</p>{demo && <DemoTag />}</div>
+        <div className="flex items-center justify-between gap-3 border-t border-silver/10 px-5 py-3"><p className="font-mono text-[0.7rem] uppercase tracking-[0.18em] text-cloud/60">Pas un titre de transport</p><span className="flex items-center gap-2">{demo && <DemoTag />}<TiltButton metal={metal} /></span></div>
       </div>
     </MetalSurface>
   );

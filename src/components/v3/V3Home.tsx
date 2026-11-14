@@ -8,6 +8,7 @@ import { SignalCard } from "@/components/signal/SignalCard";
 import { Photo } from "@/components/ui/Photo";
 import { useCountdown } from "@/lib/useCountdown";
 import { useExperience } from "@/lib/experience/useExperience";
+import { identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 import { DemoTag } from "./ui";
 import { cn } from "@/lib/cn";
 
@@ -80,36 +81,59 @@ function Memories() {
   );
 }
 
+/**
+ * Action contextuelle UNIQUE de HOME (V3.2) : seulement quand elle est utile à ce visiteur — se connecter, ou compléter son profil.
+ * Jamais de lien vers MY FLIGHT (c'est l'onglet voisin), jamais de bouton quand il n'y a rien à faire. Destinations existantes uniquement.
+ */
+function contextualCta(status: string, hasName: boolean): { label: string; href: string; testid: string } | null {
+  if (status === "anonymous") return { label: "Se connecter", href: "/v3/login?next=/v3/account", testid: "identity-anonymous" };
+  if (status === "ready" && !hasName) return { label: "Compléter mon profil", href: "/v3/account", testid: "identity-incomplete" };
+  return null;
+}
+
 export function V3Home({ signal }: { signal?: Signal }) {
   const x = useExperience(); const phase = x.phase;   // phase RÉSOLUE (jamais l'état local simulé hors revue)
+  const identity = useParticipantIdentity();
   const c = cfg[phase];
+  // Revue locale : ancien comportement (identité de démonstration en haut, lien My Flight). Live : photo plein écran + une seule action contextuelle.
+  const action = x.review ? { label: c.cta.label, href: c.cta.href, testid: "home-cta" } : contextualCta(identity.status, !!identityName(identity));
+  const below = x.review || (phase === "before" && !!signal) || phase === "after";   // des sections suivent le visuel
+  const full = !x.review && !below;   // photo plein écran, sans défilement, sous la barre du bas translucide
   return (
     <>
-      <section aria-labelledby="v3-home-title" className={cn("relative isolate flex flex-col justify-between overflow-hidden pb-5 pt-[calc(var(--safe-top)+5.25rem)]",
-        phase === "during" ? "min-h-[calc(100svh-var(--nav-h)-var(--safe-bottom)-17.5rem)]" : "min-h-[calc(100svh-var(--nav-h)-var(--safe-bottom)-15rem)]")}>
+      <section aria-labelledby="v3-home-title" className={cn("relative isolate flex flex-col overflow-hidden pt-[calc(var(--safe-top)+56px)]",
+        x.review ? "justify-between pb-5" : "justify-end",
+        x.review ? (phase === "during" ? "min-h-[calc(100svh-var(--nav-h)-var(--safe-bottom)-17.5rem)]" : "min-h-[calc(100svh-var(--nav-h)-var(--safe-bottom)-15rem)]")
+          : full ? "min-h-svh pb-[calc(var(--nav-h)+var(--safe-bottom)+1.25rem)]" : "min-h-[calc(100svh-var(--nav-h)-var(--safe-bottom)-15rem)] pb-5")}>
         <div className="absolute inset-0 -z-10">
           <Photo src={c.image} priority alt="" objectPosition={c.pos} />
-          <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-jet/70 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-jet/95 via-jet/45 via-55% to-transparent" />
+          <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-jet/80 via-jet/35 to-transparent" />
+          {/* Lisibilité : en plein écran la lueur du soleil passe derrière le texte ; le voile du bas est plus haut et plus dense (contrastes mesurés ≥ 4,5:1 pour les petits textes). */}
+          <div className={cn("absolute inset-x-0 bottom-0 bg-gradient-to-t to-transparent", x.review ? "h-[58%] from-jet/95 via-jet/45 via-55%" : "h-[78%] from-jet via-jet/80 via-55%")} />
         </div>
-        <div className="px-5"><IdentityLine variant="v3" /></div>
+        {x.review && <div className="px-5"><IdentityLine variant="v3" /></div>}
         <div className="px-5 [text-shadow:0_1px_16px_rgb(0_0_0/0.7)]">
           <p className={cn("font-mono text-[0.72rem] uppercase tracking-[0.22em]", phase === "before" ? "text-cloud/90" : c.tone)}>{c.eyebrow}</p>
           <h1 id="v3-home-title" className="font-display mt-4 text-[clamp(1.7rem,8.4vw,2.5rem)]">
             {c.lines.map((l, i) => <span key={l} className={cn("block", i === c.accent && c.tone)}>{l}</span>)}
           </h1>
-          <div className="mt-6 flex items-end justify-between gap-4 border-t border-cloud/20 pt-3.5">
+          <div className={cn("mt-6 border-t border-cloud/20 pt-3.5", x.review ? "flex items-end justify-between gap-4" : "flex flex-col items-start gap-1")}>
             {phase === "before" ? (x.countdown ? <Countdown /> : <DatesPending />) : <p className="font-mono text-[0.7rem] uppercase tracking-[0.22em] text-cloud/72">Édition {event.year}</p>}
-            <Link href={c.cta.href} className="group inline-flex min-h-11 items-center gap-2.5 border-b border-cloud/70 pb-0.5 font-mono text-[0.75rem] uppercase tracking-[0.2em] transition hover:border-sky hover:text-sky">
-              {c.cta.label} <ArrowRight size={15} strokeWidth={1.5} aria-hidden className="transition group-hover:translate-x-1" />
-            </Link>
+            {!x.review && identity.status === "no_access" && <p data-testid="identity-no-access" className="mt-2 font-mono text-[0.72rem] uppercase leading-relaxed tracking-[0.18em] text-cloud/80">Compte sans accès participants<br /><span className="text-cloud/68">Accès non activé</span></p>}
+            {action && (
+              <Link href={action.href} data-testid={action.testid} className={cn("group inline-flex min-h-11 items-center gap-2.5 border-b border-cloud/70 pb-0.5 font-mono text-[0.75rem] uppercase tracking-[0.2em] transition hover:border-sky hover:text-sky", !x.review && "mt-2")}>
+                {action.label} <ArrowRight size={15} strokeWidth={1.5} aria-hidden className="transition group-hover:translate-x-1" />
+              </Link>
+            )}
           </div>
         </div>
       </section>
-      {phase === "before" && <SignalCard signal={signal} />}
-      {phase === "during" && x.demoContent && <Now />}   {/* emplacements de revue uniquement : jamais de texte de remplacement en live */}
-      {phase === "after" && <Memories />}
-      {x.demoContent && <p className="px-5 pb-2 pt-3 text-center font-mono text-[0.7rem] uppercase tracking-[0.16em] text-dim">Revue interne — données de démonstration</p>}
+      <div className={cn(!x.review && below && "pb-[calc(var(--nav-h)+var(--safe-bottom)+2.5rem)]")}>
+        {phase === "before" && <SignalCard signal={signal} />}
+        {phase === "during" && x.demoContent && <Now />}   {/* emplacements de revue uniquement : jamais de texte de remplacement en live */}
+        {phase === "after" && <Memories />}
+        {x.demoContent && <p className="px-5 pb-2 pt-3 text-center font-mono text-[0.7rem] uppercase tracking-[0.16em] text-dim">Revue interne — données de démonstration</p>}
+      </div>
     </>
   );
 }

@@ -36,3 +36,25 @@ t("STAFF HQ non touché par ce lot : aucun fichier staff, proxy, API ni supabase
   assert.doesNotMatch(read("src/components/v3/FitName.tsx"), /staff|supabase/i);
 });
 console.log(`${n} tests OK`);
+
+// ---- V3.2 : en-tête (pur) ----
+const { headerMode, headerLabel, headerBack } = await import("../src/components/v3/headerMode.ts");
+t("V3.2 en-tête : HOME « home », MY FLIGHT / CLUB / sous-écrans / compte « compact », EXPLORE et inscription « legacy », revue locale toujours « legacy »", () => {
+  assert.equal(headerMode("/v3", false), "home");
+  for (const p of ["/v3/flight", "/v3/club", "/v3/club/space", "/v3/club/members", "/v3/club/memories", "/v3/club/messages", "/v3/profile", "/v3/account"]) assert.equal(headerMode(p, false), "compact", p);
+  for (const p of ["/v3/explore", "/v3/explore/sound", "/v3/signup"]) assert.equal(headerMode(p, false), "legacy", p);
+  for (const p of ["/v3", "/v3/flight", "/v3/club", "/v3/club/space", "/v3/account"]) assert.equal(headerMode(p, true), "legacy", "revue " + p);
+});
+t("V3.2 en-tête : noms d'écran courts (≤ 11 caractères pour tenir à 320 px) et retours sur les sous-écrans seulement", () => {
+  for (const [p, l] of [["/v3/flight", "MY FLIGHT"], ["/v3/club", "CLUB"], ["/v3/club/space", "PROFIL CLUB"], ["/v3/club/members", "MEMBRES"], ["/v3/club/memories", "SOUVENIRS"], ["/v3/account", "COMPTE"]] as const) { assert.equal(headerLabel(p), l); assert.ok(l.length <= 11); }
+  assert.equal(headerBack("/v3/flight"), null); assert.equal(headerBack("/v3/club"), null); assert.deepEqual(headerBack("/v3/club/space"), { href: "/v3/club", label: "Club" }); assert.deepEqual(headerBack("/v3/account"), { href: "/v3/profile", label: "Profil" });
+});
+t("V3.2 MY FLIGHT : reflet = TiltButton intégré au pass (plus de TiltToggle), onglets masqués seulement si tout est en attente et hors revue", () => {
+  const f = read("src/components/v3/V3Flight.tsx"), p = read("src/components/v3/FlightPass.tsx"), m = read("src/components/v3/metal.tsx");
+  assert.doesNotMatch(f, /TiltToggle/); assert.match(p, /<TiltButton metal=\{metal\}/); assert.match(m, /export function TiltButton/); assert.match(m, /size-11/);
+  assert.match(f, /const allWaiting = !x\.review && !trip\.departure && !trip\.stay && trip\.updates\.length === 0/);
+});
+t("V3.2 HOME : plus de lien vers MY FLIGHT en live, action contextuelle seulement (connexion / profil), revue locale inchangée", () => {
+  const h = read("src/components/v3/V3Home.tsx");
+  assert.match(h, /function contextualCta/); assert.match(h, /x\.review \? \{ label: c\.cta\.label/); assert.doesNotMatch(h, /contextualCta[\s\S]{0,400}\/v3\/flight/);
+});

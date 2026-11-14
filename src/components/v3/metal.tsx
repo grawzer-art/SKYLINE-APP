@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { motion, useReducedMotion } from "motion/react";
+import { Sparkles } from "lucide-react";
 import { ease } from "@/design/motion";
 import { cn } from "@/lib/cn";
 
@@ -73,12 +74,16 @@ export function useMetal(strength = 1) {
 }
 
 /** Bouton facultatif d'activation du reflet au mouvement (iPhone : la permission n'est demandée qu'au toucher). */
-export function TiltToggle({ metal, label, labelOn }: { metal: ReturnType<typeof useMetal>; label: string; labelOn: string }) {
+/**
+ * Contrôle DISCRET du reflet au mouvement : petite icône intégrée au pass (zone tactile 44 px, pastille visible de 32 px).
+ * Sur iOS, la permission des capteurs n'est demandée qu'au toucher (voir `enableTilt`). Nom accessible explicite, état annoncé par aria-pressed.
+ */
+export function TiltButton({ metal }: { metal: ReturnType<typeof useMetal> }) {
   if (!metal.supported) return null;
   return (
-    <button type="button" onClick={metal.enableTilt} aria-pressed={metal.tilt}
-      className="mx-auto mt-1 flex min-h-11 items-center gap-2 rounded-full px-4 font-mono text-[0.7rem] uppercase tracking-[0.18em] text-cloud/72 transition active:text-cloud">
-      <span aria-hidden className={cn("size-1.5 rounded-full transition", metal.tilt ? "bg-sky" : "bg-cloud/30")} />{metal.tilt ? labelOn : label}
+    <button type="button" onClick={metal.enableTilt} aria-pressed={metal.tilt} aria-label={metal.tilt ? "Reflet au mouvement actif" : "Activer le reflet au mouvement"}
+      className="-my-3 -mr-3 grid size-11 shrink-0 place-items-center rounded-full text-cloud/75 transition active:text-cloud">
+      <span aria-hidden className={cn("grid size-8 place-items-center rounded-full border transition", metal.tilt ? "border-sky/80 bg-sky/10 text-sky" : "border-silver/40 bg-jet/50")}><Sparkles size={15} strokeWidth={1.6} /></span>
     </button>
   );
 }
