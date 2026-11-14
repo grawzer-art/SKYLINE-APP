@@ -135,16 +135,21 @@ const b64u = (s) => Buffer.from(s).toString("base64url");
     }
     await ctx.close();
   }
-  /* 7. Production (démo désactivée par défaut) — nécessite un second serveur lancé avec VERCEL_ENV=production */
-  if (process.env.BASE_PROD) {
-    const P = process.env.BASE_PROD; const { ctx, p } = await mk();
+  /* 7. Hébergeur (Production, Preview, VERCEL seul) — la démo STAFF est RÉSERVÉE AU LOCAL : serveurs lancés par run-review.sh avec ces variables, et DEMO_AUTH=on pour les pousser à la limite.
+        Le jeton est signé avec le secret PAR DÉFAUT (public) par le serveur local : il doit rester sans effet. */
+  for (const [label, P] of [["PRODUCTION", process.env.BASE_PROD], ["PREVIEW + DEMO_AUTH=on", process.env.BASE_PREVIEW], ["VERCEL=1 seul + DEMO_AUTH=on", process.env.BASE_VERCEL]]) {
+    if (!P) continue; const { ctx, p } = await mk();
     const r = await ctx.request.post(B + "/api/demo-session", { form: { account: "tom" }, maxRedirects: 0 }); const token = /sk_demo=([^;]+)/.exec(r.headers()["set-cookie"] || "")[1];
     await ctx.addCookies([{ name: "sk_demo", value: token, url: P }]);
     const g = await ctx.request.get(P + "/staff", { maxRedirects: 0 });
-    ok("PRODUCTION : un jeton valide ne donne AUCUN accès quand la démo est désactivée", g.status() >= 300 && g.status() < 400 && (g.headers()["location"] || "").includes("/staff/access"));
-    ok("PRODUCTION : l'ouverture de session démo est refusée (404)", (await ctx.request.post(P + "/api/demo-session", { form: { account: "tom" }, maxRedirects: 0 })).status() === 404);
+    ok(`${label} : un jeton valide (secret par défaut) ne donne AUCUN accès STAFF`, g.status() >= 300 && g.status() < 400 && (g.headers()["location"] || "").includes("/staff/access"));
+    ok(`${label} : l'ouverture de session démo est refusée (404)`, (await ctx.request.post(P + "/api/demo-session", { form: { account: "tom" }, maxRedirects: 0 })).status() === 404);
+    const sj = await (await ctx.request.get(P + "/api/staff/session")).json(); ok(`${label} : /api/staff/session ne renvoie aucune session`, sj.session === null);
     await p.goto(P + "/staff/access"); await p.waitForTimeout(1200);
-    ok("PRODUCTION : la page d'accès explique que la démo est désactivée, sans comptes proposés", (await p.getByText(/désactivée sur cet environnement/).count()) === 1 && (await p.getByRole("button", { name: /^Tom/ }).count()) === 0);
+    ok(`${label} : la page d'accès explique que la démo est désactivée, sans comptes proposés`, (await p.getByText(/désactivée sur cet environnement/).count()) === 1 && (await p.getByRole("button", { name: /^Tom/ }).count()) === 0);
+    const home = await ctx.request.get(P + "/v3"); const xr = home.headers()["x-robots-tag"] || "";
+    // L'en-tête est décidé AU BUILD (next.config.ts) : la construction locale n'est pas une construction « production » ; l'absence en production est couverte par demo-hardening.test.mts.
+    if (label !== "PRODUCTION") ok(`${label} : en-tête X-Robots-Tag noindex`, /noindex/.test(xr), xr);
     await ctx.close();
   }
   await browser.close(); console.log(fails ? `${fails} ÉCHEC(S)` : "TOUT PASSE"); process.exit(fails ? 1 : 0);

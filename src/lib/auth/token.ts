@@ -2,6 +2,7 @@ import type { DemoSession } from "./roles";
 import { PLATFORM_ROLES, SPACES, STAFF_ROLES } from "./roles";
 import { staffAuthMode } from "@/lib/staff/mode";
 import { staffConfigIssue } from "@/lib/staff/data-source";
+import { demoSessionAllowed } from "./demoGate";
 
 /**
  * Jeton de session de DÉMONSTRATION : charge utile JSON + signature HMAC-SHA256 (Web Crypto, utilisable dans le proxy).
@@ -11,10 +12,12 @@ import { staffConfigIssue } from "@/lib/staff/data-source";
 export const SESSION_COOKIE = "sk_demo";
 export const SESSION_TTL_SECONDS = 60 * 60 * 8;
 /**
- * L'authentification de démonstration est ACTIVE par défaut sur les prévisualisations et en local, et DÉSACTIVÉE par défaut
- * sur la production Vercel (sauf `DEMO_AUTH=on`). `DEMO_AUTH=off` la coupe partout. Désactivée : aucune session n'est valide.
+ * La session de démonstration STAFF est STRICTEMENT RÉSERVÉE AU DÉVELOPPEMENT LOCAL : elle n'existe JAMAIS sur une plateforme d'hébergement
+ * (ni VERCEL ni VERCEL_ENV définis : Preview comme Production), quelles que soient les autres variables (STAFF_AUTH_MODE absent ou incorrect,
+ * DEMO_AUTH=on, secret par défaut public…). Fermé par défaut sur Vercel ; en local, `DEMO_AUTH=off` la coupe. Désactivée : aucune session n'est valide
+ * et `/api/demo-session` répond 404 (STAFF HQ réel = authentification Supabase, inchangée).
  */
-export const demoAuthEnabled = () => staffAuthMode() === "demo" && !staffConfigIssue() && (process.env.DEMO_AUTH === "on" || (process.env.DEMO_AUTH !== "off" && process.env.VERCEL_ENV !== "production"));
+export const demoAuthEnabled = () => staffAuthMode() === "demo" && !staffConfigIssue() && demoSessionAllowed({ VERCEL: process.env.VERCEL, VERCEL_ENV: process.env.VERCEL_ENV, DEMO_AUTH: process.env.DEMO_AUTH });
 const SECRET = () => process.env.DEMO_SESSION_SECRET || "skyline-demo-only-secret-not-for-production";
 
 const enc = new TextEncoder();

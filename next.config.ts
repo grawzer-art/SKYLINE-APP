@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
     // Anciennes routes participants → V3 (table unique et testée : src/components/layout/nav-items.ts). La route « / » est traitée par src/proxy.ts (choix de l'espace d'abord).
     return legacyRedirects.map((r) => ({ ...r, permanent: false }));
   },
+  // Aucun déploiement non-production (Preview Vercel, local) ne doit être indexé. La production n'est pas modifiée (aucun en-tête ajouté).
+  async headers() {
+    if (process.env.VERCEL_ENV === "production") return [];
+    return [{ source: "/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] }];
+  },
   partialPrefetching: true,
   turbopack: {
     rules: {
