@@ -17,6 +17,7 @@ const STEPS: { file: string; kind: string; sharedDbVersion: string | null; share
   { file: "supabase/proposals/B4_3_club_profiles.sql", kind: "proposal", sharedDbVersion: null, sharedDbStatus: "not_applied" },
   { file: "supabase/proposals/B4_2b_club_traveler_gate.sql", kind: "proposal", sharedDbVersion: null, sharedDbStatus: "not_applied" },
   { file: "supabase/proposals/B4_2c_revoke_rls_auto_enable.sql", kind: "proposal", sharedDbVersion: null, sharedDbStatus: "not_applied" },
+  { file: "supabase/proposals/B4_4_club_consent.sql", kind: "proposal", sharedDbVersion: null, sharedDbStatus: "not_applied" },
 ];
 if (process.argv.includes("--write")) {
   writeFileSync(MANIFEST, JSON.stringify({ schema: 1, purpose: "Reconstruire un projet Supabase de TEST isolé, dans cet ordre. Ne jamais appliquer ces étapes sur le projet partagé sans autorisation.", steps: STEPS.map((s, i) => ({ order: i + 1, ...s, sha256: sha(s.file) })) }, null, 2) + "\n"); console.log("manifeste régénéré"); process.exit(0);
@@ -28,7 +29,7 @@ await t("manifeste : ordre contigu, fichiers présents, empreintes SHA-256 à jo
   assert.equal(man.steps.length, STEPS.length);
   man.steps.forEach((s: any, i: number) => { assert.equal(s.order, i + 1); assert.equal(s.file, STEPS[i].file); assert.equal(s.sha256, sha(s.file), `${s.file} : empreinte périmée`); assert.equal(s.sharedDbStatus, STEPS[i].sharedDbStatus); });
 });
-await t("manifeste : état du projet partagé consigné (B0 + dérive + B4.1 appliqués ; B4.2 / B4.3 / B4.2b / B4.2c NON appliqués) ; les migrations du dépôt couvrent toutes celles qui existent", () => {
+await t("manifeste : état du projet partagé consigné (B0 + dérive + B4.1 appliqués ; B4.2 / B4.3 / B4.2b / B4.2c / B4.4 NON appliqués) ; les migrations du dépôt couvrent toutes celles qui existent", () => {
   assert.deepEqual(man.steps.filter((s: any) => s.sharedDbStatus === "applied").map((s: any) => s.sharedDbVersion), ["20261031141912", "20261106111620", "20261106111740", "20261107123121", "20261107161509"]);
   assert.deepEqual(readdirSync("supabase/migrations").filter((f) => f.endsWith(".sql")).map((f) => `supabase/migrations/${f}`).sort(), man.steps.filter((s: any) => s.kind === "migration").map((s: any) => s.file));
   assert.deepEqual(readdirSync("supabase/proposals").filter((f) => f.endsWith(".sql")).map((f) => `supabase/proposals/${f}`).sort(), man.steps.filter((s: any) => s.kind === "proposal").map((s: any) => s.file).sort());
