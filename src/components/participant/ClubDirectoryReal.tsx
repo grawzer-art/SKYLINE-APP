@@ -11,6 +11,7 @@ import type { ClubMember } from "@/domain/club";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import { getClubMember, listClubDirectory, loadMyClubProfile, setMyClubVisibility, signedAvatarUrls } from "@/lib/club/clubService";
 import { useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
+import { ClubConsentSheet } from "./ClubConsentSheet";
 
 type Load = ({ status: "traveler" } | { status: "closed" } | { status: "nopro" } | { status: "error"; message: string } | { status: "ready"; members: ClubMember[]; urls: Record<string, string> }) & { key: string };
 
@@ -18,7 +19,7 @@ type Load = ({ status: "traveler" } | { status: "closed" } | { status: "nopro" }
 export function ClubDirectoryReal() {
   const identity = useParticipantIdentity(); const owner = identity.status === "ready" ? identity.email : null; const traveler = identity.status === "ready" ? identity.traveler : undefined;
   const [raw, setS] = useState<Load | null>(null); const [q, setQ] = useState(""); const [city, setCity] = useState(""); const [shown, setShown] = useState<number>(LIMITS.pageSize);
-  const seq = useRef(0); const [busy, setBusy] = useState(false);
+  const seq = useRef(0); const [busy, setBusy] = useState(false); const [consentOpen, setConsentOpen] = useState(false);
   const key = `${owner}|${q}|${city}`; const s: Load | { status: "loading" } = raw && raw.key === key ? raw : { status: "loading" };   // un résultat ne s'applique qu'à SA requête et SON compte
   const load = useCallback(async (text: string, c: string) => {
     if (!owner) return; const my = ++seq.current; const key = `${owner}|${text}|${c}`; const cl = createBrowserSupabase();
@@ -39,6 +40,7 @@ export function ClubDirectoryReal() {
   return (
     <>
       <ScreenTitle {...gate} />
+      <ClubConsentSheet open={consentOpen} onClose={() => setConsentOpen(false)} onConfirm={async (version) => { setBusy(true); const r = await setMyClubVisibility(createBrowserSupabase(), true, version); setBusy(false); if (r.ok) void load(q, city); return r.ok ? { ok: true as const } : { ok: false as const, message: r.message }; }} />
       {s.status === "loading" && <Block><p role="status" className="text-[0.95rem] text-cloud/75" data-testid="dir-loading">Chargement…</p></Block>}
       {s.status === "error" && <Block><div role="alert" className="rounded-[8px] border border-sunset/60 p-4 text-[0.9rem]">{s.message}<Button variant="ghost" onClick={() => void load(q, city)} className="mt-3 w-full">Réessayer</Button></div></Block>}
       {s.status === "traveler" && <Block><div role="status" data-testid="dir-traveler" className="rounded-[8px] border border-silver/40 p-5"><p className="font-display text-[1.1rem]">Réservé aux voyageurs vérifiés</p><p className="mt-2 text-[0.9rem] leading-relaxed text-cloud/80">L&apos;annuaire s&apos;ouvre avec une réservation confirmée par l&apos;équipe SKYLINE. Votre compte membre gratuit vous donne déjà accès à votre profil.</p><Link href="/v3/club/space" className="mt-3 inline-flex min-h-11 items-center font-mono text-[0.72rem] uppercase tracking-[0.18em] text-sky">My Space →</Link></div></Block>}
@@ -46,7 +48,7 @@ export function ClubDirectoryReal() {
         <Block><div role="status" data-testid="dir-closed" className="rounded-[8px] border border-silver/40 p-5">
           <p className="font-display text-[1.1rem]">{s.status === "nopro" ? "Créez d'abord votre profil CLUB" : "Réciprocité : publiez votre profil pour voir les autres"}</p>
           <p className="mt-2 text-[0.9rem] leading-relaxed text-cloud/80">Seuls les membres qui ont choisi de publier leur profil CLUB apparaissent ici — et vous n&apos;apparaissez que si vous le publiez aussi.</p>
-          {s.status === "closed" && <Button disabled={busy} onClick={async () => { setBusy(true); await setMyClubVisibility(createBrowserSupabase(), true); setBusy(false); void load(q, city); }} className="mt-5 w-full" data-testid="dir-publish">Publier mon profil</Button>}
+          {s.status === "closed" && <Button disabled={busy} onClick={() => setConsentOpen(true)} className="mt-5 w-full" data-testid="dir-publish">Publier mon profil</Button>}
           <Link href="/v3/club/space" className="mt-3 inline-flex min-h-11 items-center font-mono text-[0.72rem] uppercase tracking-[0.18em] text-sky">My Space →</Link>
         </div></Block>
       )}

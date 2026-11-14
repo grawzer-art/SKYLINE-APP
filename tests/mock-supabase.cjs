@@ -13,7 +13,7 @@ const slugOf = (id) => Object.keys(U).find((k) => U[k] === id);
 const coord = (slug) => ROLES[slug].platform.includes("super_admin") || ROLES[slug].staff.includes("admin");
 const isStaff = (slug) => ROLES[slug].spaces.includes("staff");
 let S;
-const reset = () => { S = { missions: [], events: [], comments: [], profiles: {}, clubs: {}, files: {}, created: {}, signups: {}, suspended: {}, otpLog: [], travelers: { participant: true, lea: true, graw: true }, seq: 1, ctl: { delay: 0, fail: {} } }; for (const n of NEWBIES) ROLES[n].spaces = []; };
+const reset = () => { S = { missions: [], events: [], comments: [], profiles: {}, clubs: {}, consents: {}, files: {}, created: {}, signups: {}, suspended: {}, otpLog: [], travelers: { participant: true, lea: true, graw: true }, seq: 1, ctl: { delay: 0, fail: {} } }; for (const n of NEWBIES) ROLES[n].spaces = []; };
 reset();
 const now = () => new Date().toISOString();
 const uid = () => "aaaaaaaa-" + String(Date.now() % 1e4).padStart(4, "0") + "-4" + String(S.seq).padStart(3, "0") + "-8" + String(++S.seq).padStart(3, "0") + "-" + String(Math.floor(Math.random() * 1e12)).padStart(12, "0");
@@ -54,7 +54,7 @@ function rpc(fn, a, me) {
     const prev = S.profiles[me]; S.profiles[me] = { user_id: U[me], first_name: a.p_first_name.trim(), last_name: a.p_last_name.trim(), display_name: a.p_display_name.trim(), avatar_path: null, created_at: prev ? prev.created_at : now(), updated_at: now() }; return { body: S.profiles[me] };
   }
 
-  if (fn.startsWith("get_my_club_profile") || fn === "upsert_my_club_profile" || fn === "set_my_club_visibility" || fn === "set_my_club_avatar" || fn === "list_club_directory" || fn === "get_club_member") {
+  if (fn.startsWith("get_my_club_profile") || fn === "upsert_my_club_profile" || fn === "set_my_club_visibility" || fn === "get_my_club_consent" || fn === "set_my_club_avatar" || fn === "list_club_directory" || fn === "get_club_member") {
     if (S.ctl.clubTable === "missing") return { status: 404, body: { code: "PGRST202", message: "Could not find the function public." + fn + " in the schema cache" } };
     if (!ROLES[me].spaces.includes("members")) return FORB;
     const pub = (x) => ({ public_id: "c" + U[x].slice(1), pseudo: S.clubs[x].pseudo, city: S.clubs[x].city, bio: S.clubs[x].bio, genres: S.clubs[x].genres, avatar_path: S.clubs[x].avatar_path });
@@ -66,7 +66,13 @@ function rpc(fn, a, me) {
       return { body: [{ pseudo: c.pseudo, city: c.city, bio: c.bio, genres: c.genres, avatar_path: c.avatar_path, visible: c.visible }] };
     }
     const trav = (x) => !!S.travelers[x];
-    if (fn === "set_my_club_visibility") { if (a.p_visible === true && !trav(me)) return E("42501", "traveler_required"); if (!S.clubs[me]) return E("P0001", "no_profile"); S.clubs[me].visible = a.p_visible === true; return { body: S.clubs[me].visible }; }
+    if (fn === "set_my_club_visibility") {   // B4.4 : publier exige la version courante du texte de consentement ; chaque changement d'état est inscrit au journal
+      if (a.p_visible === true) { if (!trav(me)) return E("42501", "traveler_required"); if (a.p_consent_version !== "club-annuaire-1") return E("42501", "consent_required"); }
+      if (!S.clubs[me]) return E("P0001", "no_profile"); const prev = S.clubs[me].visible === true; S.clubs[me].visible = a.p_visible === true;
+      if (prev !== S.clubs[me].visible) (S.consents[me] = S.consents[me] || []).push({ action: S.clubs[me].visible ? "publish" : "withdraw", consent_version: "club-annuaire-1", created_at: new Date().toISOString() });
+      return { body: S.clubs[me].visible };
+    }
+    if (fn === "get_my_club_consent") return { body: (S.consents[me] || []).slice(-1) };
     if (fn === "set_my_club_avatar") { if (!S.clubs[me]) return E("P0001", "no_profile"); if (a.p_path !== null && !String(a.p_path).startsWith(U[me] + "/")) return E("P0001", "invalid_avatar"); S.clubs[me].avatar_path = a.p_path; return { body: a.p_path }; }
     if (!trav(me)) return E("42501", "traveler_required");
     if (!S.clubs[me] || !S.clubs[me].visible) return E("42501", "reciprocity_required");

@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import type { ClubInput, ClubProfile } from "@/domain/club";
-import { loadMyClubProfile, saveMyClubProfile, setMyClubVisibility, removeMyAvatar, signedAvatarUrls, uploadMyAvatar, type Fail } from "./clubService";
+import { loadMyClubConsent, loadMyClubProfile, saveMyClubProfile, setMyClubVisibility, removeMyAvatar, signedAvatarUrls, uploadMyAvatar, type Fail } from "./clubService";
 import { compressAvatar } from "./compressAvatar";
 
 export type ClubState = { status: "idle" | "loading" | "ready" | "unavailable" | "error"; profile: ClubProfile | null; avatarUrl: string | null; message?: string };
@@ -17,9 +17,16 @@ export function useClubProfile(owner: string | null) {
   // Un état appartient à UN compte : s'il ne correspond pas au compte courant, il est ignoré (jamais de données d'un autre compte).
   const s: ClubState = raw.owner === owner ? raw : { status: owner ? "loading" : "idle", profile: null, avatarUrl: null };
   const [busy, setBusy] = useState(false);
+  const [consent, setConsent] = useState<{ action: "publish" | "withdraw"; version: string; at: string } | null>(null);
   const seq = useRef(0); const ownerRef = useRef<string | null>(null);
   const client = useCallback(() => createBrowserSupabase(), []);
   const urlFor = useCallback(async (p: ClubProfile | null) => (p?.avatarPath ? (await signedAvatarUrls(client(), [p.avatarPath]))[p.avatarPath] ?? null : null), [client]);
+
+  const visibleNow = s.profile?.visible === true;
+  useEffect(() => {   // transparence : « Publié le … » (dernière trace de consentement de SOI-MÊME)
+    let on = true; if (!owner || !visibleNow) { queueMicrotask(() => on && setConsent(null)); return () => { on = false; }; }
+    void loadMyClubConsent(client()).then((c) => on && setConsent(c)); return () => { on = false; };
+  }, [owner, visibleNow, client, busy]);
 
   const load = useCallback(async () => {
     const my = ++seq.current; const o = ownerRef.current; if (!o) return;
@@ -36,7 +43,7 @@ export function useClubProfile(owner: string | null) {
 
   const run = async <T extends { ok: boolean }>(fn: () => Promise<T>): Promise<T> => { setBusy(true); try { return await fn(); } finally { setBusy(false); } };
   const save = (input: ClubInput) => run(async () => { const r = await saveMyClubProfile(client(), input); if (r.ok) setS((p) => (p.owner === owner ? { ...p, status: "ready", profile: r.profile } : p)); return r; });
-  const setVisible = (v: boolean) => run(async () => { const r = await setMyClubVisibility(client(), v); if (r.ok) setS((p) => (p.owner === owner ? { ...p, profile: p.profile ? { ...p.profile, visible: v } : p.profile } : p)); return r; });
+  const setVisible = (v: boolean, consentVersion?: string) => run(async () => { const r = await setMyClubVisibility(client(), v, consentVersion); if (r.ok) setS((p) => (p.owner === owner ? { ...p, profile: p.profile ? { ...p.profile, visible: v } : p.profile } : p)); return r; });
   const setPhoto = (file: File) => run(async (): Promise<{ ok: true } | Fail | { ok: false; kind: "photo"; message: string }> => {
     const c = await compressAvatar(file);
     if (!c.ok) return { ok: false, kind: "photo", message: c.reason === "type" ? "Format non pris en charge (JPEG, PNG ou WebP)." : c.reason === "size" ? "Image trop lourde (12 Mo maximum)." : c.reason === "toobig" ? "Image trop lourde après compression." : "Image illisible." };
@@ -45,5 +52,5 @@ export function useClubProfile(owner: string | null) {
     return { ok: true };
   });
   const removePhoto = () => run(async () => { const r = await removeMyAvatar(client(), s.profile?.avatarPath ?? null); if (r.ok) setS((x) => (x.owner === owner ? { ...x, profile: x.profile ? { ...x.profile, avatarPath: null } : null, avatarUrl: null } : x)); return r; });
-  return { ...s, busy, reload: load, save, setVisible, setPhoto, removePhoto };
+  return { ...s, consent, busy, reload: load, save, setVisible, setPhoto, removePhoto };
 }

@@ -47,10 +47,13 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   st = await state(); ok("CRÉATION (2e compte) : profil distinct, privé par défaut ; deux profils indépendants", st.clubs.lea.pseudo === "Nova" && st.clubs.lea.visible === false && st.clubs.participant.pseudo === "Skylar");
 
   /* ===== 4. Publication volontaire / réciprocité ===== */
-  await p2.getByTestId("club-visibility").locator("label").click(); await p2.waitForFunction(() => document.querySelector("[data-testid=club-visibility]")?.getAttribute("data-visible") === "true");
-  ok("PUBLICATION : Léa publie son profil (action volontaire) ; l'état est persisté", (await state()).clubs.lea.visible === true);
+  await p2.getByTestId("club-visibility").locator("label").click(); await vis(p2.getByTestId("club-consent"));
+  ok("CONSENTEMENT : activer l'interrupteur n'EXPOSE RIEN — une confirmation explicite s'ouvre (qui voit quoi, retrait possible, trace conservée) ; le profil reste privé", (await p2.getByTestId("club-consent").innerText()).includes("Jamais votre e-mail ni votre nom") && /retirer votre profil à tout moment/.test(await p2.getByTestId("club-consent").innerText()) && /date et la version/.test(await p2.getByTestId("club-consent").innerText()) && (await state()).clubs.lea.visible === false);
+  await p2.getByTestId("club-consent-cancel").click(); await p2.waitForTimeout(500); ok("CONSENTEMENT : « Annuler » → toujours privé, aucune trace", (await state()).clubs.lea.visible === false && !(await state()).consents.lea);
+  await p2.getByTestId("club-visibility").locator("label").click(); await vis(p2.getByTestId("club-consent")); await p2.getByTestId("club-consent-confirm").click(); await p2.waitForFunction(() => document.querySelector("[data-testid=club-visibility]")?.getAttribute("data-visible") === "true");
+  ok("PUBLICATION : Léa publie son profil APRÈS confirmation explicite ; l'état est persisté ; trace (action, version) enregistrée et affichée", (await state()).clubs.lea.visible === true && JSON.stringify((await state()).consents.lea.map((c) => [c.action, c.consent_version])) === JSON.stringify([["publish", "club-annuaire-1"]]) && (await vis(p2.getByTestId("club-consent-trace"))));
   await go(p1, "/v3/club/members", p1.getByTestId("dir-closed")); ok("RÉCIPROCITÉ : le participant 1 n'a pas publié → il ne voit pas Nova", (await vis(p1.getByTestId("dir-closed"))) && !/Nova/.test(await p1.locator("body").innerText()));
-  await p1.getByTestId("dir-publish").click(); await vis(p1.getByTestId("dir-list"));
+  await p1.getByTestId("dir-publish").click(); await vis(p1.getByTestId("club-consent")); ok("CONSENTEMENT : « Publier mon profil » depuis l'annuaire passe aussi par la confirmation (profil encore privé)", (await state()).clubs.participant.visible === false); await p1.getByTestId("club-consent-confirm").click(); await vis(p1.getByTestId("dir-list"));
   const dirText = await p1.getByTestId("dir-list").innerText();
   ok("ANNUAIRE : après publication, seuls les profils PUBLIÉS des autres apparaissent (Nova), jamais soi-même, jamais de fictif", /Nova/.test(dirText) && !/Skylar/.test(dirText) && !FICTIVE.test(await p1.locator("body").innerText()));
   await p1.getByRole("link", { name: /Nova/ }).click(); await vis(p1.getByTestId("member-card"));
@@ -59,7 +62,8 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
   await go(p2, "/v3/club/members", p2.getByTestId("dir-list")); ok("ANNUAIRE (2e compte) : Skylar est visible une fois publié ; Nova (soi) absent", /Skylar/.test(await p2.getByTestId("dir-list").innerText()) && !/Nova/.test(await p2.getByTestId("dir-list").innerText()));
   await p2.getByRole("searchbox", { name: /Rechercher/ }).fill("zzz"); ok("RECHERCHE : aucun résultat → état vide propre", await vis(p2.getByText(/Aucun membre à afficher/)));
   // Masquer
-  await go(p1, "/v3/club/space", p1.getByTestId("club-visibility")); await p1.getByTestId("club-visibility").locator("label").click(); await p1.waitForFunction(() => document.querySelector("[data-testid=club-visibility]")?.getAttribute("data-visible") === "false");
+  await go(p1, "/v3/club/space", p1.getByTestId("club-visibility")); await p1.getByTestId("club-visibility").locator("label").click(); await p1.waitForFunction(() => document.querySelector("[data-testid=club-visibility]")?.getAttribute("data-visible") === "false");   // retrait : SANS confirmation, immédiat
+  ok("RETRAIT : sans confirmation, immédiat, journalisé (publish puis withdraw)", JSON.stringify((await state()).consents.participant.map((c) => c.action)) === JSON.stringify(["publish", "withdraw"]));
   await go(p2, "/v3/club/members", p2.getByTestId("dir-list")); ok("CONFIDENTIALITÉ : masqué, le profil disparaît immédiatement de l'annuaire des autres", (await p2.getByTestId("dir-list").count()) === 0 || !/Skylar/.test(await p2.getByTestId("dir-list").innerText().catch(() => "")));
   const pid = "c" + "4444444-4444-4444-8444-444444444444".slice(0); await go(p2, `/v3/club/members/${pid}`, p2.getByRole("heading", { level: 1 }));
   ok("CONFIDENTIALITÉ : la fiche d'un profil masqué est introuvable (accès direct par identifiant)", (await vis(p2.getByText(/Profil introuvable/))) || (await vis(p2.getByText(/Publiez votre profil/))));

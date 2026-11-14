@@ -9,8 +9,11 @@ const MESSAGES: Record<string, string> = {
   no_profile: "Créez d'abord votre profil CLUB.", invalid_avatar: "Photo invalide.",
   traveler_required: "Réservé aux voyageurs dont la réservation est vérifiée par l'équipe.",
   reciprocity_required: "Publiez votre profil CLUB pour consulter les autres membres.",
+  consent_required: "Confirmez la publication de votre profil pour continuer.",
 };
-export type Kind = "traveler" | "invalid" | "forbidden" | "network" | "unavailable" | "no_profile" | "reciprocity" | "unknown";
+/** Version du texte de consentement affiché avant publication (le serveur compare : voir supabase/proposals/B4_4_club_consent.sql). */
+export const CLUB_CONSENT_VERSION = "club-annuaire-1";
+export type Kind = "traveler" | "invalid" | "forbidden" | "network" | "unavailable" | "no_profile" | "reciprocity" | "consent" | "unknown";
 export type Fail = { ok: false; kind: Kind; message: string; fields?: ClubErrors };
 export type Res<T> = ({ ok: true } & T) | Fail;
 
@@ -18,6 +21,7 @@ export function mapError(error: { message?: string; code?: string; status?: numb
   const raw = (error?.message ?? "").trim().toLowerCase();
   if (raw === "traveler_required") return { ok: false, kind: "traveler", message: MESSAGES.traveler_required };
   if (raw === "reciprocity_required") return { ok: false, kind: "reciprocity", message: MESSAGES.reciprocity_required };
+  if (raw === "consent_required") return { ok: false, kind: "consent", message: MESSAGES.consent_required };
   if (raw === "no_profile") return { ok: false, kind: "no_profile", message: MESSAGES.no_profile };
   if (MESSAGES[raw]) return { ok: false, kind: raw === "forbidden" ? "forbidden" : "invalid", message: MESSAGES[raw] };
   if (error?.code === "42883" || error?.code === "PGRST202" || error?.code === "PGRST205" || /could not find the (function|table)|does not exist/i.test(error?.message ?? "")) return { ok: false, kind: "unavailable", message: "Le profil CLUB n'est pas encore disponible." };
@@ -39,8 +43,14 @@ export async function saveMyClubProfile(c: SupabaseClient, input: ClubInput): Pr
   const v = validateClubInput(input); if (!v.ok) return { ok: false, kind: "invalid", message: "Vérifiez les champs signalés.", fields: v.errors };
   try { const { data, error } = await c.rpc("upsert_my_club_profile", { p_pseudo: v.value.pseudo, p_city: v.value.city, p_bio: v.value.bio, p_genres: v.value.genres }); if (error) return mapError(error); const r = first(data); return r ? { ok: true, profile: row(r) } : mapError(null); } catch { return NET; }
 }
-export async function setMyClubVisibility(c: SupabaseClient, visible: boolean): Promise<Res<{ visible: boolean }>> {
-  try { const { error } = await c.rpc("set_my_club_visibility", { p_visible: visible }); return error ? mapError(error) : { ok: true, visible }; } catch { return NET; }
+/** Publier exige la confirmation explicite (version du texte affiché) ; masquer ne l'exige jamais. Le serveur revérifie tout (consentement, voyageur vérifié). */
+export async function setMyClubVisibility(c: SupabaseClient, visible: boolean, consentVersion?: string): Promise<Res<{ visible: boolean }>> {
+  if (visible && consentVersion !== CLUB_CONSENT_VERSION) return { ok: false, kind: "consent", message: MESSAGES.consent_required };
+  try { const { error } = await c.rpc("set_my_club_visibility", { p_visible: visible, p_consent_version: visible ? consentVersion : null }); return error ? mapError(error) : { ok: true, visible }; } catch { return NET; }
+}
+/** Dernier consentement de SOI-MÊME (« Publié le … ») ; null si aucun ou si la fonction n'existe pas encore. Jamais celui d'un autre. */
+export async function loadMyClubConsent(c: SupabaseClient): Promise<{ action: "publish" | "withdraw"; version: string; at: string } | null> {
+  try { const { data, error } = await c.rpc("get_my_club_consent"); if (error) return null; const r = Array.isArray(data) ? data[0] : data; return r && (r.action === "publish" || r.action === "withdraw") ? { action: r.action, version: String(r.consent_version), at: String(r.created_at) } : null; } catch { return null; }
 }
 /** Annuaire des profils publiés (champs publics). Fermé tant que SON profil n'est pas publié. */
 export async function listClubDirectory(c: SupabaseClient, o: { text?: string; city?: string; limit?: number; offset?: number } = {}): Promise<Res<{ members: ClubMember[] }>> {

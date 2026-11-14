@@ -16,6 +16,7 @@ import { useProto } from "@/lib/useProto";
 import { cn } from "@/lib/cn";
 import { activeLocale } from "@/i18n";
 import { useCompactHeader } from "@/components/v3/useHeaderMode";
+import { ClubConsentSheet } from "./ClubConsentSheet";
 
 const L = {
   fr: { back: "Club", title: "My Space", loading: "Chargement de votre profil CLUB…", signin: "Connectez-vous pour gérer votre profil CLUB.", signinCta: "Se connecter",
@@ -43,7 +44,7 @@ export function ClubSpaceReal() {
   const { state } = useProto(); const l = L[activeLocale(state.locale) === "en" ? "en" : "fr"];
   const identity = useParticipantIdentity(); const owner = identity.status === "ready" ? identity.email : null;
   const club = useClubProfile(owner);
-  const [editing, setEditing] = useState(false);
+  const [editing, setEditing] = useState(false); const [consentOpen, setConsentOpen] = useState(false);
   const p = club.profile;
 
   const compact = useCompactHeader();   // V3.2 : le retour vit dans l'en-tête compact
@@ -87,10 +88,12 @@ export function ClubSpaceReal() {
       <section aria-labelledby="vis-title" className="px-5 pt-9">
         <h2 id="vis-title" className="sr-only">{l.visLabel}</h2>
         <div className={cn("rounded-[6px] border p-4", p.visible ? "border-sky/50" : "border-cloud/15")} data-testid="club-visibility" data-visible={p.visible}>
-          {identity.traveler === "none" && !p.visible ? <div data-testid="club-traveler-only"><p className="text-[0.95rem]">{l.private}</p><p className="mt-1 text-[0.78rem] text-dim">{l.travelerOnly}</p></div> : <Switch on={p.visible} onChange={(v) => void club.setVisible(v)} label={p.visible ? l.public : l.private} hint={p.visible ? l.pubText : l.privText} />}
+          {identity.traveler === "none" && !p.visible ? <div data-testid="club-traveler-only"><p className="text-[0.95rem]">{l.private}</p><p className="mt-1 text-[0.78rem] text-dim">{l.travelerOnly}</p></div> : <Switch on={p.visible} onChange={(v) => { if (v) setConsentOpen(true); else void club.setVisible(false); }} label={p.visible ? l.public : l.private} hint={p.visible ? l.pubText : l.privText} />}
+          {club.consent && p.visible && club.consent.action === "publish" && <p className="mt-3 text-[0.78rem] text-dim" data-testid="club-consent-trace">{activeLocale(state.locale) === "en" ? "Consent given on" : "Consentement donné le"} {new Date(club.consent.at).toLocaleDateString(activeLocale(state.locale) === "en" ? "en-GB" : "fr-FR", { day: "numeric", month: "long", year: "numeric" })}.</p>}
           <p className="mt-3 text-[0.78rem] text-dim">{l.publicList}</p>
         </div>
       </section>
+      <ClubConsentSheet open={consentOpen} onClose={() => setConsentOpen(false)} locale={activeLocale(state.locale) === "en" ? "en" : "fr"} onConfirm={async (version) => { const r = await club.setVisible(true, version); return r.ok ? { ok: true } : { ok: false, message: r.message }; }} />
       <ClubEditSheet open={editing} onClose={() => setEditing(false)} club={club} l={l} />
     </>
   );
