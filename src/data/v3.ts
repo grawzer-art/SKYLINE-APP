@@ -76,7 +76,7 @@ export const sitemap: ScreenNode[] = [
     { label: "MESSAGES", href: "/v3/club/messages", note: "Demandes · conversations", children: [
       { label: "Conversation", href: "/v3/club/messages/m1" },
     ] },
-    { label: "SOUVENIRS", href: "/v3/club/memories", note: "Archives officielles" },
+    { label: "SOUVENIRS", href: "/v3/club/memories", note: "Archives SKYLINE" },
   ] },
   { label: "PROFIL & PARAMÈTRES (via l'avatar)", href: "/v3/profile", note: "Confidentialité · blocages · notifications · données" },
   { label: "SKYLINE HQ (organisateurs, environnement séparé)", href: "/v3/wireframes#hq", note: "Wireframe" },

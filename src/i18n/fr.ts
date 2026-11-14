@@ -99,7 +99,7 @@ export const fr = {
   // Visuel V3.1
   "club.eyebrow": "The membership", "club.title": "Club", "club.tagline": "From France to Ibiza", "club.signature": "The journey never ends.",
   "club.card.member": "Member", "club.card.tilt": "Activer le reflet au mouvement", "club.card.tilt.on": "Reflet au mouvement actif", "club.card.since": "Membre depuis", "club.card.number": "N°", "club.card.pending": "En attente", "club.card.since.value": "Ibiza 2027",
-  "club.tile.space": "Votre monde, votre histoire", "club.tile.members": "Rencontrer la communauté", "club.tile.messages": "Conversations et demandes", "club.tile.souvenirs": "Archives officielles",
+  "club.tile.space": "Votre monde, votre histoire", "club.tile.members": "Rencontrer la communauté", "club.tile.messages": "Conversations et demandes", "club.tile.souvenirs": "Archives SKYLINE",
   "club.tile.locked": "Disponible après activation de la communauté",
   "club.join": "Rejoindre la communauté", "club.join.text": "Faites connaissance avant Ibiza, gardez vos contacts après.", "club.join.cta": "Voir les conditions", "club.active": "Communauté activée",
   "club.history": "Historique de participation", "club.history.empty": "Votre participation à Ibiza 2027 apparaîtra ici.", "club.history.dates": "[Dates officielles]", "club.next": "À venir", "club.next.text": "Les prochaines éditions et accès anticipés apparaîtront ici lorsqu'ils seront réellement proposés.",

@@ -91,7 +91,7 @@ export const en: Record<Key, string> = {
   "sim.trip": "Trip details", "sim.trip.none": "None", "sim.trip.demo": "Fictional preview", "sim.media": "Authorised media", "sim.media.none": "None", "sim.media.tone": "Test signal",
   "club.eyebrow": "The membership", "club.title": "Club", "club.tagline": "From France to Ibiza", "club.signature": "The journey never ends.",
   "club.card.member": "Member", "club.card.tilt": "Enable motion shine", "club.card.tilt.on": "Motion shine on", "club.card.since": "Member since", "club.card.number": "No.", "club.card.pending": "Pending", "club.card.since.value": "Ibiza 2027",
-  "club.tile.space": "Your world, your story", "club.tile.members": "Meet the community", "club.tile.messages": "Conversations and requests", "club.tile.souvenirs": "Official archives",
+  "club.tile.space": "Your world, your story", "club.tile.members": "Meet the community", "club.tile.messages": "Conversations and requests", "club.tile.souvenirs": "SKYLINE archives",
   "club.tile.locked": "Available once the community is enabled",
   "club.join": "Join the community", "club.join.text": "Get to know people before Ibiza, keep your contacts afterwards.", "club.join.cta": "See the conditions", "club.active": "Community enabled",
   "club.history": "Participation history", "club.history.empty": "Your participation in Ibiza 2027 will appear here.", "club.history.dates": "[Official dates]", "club.next": "Coming up", "club.next.text": "Future editions and early access will appear here when they are actually offered.",

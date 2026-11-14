@@ -61,7 +61,7 @@ export function MembershipCard({ name, since, number, member, sinceLabel, number
   return (
     <MetalSurface metal={metal} label={`${member} SKYLINE — ${name}`}>
       <span aria-hidden className="pointer-events-none absolute -bottom-20 -right-16 opacity-[0.055] [filter:drop-shadow(0_1px_0_rgba(255,255,255,0.4))_drop-shadow(0_-1px_0_rgba(0,0,0,0.9))]"><Emblem size={240} /></span>
-      <div className="relative flex aspect-[1.586/1] flex-col justify-between gap-2 p-[1.15rem]">
+      <div className="relative flex aspect-[1.586/1] flex-col justify-between gap-2 p-[1.15rem] max-[359px]:gap-1.5 max-[359px]:p-[0.9rem]">
         <div className="flex items-start justify-between">
           <Emblem size={52} className="[filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.8))]" />
           <div className="text-right font-mono uppercase">
@@ -71,10 +71,10 @@ export function MembershipCard({ name, since, number, member, sinceLabel, number
           </div>
         </div>
         <div>
-          <p className="font-mono text-[0.7rem] uppercase tracking-[0.34em] text-silver/80">{member}</p>
-          <FitName name={name} max="2.25rem" min="1.2rem" gutter="4.9rem" className="metal-text font-display mt-1.5 uppercase leading-[1.04]" />
-          <div aria-hidden className="mt-3 h-px bg-gradient-to-r from-silver/55 via-silver/15 to-transparent" />
-          <div className="mt-2.5 flex items-end justify-between font-mono text-[0.7rem] uppercase tracking-[0.2em] text-cloud/68">
+          <p className="font-mono text-[0.7rem] uppercase tracking-[0.34em] text-silver/80 max-[359px]:leading-none">{member}</p>
+          <FitName name={name} max="2.25rem" min="1.2rem" gutter="4.9rem" className="metal-text font-display mt-1.5 uppercase leading-[1.04] max-[359px]:mt-1" />
+          <div aria-hidden className="mt-3 h-px bg-gradient-to-r from-silver/55 via-silver/15 to-transparent max-[359px]:mt-2" />
+          <div className="mt-2.5 flex items-end justify-between font-mono text-[0.7rem] uppercase tracking-[0.2em] text-cloud/68 max-[359px]:mt-2 max-[359px]:leading-tight">
             <p>{sinceLabel}<span className="mt-1 block text-[0.72rem] tracking-[0.16em] text-cloud/85">{since}</span></p>
             <p className="text-right">{numberLabel}<span className="mt-1 block text-[0.72rem] tracking-[0.16em] text-cloud/85">{number}</span></p>
           </div>

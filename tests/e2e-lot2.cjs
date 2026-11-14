@@ -38,7 +38,7 @@ const cardOk = (loc) => loc.evaluate((card) => { const cr = card.getBoundingClie
       const card = p.locator('[aria-label^="Member SKYLINE"]'); const cn = card.locator(".metal-text").first(); const g = await fits(cn); const co = await cardOk(card.first());
       ok(`${tag} CARTE CLUB (${label}) : nom jamais tronqué`, !g.ellipsis && !g.clipped && !g.out && g.lines <= 3 && g.size >= 16, JSON.stringify(g));
       ok(`${tag} CARTE CLUB (${label}) : dernière ligne (« Membre depuis / N° ») entièrement visible dans la carte`, co.bottom <= co.cardBottom + 0.5, JSON.stringify(co));
-      if (!name && w >= 375) ok(`${tag} CARTE CLUB : proportions de la carte conservées quand le contenu tient (≈ 1,586)`, Math.abs(co.w / co.h - 1.586) < 0.04, (co.w / co.h).toFixed(3));
+      if (!name) ok(`${tag} CARTE CLUB : proportions d'origine conservées (≈ 1,586) avec le nom par défaut, y compris à 320 px`, Math.abs(co.w / co.h - 1.586) < 0.04, (co.w / co.h).toFixed(3));
       ok(`${tag} CARTE CLUB (${label}) : « En attente » (jamais de crochets)`, (await card.getByText("En attente").count()) === 1 && !/\[|\]/.test(await card.innerText()));
     }
     /* TUILES CLUB : sous-titres entiers, Messages non cliquable, My Space / Members accessibles */
@@ -51,7 +51,7 @@ const cardOk = (loc) => loc.evaluate((card) => { const cr = card.getBoundingClie
     ok(`${tag} TUILES CLUB : My Space, Members et Souvenirs restent des liens`, (await p.locator('nav[aria-label="Club"] a[href="/v3/club/space"]').count()) === 1 && (await p.locator('nav[aria-label="Club"] a[href="/v3/club/members"]').count()) === 1 && (await p.locator('nav[aria-label="Club"] a[href="/v3/club/memories"]').count()) === 1);
     await tile.evaluate((e) => e.scrollIntoView({ block: "center" })); await p.waitForTimeout(300); await tile.click().catch(() => {}); await p.waitForTimeout(500); ok(`${tag} TUILE MESSAGES : un tap ne change pas de page`, new URL(p.url()).pathname === "/v3/club");
     await p.goto(A + "/v3/club/memories"); await p.waitForTimeout(1200); t = await p.evaluate(() => document.body.innerText);
-    ok(`${tag} SOUVENIRS : « Première édition » à la place d'« Aperçu »`, /première édition/i.test(t) && !/Aperçu/.test(t) && (await p.title()) === "Souvenirs — SKYLINE");
+    ok(`${tag} SOUVENIRS : « Archives SKYLINE », aucune affirmation historique (ni « Aperçu », ni « première édition », ni « édition précédente », ni « officielles »)`, /archives skyline/i.test(t) && !/Aperçu|première édition|édition précédente|archives officielles/i.test(t) && (await p.title()) === "Souvenirs — SKYLINE");
     /* titres des quatre onglets */
     const titles = []; for (const [path, exp] of [["/v3", "SKYLINE"], ["/v3/flight", "My Flight — SKYLINE"], ["/v3/explore", "Explore — SKYLINE"], ["/v3/club", "Club — SKYLINE"], ["/v3/explore/sound", "Skyline Sound — SKYLINE"], ["/v3/club/space", "My Space — SKYLINE"], ["/v3/account", "Mon compte — SKYLINE"]]) { await p.goto(A + path); await p.waitForTimeout(500); const tt = await p.title(); if (tt !== exp) titles.push(`${path}: « ${tt} » ≠ « ${exp} »`); }
     ok(`${tag} TITRES : cohérents sur HOME, MY FLIGHT, EXPLORE, CLUB, SOUND, My Space, compte (aucun « Prototype »)`, titles.length === 0, titles.join(" ; "));
