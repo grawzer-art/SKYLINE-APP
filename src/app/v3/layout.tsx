@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { V3Shell } from "@/components/v3/V3Shell";
 
 export const metadata: Metadata = {
-  title: "SKYLINE — Prototype V3",
-  robots: { index: false, follow: false }, // prototype de conception : jamais indexé
+  title: { default: "SKYLINE", template: "%s — SKYLINE" },
+  robots: { index: false, follow: false }, // application participants : jamais indexée (en plus de l'en-tête X-Robots-Tag hors production)
 };
 
 export default function V3Layout({ children }: { children: React.ReactNode }) {

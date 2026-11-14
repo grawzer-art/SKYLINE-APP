@@ -5,7 +5,7 @@ import {
   LIMITS, canRequestContact, isEligible, isRateLimited, missingConditions, requestsRemaining, validateIntro, validateMessage, validatePseudo,
   type Eligibility, type MessageProblem, type RequestBlock,
 } from "@/domain/community";
-import { translate, type TKey, type Vars } from "@/i18n";
+import { activeLocale, translate, type TKey, type Vars } from "@/i18n";
 import { useClock } from "@/lib/useClock";
 import { useProto, type Proto } from "@/lib/useProto";
 import { useExperience } from "@/lib/experience/useExperience";
@@ -34,7 +34,7 @@ export function useCommunity() {
   const eligible = isEligible(eligibility);
   const missing = missingConditions(eligibility);
 
-  const t = useCallback((key: TKey, vars?: Vars) => translate(state.locale, key, vars), [state.locale]);
+  const t = useCallback((key: TKey, vars?: Vars) => translate(activeLocale(state.locale), key, vars), [state.locale]);
 
   const member = useCallback((id: string): Member | undefined => allMembers.find((m) => m.id === id), []);
 
@@ -95,7 +95,7 @@ export function useCommunity() {
     if (!v.ok) return v;
     const times = messagesOf(id).filter((m) => m.from === "me" && m.ts).map((m) => m.ts as number);
     if (isRateLimited(times, now())) return { ok: false, reason: "rate" };
-    update((s) => ({ ...s, messages: { ...s.messages, [id]: [...(s.messages[id] ?? []), { from: "me", text: v.text, t: translate(s.locale, "chat.now"), ts: now() }] } }));
+    update((s) => ({ ...s, messages: { ...s.messages, [id]: [...(s.messages[id] ?? []), { from: "me", text: v.text, t: translate(activeLocale(s.locale), "chat.now"), ts: now() }] } }));
     return { ok: true };
   };
   const markRead = (id: string) => { if ((state.unread[id] ?? 0) > 0) update((s) => ({ ...s, unread: { ...s.unread, [id]: 0 } })); };

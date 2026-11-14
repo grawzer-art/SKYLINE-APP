@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ScreenTitle, Block, Switch, Initials } from "./ui";
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
-import { locales } from "@/i18n";
+import { LANGUAGE_SWITCH_ENABLED, locales } from "@/i18n";
 import { useCommunity } from "@/lib/useCommunity";
 import { identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 import { useExperience } from "@/lib/experience/useExperience";
@@ -30,16 +30,16 @@ export function V3Profile() {
       <ScreenTitle eyebrow="Compte" title="Profil" />
       <AccountBlock />
       {(x.review || real) && <Block>
-        <div className="flex items-center gap-4"><Initials name={shownName || "?"} size={64} /><div><p className="font-display text-[1.15rem]" data-testid="profile-name">{shownName || (real ? "—" : "")}</p><Link href="/v3/club/space" className="font-mono text-[0.72rem] uppercase tracking-[0.18em] text-sky">{t("space.title")} →</Link></div></div>
+        <div className="flex items-center gap-4"><Initials name={shownName || (real && identity.status === "ready" ? identity.email : "") || "·"} size={64} /><div><p className="font-display text-[1.15rem]" data-testid="profile-name">{shownName || (real ? "Profil à compléter" : "")}</p><Link href="/v3/club/space" className="inline-flex min-h-11 items-center font-mono text-[0.72rem] uppercase tracking-[0.18em] text-sky">{t("space.title")} →</Link></div></div>
       </Block>}
-      <Block label={t("profile.language")}>
+      {LANGUAGE_SWITCH_ENABLED && <Block label={t("profile.language")}>
         <div role="radiogroup" aria-label={t("profile.language")} className="grid grid-cols-2 gap-2">
           {locales.map((l) => (
             <button key={l.id} type="button" role="radio" aria-checked={state.locale === l.id} onClick={() => update((p) => ({ ...p, locale: l.id }))}
               className={cn("min-h-12 border px-3 text-[0.9rem] transition", state.locale === l.id ? "border-sky bg-sky text-jet" : "border-line bg-surface-1")}>{l.label}</button>
           ))}
         </div>
-      </Block>
+      </Block>}
       {x.review && <Block label="Communauté">
         <Link href="/v3/club/community" className="flex min-h-14 items-center justify-between border-y border-line text-[0.95rem]">{c.eligible ? t("gate.done.title") : t("gate.title")}<span aria-hidden className="text-silver">→</span></Link>
       </Block>}

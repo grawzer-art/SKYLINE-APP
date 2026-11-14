@@ -34,7 +34,7 @@ export function V3Shell({ children }: { children: React.ReactNode }) {
       <header className={cn("fixed inset-x-0 top-0 z-50 mx-auto w-full max-w-[480px] border-b px-5 pt-[var(--safe-top)] transition-[background-color,backdrop-filter,border-color] duration-300", scrolled ? "border-line bg-jet/85 backdrop-blur-xl" : "border-transparent bg-gradient-to-b from-jet/80 to-transparent")}>
         {pathname !== "/v3/account" && <p className="pt-1.5 whitespace-nowrap font-mono text-[0.72rem] uppercase tracking-[0.06em] text-sunset/85"data-testid="proto-banner">{x.review ? "Revue interne · données fictives" : x.surface === "loading" ? "\u00a0" : x.toConfirmDates ? "Programme à confirmer" : "\u00a0"}</p>}
         <div className="flex h-12 items-center justify-between">
-          <Link href="/v3" aria-label="SKYLINE — accueil du prototype" className="flex min-h-11 items-center"><Wordmark /></Link>
+          <Link href="/v3" aria-label="SKYLINE — accueil" className="flex min-h-11 items-center"><Wordmark /></Link>
           <div className="flex items-center gap-1.5">
             {x.showSimulation && (<button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog"
               className="inline-flex h-11 items-center gap-1.5 rounded-full border border-cloud/25 px-3 font-mono text-[0.7rem] uppercase tracking-[0.14em] transition active:scale-95">

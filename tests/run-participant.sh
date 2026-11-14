@@ -24,5 +24,6 @@ PART_A=http://localhost:3105 PART_OFF=http://localhost:3106 PART_BAD=http://loca
 if [ "${SKIP_CLUB:-0}" != 1 ]; then PART_A=http://localhost:3105 PART_OFF=http://localhost:3106 MOCK=http://127.0.0.1:3199 node tests/e2e-club.cjs || code=$?; fi
 if [ "${SKIP_CLUB:-0}" != 1 ]; then PART_A=http://localhost:3105 SIGNUP_ON=http://localhost:3108 SIGNUP_BAD=http://localhost:3109 SIGNUP_CAP=http://localhost:3110 SIGNUP_PREVIEW=http://localhost:3111 MOCK=http://127.0.0.1:3199 node tests/e2e-signup.cjs || code=$?; fi
 if [ "${SKIP_CLUB:-0}" != 1 ]; then PART_A=http://localhost:3105 PART_OFF=http://localhost:3106 REV=http://localhost:3112 PREV=http://localhost:3113 PROD=http://localhost:3114 MOCK=http://127.0.0.1:3199 node tests/e2e-v31.cjs || code=$?; fi
+if [ "${SKIP_CLUB:-0}" != 1 ]; then PART_A=http://localhost:3105 PART_OFF=http://localhost:3106 MOCK=http://127.0.0.1:3199 node tests/e2e-lot2.cjs || code=$?; fi
 for p in 3199 3105 3106 3107 3108 3109 3110 3111 3112 3113 3114; do fuser -k $p/tcp >/dev/null 2>&1 || true; done
 exit $code

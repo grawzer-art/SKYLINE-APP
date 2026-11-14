@@ -17,8 +17,8 @@ t("le contournement DEMO_AUTH=on n'existe plus dans le code", () => {
   const src = readFileSync(new URL("../src/lib/auth/token.ts", import.meta.url), "utf8");
   assert.ok(!/DEMO_AUTH === "on"/.test(src));
 });
-t("noindex hors production : en-tête X-Robots-Tag dans next.config.ts, sans en-tête ajouté en production", () => {
+t("noindex hors production : en-tête X-Robots-Tag dans next.config.ts, noindex absent en production", () => {
   const src = readFileSync(new URL("../next.config.ts", import.meta.url), "utf8");
-  assert.ok(/X-Robots-Tag/.test(src) && /VERCEL_ENV === "production"\) return \[\]/.test(src));
+  assert.ok(/X-Robots-Tag/.test(src) && /VERCEL_ENV !== "production"\) headers\.push/.test(src));
 });
 console.log(`${n} tests OK`);

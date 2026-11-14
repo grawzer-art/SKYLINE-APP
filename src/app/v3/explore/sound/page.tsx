@@ -3,7 +3,7 @@ import { V3Sound } from "@/components/v3/V3Sound";
 import { getSoundCollections } from "@/data/sound";
 import { demoContentFromProcess } from "@/lib/experience/demoContent";
 
-export const metadata: Metadata = { title: "SKYLINE — Sound" };
+export const metadata: Metadata = { title: "Skyline Sound" };
 /** Prérendue : les liens aux droits non confirmés et l'outil de test sont décidés ici, au build (fermés par défaut). */
 export default function Page() {
   const demoOk = demoContentFromProcess();

@@ -6,8 +6,8 @@ import { AppShell } from "@/components/layout/AppShell";
 import { SoundProvider } from "@/components/sound/SoundProvider";
 
 export const metadata: Metadata = {
-  title: "SKYLINE — Pre-boarding",
-  description: "SKYLINE IBIZA 2027 — l'app des participants. Version de démonstration.",
+  title: "SKYLINE",
+  description: "SKYLINE IBIZA 2027 — l'app des participants.",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "SKYLINE", statusBarStyle: "black-translucent" },
   icons: { icon: "/icon-192.png", apple: "/icon-192.png" },

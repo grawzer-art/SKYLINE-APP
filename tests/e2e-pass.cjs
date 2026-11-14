@@ -17,7 +17,7 @@ const orient = (p, gamma, beta) => p.evaluate(([g, b]) => window.dispatchEvent(O
     ok("CAPTEURS (sans permission requise) : l'inclinaison déplace lumière et relief", Number.isFinite(parseFloat(v.ry)) && parseFloat(v.ry) !== 0 && v.mx !== "" && v.mx !== "28.0%");
     await orient(p, 90, 200); for (let i = 0; i < 25; i++) await orient(p, 90, 200); await p.waitForTimeout(300); const m = await vars(p);
     ok("PASS 3D : rotation plafonnée (≤ 7° en Y, ≤ 6° en X) et lissée", Number.isFinite(parseFloat(m.ry)) && Math.abs(parseFloat(m.ry)) <= 7 && Math.abs(parseFloat(m.rx)) <= 6, JSON.stringify(m));
-    ok("PASS 3D : le QR reste hors des calques parallaxe (emplacement stable, fond opaque)", await p.getByRole("img", { name: /Emplacement du QR/ }).evaluate((e) => !e.style.transform && getComputedStyle(e).backgroundColor !== "rgba(0, 0, 0, 0)"));
+    ok("PASS 3D (Lot 2) : aucun cadre ni emplacement de QR sur le pass", (await p.getByRole("img", { name: /QR/ }).count()) === 0 && (await p.getByText(/^QR$/).count()) === 0);
     ok("PASS 3D : aucune erreur JS", errs.length === 0, errs.join("|"));
     await ctx.close();
   }

@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { SignupComplete } from "@/components/participant/SignupComplete";
 import { signupConfig } from "@/lib/participant/config";
+
+export const metadata: Metadata = { title: "Inscription" };
 
 async function Complete() {
   await connection(); const c = signupConfig(); if (c.mode !== "on") notFound();

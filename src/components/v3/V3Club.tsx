@@ -49,7 +49,7 @@ export function V3Club() {
       <nav aria-label={t("club.title")} className="space-y-2.5 px-5 pt-5">
         <NavTile href="/v3/club/space" title="My Space" sub={x.surface === "open" ? "Bientôt" : t("club.tile.space")} visual={visuals.ceiling} />
         <NavTile href="/v3/club/members" title="Members" sub={x.surface === "open" ? "Bientôt" : locked ? t("club.tile.locked") : t("club.tile.members")} visual={visuals.airport} locked={locked} />
-        <NavTile href="/v3/club/messages" title="Messages" sub={real ? "Bientôt" : locked ? t("club.tile.locked") : nReq ? t("messages.tab.requests.n", { n: nReq }) : c.unreadTotal ? t("messages.unread", { count: c.unreadTotal }) : t("club.tile.messages")} visual={visuals.sunset} badge={real ? undefined : msgBadge} locked={locked} />
+        <NavTile href="/v3/club/messages" soon={real} title="Messages" sub={real ? "Bientôt" : locked ? t("club.tile.locked") : nReq ? t("messages.tab.requests.n", { n: nReq }) : c.unreadTotal ? t("messages.unread", { count: c.unreadTotal }) : t("club.tile.messages")} visual={visuals.sunset} badge={real ? undefined : msgBadge} locked={locked} />
         <NavTile href="/v3/club/memories" title="Souvenirs" sub={t("club.tile.souvenirs")} visual={visuals.warm} />
       </nav>
 

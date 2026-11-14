@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "SKYLINE",
     short_name: "SKYLINE",
-    description: "SKYLINE IBIZA 2027 — démonstration",
+    description: "SKYLINE IBIZA 2027",
     start_url: "/",
     display: "standalone",
     background_color: "#080A0D",

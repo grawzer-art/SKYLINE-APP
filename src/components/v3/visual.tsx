@@ -1,4 +1,5 @@
 "use client";
+import { FitName } from "./FitName";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Emblem } from "@/components/ui/Emblem";
@@ -33,20 +34,23 @@ export function Face({ name, size = 52, tone = "silver", src, className }: { nam
 }
 
 /** Ligne d'accès : vignette photographique, titre, sous-titre. Une seule action par ligne. */
-export function NavTile({ href, title, sub, visual, badge, locked }: { href: string; title: string; sub: string; visual: string; badge?: string; locked?: boolean }) {
-  return (
-    <Link href={href} className="group flex h-[4.75rem] items-stretch overflow-hidden rounded-[6px] border border-cloud/10 bg-surface-1 transition active:scale-[0.99]">
-      <span className="relative block w-[4.75rem] shrink-0"><Photo src={visual} sizes="76px" imgClassName={cn("transition duration-700 group-hover:scale-110", locked && "opacity-50")} /></span>
+export function NavTile({ href, title, sub, visual, badge, locked, soon }: { href: string; title: string; sub: string; visual: string; badge?: string; locked?: boolean; /** Fonction pas encore ouverte : tuile non cliquable, même gabarit, sans flèche. */ soon?: boolean }) {
+  const body = (
+    <>
+      <span className="relative block w-[4.75rem] shrink-0"><Photo src={visual} sizes="76px" imgClassName={cn(!soon && "transition duration-700 group-hover:scale-110", (locked || soon) && "opacity-50")} /></span>
       <span className="flex min-w-0 flex-1 flex-col justify-center px-4">
         <span className="font-display block text-[0.98rem] leading-none">{title}</span>
-        <span className="mt-1.5 block truncate text-[0.78rem] text-cloud/75">{sub}</span>
+        <span className="mt-1.5 line-clamp-2 text-[0.78rem] leading-snug text-cloud/75">{sub}</span>
       </span>
-      <span className="flex items-center gap-3 pr-4">
+      {!soon && <span className="flex items-center gap-3 pr-4">
         {badge && <span className="rounded-[8px] border border-sky/60 px-1.5 py-0.5 font-mono text-[0.7rem] uppercase tracking-[0.14em] text-sky">{badge}</span>}
         <ArrowRight size={16} strokeWidth={1.5} aria-hidden className="text-silver transition group-hover:translate-x-1 motion-reduce:transition-none" />
-      </span>
-    </Link>
+      </span>}
+    </>
   );
+  const box = "group flex h-[4.75rem] items-stretch overflow-hidden rounded-[6px] border border-cloud/10 bg-surface-1";
+  if (soon) return <div role="group" aria-label={`${title} — ${sub}`} data-testid="tile-soon" className={box}>{body}</div>;
+  return <Link href={href} className={cn(box, "transition active:scale-[0.99]")}>{body}</Link>;
 }
 
 /**
@@ -55,9 +59,9 @@ export function NavTile({ href, title, sub, visual, badge, locked }: { href: str
  */
 export function MembershipCard({ name, since, number, member, sinceLabel, numberLabel, demo, metal }: { name: string; since: string; number: string; member: string; sinceLabel: string; numberLabel: string; demo?: boolean; metal: ReturnType<typeof useMetal> }) {
   return (
-    <MetalSurface metal={metal} label={`${member} SKYLINE — ${name}`} className="aspect-[1.586/1]">
+    <MetalSurface metal={metal} label={`${member} SKYLINE — ${name}`}>
       <span aria-hidden className="pointer-events-none absolute -bottom-20 -right-16 opacity-[0.055] [filter:drop-shadow(0_1px_0_rgba(255,255,255,0.4))_drop-shadow(0_-1px_0_rgba(0,0,0,0.9))]"><Emblem size={240} /></span>
-      <div className="relative flex h-full flex-col justify-between p-[1.15rem]">
+      <div className="relative flex aspect-[1.586/1] flex-col justify-between gap-2 p-[1.15rem]">
         <div className="flex items-start justify-between">
           <Emblem size={52} className="[filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.8))]" />
           <div className="text-right font-mono uppercase">
@@ -68,7 +72,7 @@ export function MembershipCard({ name, since, number, member, sinceLabel, number
         </div>
         <div>
           <p className="font-mono text-[0.7rem] uppercase tracking-[0.34em] text-silver/80">{member}</p>
-          <p className="metal-text font-display mt-1.5 truncate text-[clamp(1.7rem,8.6vw,2.25rem)] uppercase leading-[1.02]">{name}</p>
+          <FitName name={name} max="2.25rem" min="1.2rem" gutter="4.9rem" className="metal-text font-display mt-1.5 uppercase leading-[1.04]" />
           <div aria-hidden className="mt-3 h-px bg-gradient-to-r from-silver/55 via-silver/15 to-transparent" />
           <div className="mt-2.5 flex items-end justify-between font-mono text-[0.7rem] uppercase tracking-[0.2em] text-cloud/68">
             <p>{sinceLabel}<span className="mt-1 block text-[0.72rem] tracking-[0.16em] text-cloud/85">{since}</span></p>

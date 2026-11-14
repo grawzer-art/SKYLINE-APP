@@ -13,10 +13,12 @@ const nextConfig: NextConfig = {
     // Anciennes routes participants → V3 (table unique et testée : src/components/layout/nav-items.ts). La route « / » est traitée par src/proxy.ts (choix de l'espace d'abord).
     return legacyRedirects.map((r) => ({ ...r, permanent: false }));
   },
-  // Aucun déploiement non-production (Preview Vercel, local) ne doit être indexé. La production n'est pas modifiée (aucun en-tête ajouté).
+  // En-têtes de sécurité simples, sur toutes les routes (CSP volontairement reportée : iframe SoundCloud, STAFF HQ). Un déploiement non-production n'est jamais indexé
+  // (la production n'ajoute pas X-Robots-Tag).
   async headers() {
-    if (process.env.VERCEL_ENV === "production") return [];
-    return [{ source: "/:path*", headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] }];
+    const headers = [{ key: "X-Content-Type-Options", value: "nosniff" }, { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" }];
+    if (process.env.VERCEL_ENV !== "production") headers.push({ key: "X-Robots-Tag", value: "noindex, nofollow" });
+    return [{ source: "/:path*", headers }];
   },
   partialPrefetching: true,
   turbopack: {

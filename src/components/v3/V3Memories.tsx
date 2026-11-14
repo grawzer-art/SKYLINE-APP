@@ -22,7 +22,7 @@ export function V3Memories() {
   return (
     <>
       <ScreenTitle eyebrow="Club" title="Souvenirs" back={{ href: "/v3/club", label: "Club" }}>
-        <p className="mt-3 flex items-center gap-2 text-[0.85rem] text-cloud/70">Archives officielles <DemoTag>Aperçu</DemoTag></p>
+        <p className="mt-3 flex items-center gap-2 text-[0.85rem] text-cloud/70">Archives officielles <DemoTag>Première édition</DemoTag></p>
       </ScreenTitle>
       {x.phase !== "after" && <Block><p className="border-l border-sky pl-4 text-[0.85rem] text-cloud/80">Les souvenirs d&apos;Ibiza 2027 s&apos;ajouteront ici après l&apos;événement. En attendant : l&apos;édition précédente.</p></Block>}
       <Block label="Édition précédente">

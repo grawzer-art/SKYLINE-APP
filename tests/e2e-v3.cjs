@@ -79,7 +79,7 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
     const { ctx, p } = await mk(); await seed(p, { sim: { reservation: "pending", tone: false, trip: false } }); const vis = (t) => p.getByText(t).locator("visible=true");
     await p.goto(B + "/v3/flight"); await p.waitForTimeout(1500);
     ok("FLIGHT : pass (nom, édition, statut réel)", (await vis("Ibiza 2027").count()) >= 1 && (await vis("En attente de confirmation").count()) === 1);
-    ok("FLIGHT : aucun faux QR (emplacement uniquement)", (await p.locator("canvas, img[alt*='QR' i], svg[aria-label*='QR' i]").count()) === 0 && (await p.getByRole("img", { name: /Emplacement du QR/ }).count()) === 1);
+    ok("FLIGHT : aucun faux QR, aucun cadre de QR (Lot 2)", (await p.locator("canvas, img[alt*='QR' i], svg[aria-label*='QR' i]").count()) === 0 && (await p.getByRole("img", { name: /QR/ }).count()) === 0 && (await p.getByText(/^QR$/).count()) === 0);
     ok("FLIGHT : message unique quand rien n'est confirmé", (await vis("Les détails de votre voyage apparaîtront ici dès leur confirmation.").count()) === 1 && (await vis("À confirmer").count()) === 0);
     await p.getByRole("tab", { name: /Séjour/ }).click(); await p.waitForTimeout(500);
     ok("FLIGHT : onglet séjour", (await vis(/Hébergement, transferts et programme/).count()) === 1);
@@ -173,9 +173,9 @@ fs.writeFileSync(png, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJA
   {
     const { ctx, p } = await mk(); await seed(p, { ...eligible, me: { pseudo: "Alex", city: "Paris", bio: "", genres: ["House"], visible: true }, locale: "en" }); const vis = (t) => p.getByText(t).locator("visible=true");
     await p.goto(B + "/v3/club/members"); await p.waitForTimeout(1000);
-    ok("EN : annuaire traduit", (await vis("8 visible members").count()) === 1 && (await vis(/Alphabetical order/).count()) === 1);
-    await p.goto(B + "/v3/club/space"); await p.waitForTimeout(800); ok("EN : My Space traduit", (await p.getByRole("button", { name: "Edit" }).first().count()) === 1);
-    await p.goto(B + "/v3/club/messages"); await p.waitForTimeout(800); ok("EN : messages traduits", (await vis("Conversations").count()) >= 1 && (await vis(/1 unread/).count()) === 1);
+    ok("LOT 2 — langue « en » mémorisée : l'annuaire reste en FRANÇAIS (sélecteur masqué, aucune appli à moitié traduite)", (await vis("8 visible members").count()) === 0 && (await vis(/Alphabetical order/).count()) === 0 && (await vis(/membres visibles/).count()) === 1);
+    await p.goto(B + "/v3/club/space"); await p.waitForTimeout(800); ok("LOT 2 — langue « en » mémorisée : My Space reste en français", (await p.getByRole("button", { name: "Edit" }).count()) === 0 && (await p.getByRole("button", { name: "Modifier" }).first().count()) === 1);
+    await p.goto(B + "/v3/club/messages"); await p.waitForTimeout(800); ok("LOT 2 — langue « en » mémorisée : messages en français", (await vis(/1 unread/).count()) === 0 && (await vis(/1 non lu/).count()) === 1);
     await ctx.close();
   }
 

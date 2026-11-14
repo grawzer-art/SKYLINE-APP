@@ -14,6 +14,7 @@ import { useClubProfile } from "@/lib/club/useClubProfile";
 import { authActive, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 import { useProto } from "@/lib/useProto";
 import { cn } from "@/lib/cn";
+import { activeLocale } from "@/i18n";
 
 const L = {
   fr: { back: "Club", title: "My Space", loading: "Chargement de votre profil CLUB…", signin: "Connectez-vous pour gérer votre profil CLUB.", signinCta: "Se connecter",
@@ -38,7 +39,7 @@ const L = {
 
 /** MY SPACE en mode RÉEL : le profil CLUB de la personne connectée (Supabase), distinct de son identité privée. Aucun profil fictif. */
 export function ClubSpaceReal() {
-  const { state } = useProto(); const l = L[state.locale === "en" ? "en" : "fr"];
+  const { state } = useProto(); const l = L[activeLocale(state.locale) === "en" ? "en" : "fr"];
   const identity = useParticipantIdentity(); const owner = identity.status === "ready" ? identity.email : null;
   const club = useClubProfile(owner);
   const [editing, setEditing] = useState(false);
