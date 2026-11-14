@@ -24,8 +24,8 @@ export function V3Memories() {
       <ScreenTitle eyebrow="Club" title="Souvenirs" back={{ href: "/v3/club", label: "Club" }}>
         <p className="mt-3 flex items-center gap-2 text-[0.85rem] text-cloud/70"><DemoTag>Archives SKYLINE</DemoTag></p>
       </ScreenTitle>
-      {x.phase !== "after" && <Block><p className="border-l border-sky pl-4 text-[0.85rem] text-cloud/80">Les souvenirs d&apos;Ibiza 2027 s&apos;ajouteront ici après l&apos;événement. En attendant : les archives SKYLINE.</p></Block>}
-      <Block label="Archives SKYLINE">
+      {x.phase !== "after" && <Block><p className="border-l border-sky pl-4 text-[0.85rem] text-cloud/80">Les souvenirs d&apos;Ibiza 2027 s&apos;ajouteront ici après l&apos;événement. Revivez les moments SKYLINE.</p></Block>}
+      <Block label="Photographies">
         <ul className="grid grid-cols-2 gap-2">
           {archive.map((a, i) => (
             <li key={a.src}>
@@ -36,7 +36,6 @@ export function V3Memories() {
           ))}
         </ul>
       </Block>
-      <p className="px-5 pb-8 pt-4 text-[0.72rem] text-dim">En production : seules les photos et vidéos officielles dont la diffusion est autorisée, avec droit de retrait pour les personnes photographiées.</p>
       <Sheet open={!!view} onClose={() => setView(null)} eyebrow="Archives SKYLINE" title="Souvenir">
         {view && <div className="relative -mx-5 aspect-[4/5] overflow-hidden"><Photo src={view.src} alt={view.alt} objectPosition={view.pos} sizes="(max-width: 480px) 100vw, 480px" /></div>}
       </Sheet>
