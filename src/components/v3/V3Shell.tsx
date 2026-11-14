@@ -12,6 +12,8 @@ import { useCommunity } from "@/lib/useCommunity";
 import { locales } from "@/i18n";
 import { identityName, useParticipantIdentity } from "@/lib/participant/useParticipantIdentity";
 import { Initials } from "./ui";
+import { headerBack, headerLabel, headerMode } from "./headerMode";
+import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 
@@ -27,10 +29,25 @@ export function V3Shell({ children }: { children: React.ReactNode }) {
   const identity = useParticipantIdentity(); const x = useExperience();
   const avatarName = x.surface === "review" ? state.me.pseudo : x.surface === "account" ? identityName(identity) ?? "" : "";   // jamais d'identité de démonstration hors revue
 
+  const compact = headerMode(pathname, x.review) === "compact"; const back = headerBack(pathname);
+
   if (bare) return <>{children}</>; // documents de conception : plein cadre, sans chrome d'application
 
   return (
     <>
+      {compact ? (
+        <header data-testid="header-compact" className={cn("fixed inset-x-0 top-0 z-50 mx-auto w-full max-w-[480px] border-b px-5 pt-[var(--safe-top)] transition-[background-color,backdrop-filter,border-color] duration-300", scrolled ? "border-line bg-jet/85 backdrop-blur-xl" : "border-transparent bg-gradient-to-b from-jet/80 to-transparent")}>
+          <div className="flex h-11 items-center justify-between">
+            <div className="flex min-w-0 items-center gap-2.5">
+              {back && <Link href={back.href} aria-label={`Retour : ${back.label}`} className="-ml-[13px] grid size-11 shrink-0 place-items-center text-cloud/85"><ArrowLeft size={18} strokeWidth={1.5} aria-hidden /></Link>}
+              <Link href="/v3" aria-label="SKYLINE — accueil" className="flex min-h-11 shrink-0 items-center"><Wordmark size="sm" /></Link>
+              <span aria-hidden className="h-3.5 w-px shrink-0 bg-cloud/30" />
+              <span data-testid="header-label" className="truncate font-mono text-[0.72rem] uppercase tracking-[0.16em] text-silver">{headerLabel(pathname)}</span>
+            </div>
+            <Link href="/v3/profile" aria-label="Profil et paramètres" className="-mr-[7px] grid size-11 shrink-0 place-items-center"><Initials name={avatarName || "·"} size={30} /></Link>
+          </div>
+        </header>
+      ) : (
       <header className={cn("fixed inset-x-0 top-0 z-50 mx-auto w-full max-w-[480px] border-b px-5 pt-[var(--safe-top)] transition-[background-color,backdrop-filter,border-color] duration-300", scrolled ? "border-line bg-jet/85 backdrop-blur-xl" : "border-transparent bg-gradient-to-b from-jet/80 to-transparent")}>
         {pathname !== "/v3/account" && <p className="pt-1.5 whitespace-nowrap font-mono text-[0.72rem] uppercase tracking-[0.06em] text-sunset/85"data-testid="proto-banner">{x.review ? "Revue interne · données fictives" : x.surface === "loading" ? "\u00a0" : x.toConfirmDates ? "Programme à confirmer" : "\u00a0"}</p>}
         <div className="flex h-12 items-center justify-between">
@@ -44,6 +61,7 @@ export function V3Shell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </header>
+      )}
 
       <div className="min-h-dvh pb-[calc(var(--nav-h)+var(--safe-bottom)+2.5rem)]">{children}</div>
 

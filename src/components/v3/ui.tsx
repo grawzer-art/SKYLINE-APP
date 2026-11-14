@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, Check } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import { useCompactHeader } from "./useHeaderMode";
 
 /** Étiquette « fictif » : tout contenu du prototype est une démonstration. */
 export const DemoTag = ({ children = "Démo" }: { children?: ReactNode }) => (
@@ -20,6 +21,14 @@ export function Initials({ name, size = 44, className }: { name: string; size?: 
 }
 
 export function ScreenTitle({ eyebrow, title, back, children }: { eyebrow: string; title: string; back?: { href: string; label: string }; children?: ReactNode }) {
+  const compact = useCompactHeader();
+  // V3.2 : le nom de l'écran et le retour vivent dans l'en-tête compact ; il ne reste qu'un <h1> pour les lecteurs d'écran.
+  if (compact) return (
+    <header className="px-5 pt-[calc(var(--safe-top)+44px+1rem)]">
+      <h1 className="sr-only">{title}</h1>
+      {children}
+    </header>
+  );
   return (
     <header className="px-5 pt-[calc(var(--safe-top)+5.25rem)]">
       {back && (

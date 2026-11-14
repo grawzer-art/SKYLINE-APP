@@ -86,7 +86,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
 
   /* ===== 7. Identité privée vs CLUB : écrans ===== */
   await go(p1, "/v3/profile", p1.getByTestId("profile-name").filter({ hasText: /\S/ })); ok("PROFIL : le nom affiché vient du COMPTE (jamais de pseudo de démonstration) ; pas de bloc de simulation", !FICTIVE.test(await p1.locator("body").innerText()) && (await p1.getByText("Communauté", { exact: true }).count()) === 0);
-  await go(p1, "/v3/club", p1.getByRole("heading", { level: 1 })); ok("CLUB : tuiles réelles (My Space, Members) accessibles ; Messages « Bientôt » ; pas d'invitation simulée", (await vis(p1.getByText("Bientôt").first())) && (await p1.getByText(/Rejoindre|Join/i).count()) === 0);
+  await go(p1, "/v3/club", p1.getByRole("heading", { level: 1 })); ok("CLUB (V3.2) : accès réels Mon profil CLUB, Membres, Souvenirs ; Messages masqué ; pas d'invitation simulée", (await vis(p1.locator('nav[aria-label="Club"] a[href="/v3/club/space"]'))) && (await p1.getByText(/Messages|Bientôt/).count()) === 0 && (await p1.getByText(/Rejoindre|Join/i).count()) === 0);
   await go(p1, "/v3/flight", p1.getByRole("heading", { level: 1 })); ok("PASS : aucun QR code, même pour une réservation vérifiée côté serveur, et plus de cadre de QR (Lot 2)", (await p1.locator("svg[aria-label*=QR], canvas, img[alt*=QR]").count()) === 0 && (await p1.getByText(/remis par l'équipe/).count()) === 0 && (await vis(p1.getByText(/Réservation vérifiée/))));
 
   /* ===== 8. Indisponible (migration non appliquée) ===== */

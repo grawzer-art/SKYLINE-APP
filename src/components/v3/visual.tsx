@@ -1,11 +1,7 @@
 "use client";
-import { FitName } from "./FitName";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { Emblem } from "@/components/ui/Emblem";
 import { Photo } from "@/components/ui/Photo";
-import { DemoTag } from "./ui";
-import { MetalSurface, type useMetal } from "./metal";
 import { cn } from "@/lib/cn";
 
 /** Fond photographique plein cadre avec dégradés de lisibilité locaux (haut pour l'en-tête, bas pour le texte). */
@@ -34,53 +30,19 @@ export function Face({ name, size = 52, tone = "silver", src, className }: { nam
 }
 
 /** Ligne d'accès : vignette photographique, titre, sous-titre. Une seule action par ligne. */
-export function NavTile({ href, title, sub, visual, badge, locked, soon }: { href: string; title: string; sub: string; visual: string; badge?: string; locked?: boolean; /** Fonction pas encore ouverte : tuile non cliquable, même gabarit, sans flèche. */ soon?: boolean }) {
-  const body = (
-    <>
-      <span className="relative block w-[4.75rem] shrink-0"><Photo src={visual} sizes="76px" imgClassName={cn(!soon && "transition duration-700 group-hover:scale-110", (locked || soon) && "opacity-50")} /></span>
-      <span className="flex min-w-0 flex-1 flex-col justify-center px-4">
-        <span className="font-display block text-[0.98rem] leading-none">{title}</span>
+export function NavTile({ href, title, sub, visual, badge, locked }: { href: string; title: string; sub: string; visual: string; badge?: string; locked?: boolean }) {
+  return (
+    <Link href={href} className="group flex min-h-16 items-stretch overflow-hidden rounded-[6px] border border-cloud/10 bg-surface-1 transition active:scale-[0.99]">
+      <span className="relative block w-16 shrink-0"><Photo src={visual} sizes="64px" imgClassName={cn("transition duration-700 group-hover:scale-110", locked && "opacity-50")} /></span>
+      <span className="flex min-w-0 flex-1 flex-col justify-center px-3.5 py-2.5">
+        <span className="font-display block text-[0.98rem] leading-[1.05]">{title}</span>
         <span className="mt-1.5 line-clamp-2 text-[0.78rem] leading-snug text-cloud/75">{sub}</span>
       </span>
-      {!soon && <span className="flex items-center gap-3 pr-4">
+      <span className="flex items-center gap-3 pr-4">
         {badge && <span className="rounded-[8px] border border-sky/60 px-1.5 py-0.5 font-mono text-[0.7rem] uppercase tracking-[0.14em] text-sky">{badge}</span>}
         <ArrowRight size={16} strokeWidth={1.5} aria-hidden className="text-silver transition group-hover:translate-x-1 motion-reduce:transition-none" />
-      </span>}
-    </>
-  );
-  const box = "group flex h-[4.75rem] items-stretch overflow-hidden rounded-[6px] border border-cloud/10 bg-surface-1";
-  if (soon) return <div role="group" aria-label={`${title} — ${sub}`} data-testid="tile-soon" className={box}>{body}</div>;
-  return <Link href={href} className={cn(box, "transition active:scale-[0.99]")}>{body}</Link>;
-}
-
-/**
- * Carte membre SKYLINE CLUB : objet collector noir et argent, emblème officiel gravé en filigrane, nom en relief.
- * Distincte du pass MY FLIGHT (accès personnel à l'événement). Numéro et date : emplacements tant que l'équipe ne les attribue pas.
- */
-export function MembershipCard({ name, since, number, member, sinceLabel, numberLabel, demo, metal }: { name: string; since: string; number: string; member: string; sinceLabel: string; numberLabel: string; demo?: boolean; metal: ReturnType<typeof useMetal> }) {
-  return (
-    <MetalSurface metal={metal} label={`${member} SKYLINE — ${name}`}>
-      <span aria-hidden className="pointer-events-none absolute -bottom-20 -right-16 opacity-[0.055] [filter:drop-shadow(0_1px_0_rgba(255,255,255,0.4))_drop-shadow(0_-1px_0_rgba(0,0,0,0.9))]"><Emblem size={240} /></span>
-      <div className="relative flex aspect-[1.586/1] flex-col justify-between gap-2 p-[1.15rem] max-[359px]:gap-1.5 max-[359px]:p-[0.9rem]">
-        <div className="flex items-start justify-between">
-          <Emblem size={52} className="[filter:drop-shadow(0_1px_1px_rgba(0,0,0,0.8))]" />
-          <div className="text-right font-mono uppercase">
-            <p className="text-[0.7rem] tracking-[0.3em] text-silver">Skyline Club</p>
-            <p className="mt-1 text-[0.7rem] tracking-[0.24em] text-cloud/64">Ibiza 2027</p>
-            {demo && <p className="mt-2"><DemoTag /></p>}
-          </div>
-        </div>
-        <div>
-          <p className="font-mono text-[0.7rem] uppercase tracking-[0.34em] text-silver/80 max-[359px]:leading-none">{member}</p>
-          <FitName name={name} max="2.25rem" min="1.2rem" gutter="4.9rem" className="metal-text font-display mt-1.5 uppercase leading-[1.04] max-[359px]:mt-1" />
-          <div aria-hidden className="mt-3 h-px bg-gradient-to-r from-silver/55 via-silver/15 to-transparent max-[359px]:mt-2" />
-          <div className="mt-2.5 flex items-end justify-between font-mono text-[0.7rem] uppercase tracking-[0.2em] text-cloud/68 max-[359px]:mt-2 max-[359px]:leading-tight">
-            <p>{sinceLabel}<span className="mt-1 block text-[0.72rem] tracking-[0.16em] text-cloud/85">{since}</span></p>
-            <p className="text-right">{numberLabel}<span className="mt-1 block text-[0.72rem] tracking-[0.16em] text-cloud/85">{number}</span></p>
-          </div>
-        </div>
-      </div>
-    </MetalSurface>
+      </span>
+    </Link>
   );
 }
 

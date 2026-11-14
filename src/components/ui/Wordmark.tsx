@@ -6,9 +6,9 @@ import { cn } from "@/lib/cn";
  * Wordmark SKYLINE OFFICIEL uniquement (fichier fourni, variante blanche sur fond sombre). Aucune recréation
  * typographique : sans fichier dans `brand.wordmarkSrc`, un emplacement clairement identifié s'affiche.
  */
-export function Wordmark({ className }: { className?: string }) {
+export function Wordmark({ className, size = "md" }: { className?: string; /** `sm` : en-tête compact V3.2 (14 px de haut au lieu de 20). */ size?: "md" | "sm" }) {
   if (brand.wordmarkSrc) {
-    return <Image src={brand.wordmarkSrc} alt="SKYLINE" width={Math.round(20 * brand.wordmarkRatio * 2)} height={40} priority className={cn("h-5 w-auto", className)} />;
+    return <Image src={brand.wordmarkSrc} alt="SKYLINE" width={Math.round(20 * brand.wordmarkRatio * 2)} height={40} priority className={cn(size === "sm" ? "h-3.5 w-auto" : "h-5 w-auto", className)} />;
   }
   return (
     <span role="img" aria-label="SKYLINE (emplacement du wordmark officiel)"

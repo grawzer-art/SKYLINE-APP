@@ -15,6 +15,7 @@ import { authActive, useParticipantIdentity } from "@/lib/participant/usePartici
 import { useProto } from "@/lib/useProto";
 import { cn } from "@/lib/cn";
 import { activeLocale } from "@/i18n";
+import { useCompactHeader } from "@/components/v3/useHeaderMode";
 
 const L = {
   fr: { back: "Club", title: "My Space", loading: "Chargement de votre profil CLUB…", signin: "Connectez-vous pour gérer votre profil CLUB.", signinCta: "Se connecter",
@@ -45,14 +46,15 @@ export function ClubSpaceReal() {
   const [editing, setEditing] = useState(false);
   const p = club.profile;
 
+  const compact = useCompactHeader();   // V3.2 : le retour vit dans l'en-tête compact
   const head = (
-    <div className="absolute inset-x-5 top-[calc(var(--safe-top)+4.5rem)] flex items-center justify-between">
-      <Link href="/v3/club" className="-ml-1 inline-flex min-h-11 items-center gap-2 font-mono text-[0.72rem] uppercase tracking-[0.18em] text-cloud/80"><ArrowLeft size={16} strokeWidth={1.5} aria-hidden />{l.back}</Link>
+    <div className={compact ? "absolute inset-x-5 top-[calc(var(--safe-top)+44px+0.5rem)] flex items-center justify-end" : "absolute inset-x-5 top-[calc(var(--safe-top)+4.5rem)] flex items-center justify-between"}>
+      {!compact && <Link href="/v3/club" className="-ml-1 inline-flex min-h-11 items-center gap-2 font-mono text-[0.72rem] uppercase tracking-[0.18em] text-cloud/80"><ArrowLeft size={16} strokeWidth={1.5} aria-hidden />{l.back}</Link>}
       {p && <button type="button" onClick={() => setEditing(true)} aria-haspopup="dialog" data-testid="club-edit" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-cloud/35 bg-jet/40 px-4 font-mono text-[0.72rem] uppercase tracking-[0.16em]"><Pencil size={14} strokeWidth={1.5} aria-hidden />{l.edit}</button>}
     </div>
   );
   const shell = (children: React.ReactNode) => (
-    <section aria-labelledby="space-title" className="relative isolate px-5 pb-8 pt-[calc(var(--safe-top)+5.75rem)] text-center"><Backdrop src={images.before} position="30% 80%" strength="deep" />{head}{children}</section>
+    <section aria-labelledby="space-title" className={`relative isolate px-5 pb-8 text-center ${compact ? "pt-[calc(var(--safe-top)+44px+1rem)]" : "pt-[calc(var(--safe-top)+5.75rem)]"}`}><Backdrop src={images.before} position="30% 80%" strength="deep" />{head}{children}</section>
   );
 
   if (identity.status === "loading" || club.status === "loading" || club.status === "idle" && identity.status === "ready")

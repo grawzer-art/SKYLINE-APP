@@ -18,16 +18,15 @@ t("aucune mention « Prototype » / « démonstration » dans les métadonnées 
   assert.doesNotMatch(read("src/components/v3/FlightPass.tsx"), /prototype/i); assert.doesNotMatch(read("src/components/v3/V3Shell.tsx"), /accueil du prototype/);
   assert.match(read("src/app/v3/layout.tsx"), /template: "%s — SKYLINE"/);
 });
-t("pass et carte CLUB : nom sans troncature (plus de `truncate`), cadre de QR supprimé", () => {
-  const p = read("src/components/v3/FlightPass.tsx"), v = read("src/components/v3/visual.tsx");
+t("pass : nom sans troncature (plus de `truncate`), cadre de QR supprimé", () => {
+  const p = read("src/components/v3/FlightPass.tsx");
   assert.match(p, /<FitName name=\{name\}/); assert.doesNotMatch(p, /truncate/); assert.doesNotMatch(p, /Emplacement du QR/);
-  const card = v.slice(v.indexOf("export function MembershipCard"), v.indexOf("Pastille de goût")); assert.match(card, /<FitName name=\{name\}/); assert.doesNotMatch(card, /truncate|h-full/);
-  assert.match(card, /aspect-\[1\.586\/1\]/);
 });
-t("tuiles CLUB : Messages non cliquable (« soon »), My Space et Members restent des liens ; sous-titres sur 2 lignes", () => {
+t("CLUB V3.2 : plus de carte membre ; Messages réservé à la revue locale ; sous-titres sur 2 lignes", () => {
   const c = read("src/components/v3/V3Club.tsx"), v = read("src/components/v3/visual.tsx");
-  assert.match(c, /href="\/v3\/club\/messages" soon=\{real\}/); assert.doesNotMatch(c, /href="\/v3\/club\/space"[^\n]*soon/); assert.doesNotMatch(c, /href="\/v3\/club\/members"[^\n]*soon/);
-  assert.match(v, /line-clamp-2/); assert.match(v, /data-testid="tile-soon"/);
+  assert.doesNotMatch(c, /MembershipCard|TiltToggle|useMetal/); assert.doesNotMatch(v, /MembershipCard/);
+  assert.match(c, /\{x\.review && <NavTile href="\/v3\/club\/messages"/); assert.match(v, /line-clamp-2/);
+  assert.match(c, /href="\/v3\/club\/space" title=\{real \? "Mon profil CLUB" : "My Space"\}/); assert.match(c, /href="\/v3\/club\/members" title=\{real \? "Membres" : "Members"\}/); assert.match(c, /href="\/v3\/club\/memories" title="Souvenirs"/);
 });
 t("en-têtes de sécurité : nosniff + Referrer-Policy sur toutes les routes ; pas de CSP dans ce lot", () => {
   const c = read("next.config.ts"); assert.match(c, /X-Content-Type-Options/); assert.match(c, /Referrer-Policy/); assert.match(c, /VERCEL_ENV !== "production"\) headers\.push/); assert.doesNotMatch(c, /Content-Security-Policy/);

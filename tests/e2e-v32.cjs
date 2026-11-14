@@ -101,9 +101,9 @@ let fails = 0; const ok = (n, c, d = "") => { console.log(`${c ? "PASS" : "FAIL"
 
   /* Animations réduites */
   {
-    const { ctx, p } = await mk({ reducedMotion: "reduce" }, active); await p.goto(B + "/v3/club"); await p.waitForTimeout(1500);
+    const { ctx, p } = await mk({ reducedMotion: "reduce" }, active); await p.goto(B + "/v3/flight"); await p.waitForTimeout(1500);
     const sweep = await p.evaluate(() => { const e = document.querySelector(".metal-sweep"); return e ? getComputedStyle(e).display : "absent"; });
-    ok("ANIMATIONS RÉDUITES : balayage métallique désactivé, pas de bouton de mouvement", sweep === "none" && (await p.getByRole("button", { name: /reflet au mouvement/i }).count()) === 0, sweep);
+    ok("ANIMATIONS RÉDUITES (pass MY FLIGHT) : balayage métallique désactivé, pas de bouton de mouvement", sweep === "none" && (await p.getByRole("button", { name: /reflet au mouvement/i }).count()) === 0, sweep);
     await ctx.close();
   }
   await b.close();
