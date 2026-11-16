@@ -20,11 +20,12 @@ export async function build(): Promise<{ pre: string; post: string }> {
   const before = await fp(); await db.exec(P("B4_4_club_consent.sql")); const after = await fp(); await db.close();
   const values = (rows: { f: string; src: string }[]) => rows.map((r) => `    ('${r.f.replace(/'/g, "''")}', '${r.src}')`).join(",\n");
   const common = (tag: string, rows: { f: string; src: string }[], extra: string) => `-- SKYLINE-TEST — ${tag}. LECTURE SEULE. Généré par supabase/test-env/generate.mts (ne pas modifier à la main : le test du dépôt vérifie qu'il est à jour).
+-- (Les empreintes ignorent les retours chariot CR : un copier-coller depuis un iPhone ou Windows convertit les fins de ligne sans changer le code.)
 -- Chaque ligne : contrôle, valeur attendue, valeur réelle, ok. La dernière ligne « GLOBAL » doit être ok = true ; sinon : ARRÊT, ne rien exécuter.
 with fp(f, src) as (values
 ${values(rows)}
 ), actual as (
-  select p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' f, md5(p.prosrc) src from pg_proc p where p.pronamespace = 'public'::regnamespace and p.prokind = 'f'
+  select p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' f, md5(replace(p.prosrc, chr(13), '')) src from pg_proc p where p.pronamespace = 'public'::regnamespace and p.prokind = 'f'
 ), checks(c, e, a) as (
   select 'fonctions publiques identiques au dépôt (empreinte du code)', (select count(*) from fp)::text, (select count(*) from fp join actual using (f, src))::text
   union all select 'fonctions publiques en trop ou manquantes', '0', ((select count(*) from actual x where not exists (select 1 from fp where fp.f = x.f)) + (select count(*) from fp where not exists (select 1 from actual x where x.f = fp.f)))::text

@@ -1,4 +1,5 @@
 -- SKYLINE-TEST — CONTRÔLE APRÈS B4.4 (état attendu : B0 → B4.2c + B4.4). LECTURE SEULE. Généré par supabase/test-env/generate.mts (ne pas modifier à la main : le test du dépôt vérifie qu'il est à jour).
+-- (Les empreintes ignorent les retours chariot CR : un copier-coller depuis un iPhone ou Windows convertit les fins de ligne sans changer le code.)
 -- Chaque ligne : contrôle, valeur attendue, valeur réelle, ok. La dernière ligne « GLOBAL » doit être ok = true ; sinon : ARRÊT, ne rien exécuter.
 with fp(f, src) as (values
     ('add_mission_comment(p_id uuid, p_body text)', '25218afcfa5c82fa28a8cfd5f06719e6'),
@@ -46,7 +47,7 @@ with fp(f, src) as (values
     ('upsert_my_club_profile(p_pseudo text, p_city text, p_bio text, p_genres text[])', 'de313b8885f3191e12d8945f0890a1a1'),
     ('upsert_my_participant_profile(p_first_name text, p_last_name text, p_display_name text)', '9b9105dfe4affe712c9d24fe7f860b3f')
 ), actual as (
-  select p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' f, md5(p.prosrc) src from pg_proc p where p.pronamespace = 'public'::regnamespace and p.prokind = 'f'
+  select p.proname || '(' || pg_get_function_identity_arguments(p.oid) || ')' f, md5(replace(p.prosrc, chr(13), '')) src from pg_proc p where p.pronamespace = 'public'::regnamespace and p.prokind = 'f'
 ), checks(c, e, a) as (
   select 'fonctions publiques identiques au dépôt (empreinte du code)', (select count(*) from fp)::text, (select count(*) from fp join actual using (f, src))::text
   union all select 'fonctions publiques en trop ou manquantes', '0', ((select count(*) from actual x where not exists (select 1 from fp where fp.f = x.f)) + (select count(*) from fp where not exists (select 1 from actual x where x.f = fp.f)))::text
