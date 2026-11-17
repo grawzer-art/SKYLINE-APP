@@ -43,6 +43,10 @@ export async function saveMyClubProfile(c: SupabaseClient, input: ClubInput): Pr
   const v = validateClubInput(input); if (!v.ok) return { ok: false, kind: "invalid", message: "Vérifiez les champs signalés.", fields: v.errors };
   try { const { data, error } = await c.rpc("upsert_my_club_profile", { p_pseudo: v.value.pseudo, p_city: v.value.city, p_bio: v.value.bio, p_genres: v.value.genres }); if (error) return mapError(error); const r = first(data); return r ? { ok: true, profile: row(r) } : mapError(null); } catch { return NET; }
 }
+/** Après l'inscription autonome : crée SON profil CLUB PRIVÉ s'il n'existe pas (B4.5, idempotent). Silencieux : si la fonction n'existe pas encore ou échoue, le parcours « créer mon profil » reste disponible. */
+export async function ensureMyClubProfile(c: SupabaseClient): Promise<boolean> {
+  try { const { data, error } = await c.rpc("ensure_my_club_profile"); return !error && data === true; } catch { return false; }
+}
 /** Publier exige la confirmation explicite (version du texte affiché) ; masquer ne l'exige jamais. Le serveur revérifie tout (consentement, voyageur vérifié). */
 export async function setMyClubVisibility(c: SupabaseClient, visible: boolean, consentVersion?: string): Promise<Res<{ visible: boolean }>> {
   if (visible && consentVersion !== CLUB_CONSENT_VERSION) return { ok: false, kind: "consent", message: MESSAGES.consent_required };

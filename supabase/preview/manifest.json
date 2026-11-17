@@ -81,6 +81,14 @@
       "sharedDbVersion": null,
       "sharedDbStatus": "not_applied",
       "sha256": "388b1ee591c35d0d2cba399b8b690106251e4fbe1af444f8b446c1a342296b87"
+    },
+    {
+      "order": 11,
+      "file": "supabase/proposals/B4_5_club_profile_auto.sql",
+      "kind": "proposal",
+      "sharedDbVersion": null,
+      "sharedDbStatus": "not_applied",
+      "sha256": "a4538d1b8fbcc1183f2e9d48b2a99b668b6f5181372f05cd97776b46d8c10c25"
     }
   ]
 }

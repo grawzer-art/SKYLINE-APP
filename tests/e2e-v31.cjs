@@ -104,7 +104,7 @@ const FORGED = { phase: "during", locale: "fr", sim: { reservation: "confirmed",
   /* ===== 5. MEMBRE SANS RÉSERVATION (preuve serveur absente) ===== */
   await ctl({ travelers: {} });
   { const { ctx, p } = await mk(A, { forged: true }); await login(p, A, "participant");
-    await vis(p.getByTestId("account-status")); ok("MEMBRE SANS RÉSERVATION : statut serveur « Compte membre · réservation non vérifiée »", /réservation non vérifiée/i.test(await p.getByTestId("account-status").innerText()));
+    await vis(p.getByTestId("account-status")); ok("MEMBRE SANS RÉSERVATION : statut serveur « Membre CLUB · réservation non vérifiée »", /réservation non vérifiée/i.test(await p.getByTestId("account-status").innerText()));
     await p.goto(A + "/v3/flight", { waitUntil: "domcontentloaded" }); await vis(p.getByRole("group", { name: /Pass SKYLINE/ })); await p.waitForTimeout(600); const f = await body(p);
     ok("MEMBRE SANS RÉSERVATION : pass « Réservation à confirmer » — l'état local « confirmé » ne compte pour rien ; aucun voyage fictif ; aucun QR", /Réservation à confirmer/i.test(f) && !/Réservation (confirmée|vérifiée)/i.test(f) && !/Aéroport de démonstration|France/i.test(f) && await noQr(p));
     await p.goto(A + "/v3/club/members", { waitUntil: "domcontentloaded" }); ok("MEMBRE SANS RÉSERVATION : annuaire fermé « Réservé aux voyageurs vérifiés », malgré consentements locaux forgés", await vis(p.getByTestId("dir-traveler")));
@@ -115,7 +115,7 @@ const FORGED = { phase: "during", locale: "fr", sim: { reservation: "confirmed",
   /* ===== 6. VOYAGEUR VÉRIFIÉ — SIMULÉ par le faux serveur (contexte de test isolé) ===== */
   await ctl({ travelers: { participant: true } });
   { const { ctx, p } = await mk(A); await login(p, A, "participant");
-    await vis(p.getByTestId("account-status")); ok("VOYAGEUR VÉRIFIÉ : statut serveur « Voyageur · réservation vérifiée »", /Voyageur · réservation vérifiée/i.test(await p.getByTestId("account-status").innerText()));
+    await vis(p.getByTestId("account-status")); ok("VOYAGEUR VÉRIFIÉ : statut serveur « Voyageur vérifié · réservation confirmée »", /Voyageur vérifié · réservation confirmée/i.test(await p.getByTestId("account-status").innerText()));
     await p.goto(A + "/v3/flight", { waitUntil: "domcontentloaded" }); await vis(p.getByRole("group", { name: /Pass SKYLINE/ })); await p.waitForTimeout(600); const f = await body(p);
     ok("VOYAGEUR VÉRIFIÉ : pass « Réservation vérifiée » (preuve serveur) — toujours SANS QR ni cadre de QR (Lot 2), aucun voyage inventé", /Réservation vérifiée/i.test(f) && !/remis par l'équipe|^QR$/im.test(f) && !/Aéroport de démonstration|France/i.test(f) && await noQr(p));
     await p.goto(A + "/v3/club/members", { waitUntil: "domcontentloaded" }); await p.waitForTimeout(800); ok("VOYAGEUR VÉRIFIÉ : l'annuaire n'est plus bloqué par le statut voyageur (profil CLUB à créer / publier)", (await p.getByTestId("dir-traveler").count()) === 0 && (await vis(p.getByTestId("dir-closed"))));

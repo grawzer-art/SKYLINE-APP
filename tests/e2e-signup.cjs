@@ -48,20 +48,21 @@ const state = () => fetch(MOCK + "/__state").then((r) => r.json());
   st = await state(); const su = st.signups.newbie1;
   ok("CLAIM : le profil est créé côté serveur avec les noms saisis ; la requête ne contient AUCUN rôle / espace / identifiant", su && su.first === "Camille" && su.last === "Dupont" && su.display === "Cam D." && su.terms === "cgu-test-1" && JSON.stringify(su.role_args.sort()) === JSON.stringify(["p_adult", "p_display_name", "p_first_name", "p_last_name", "p_terms_version"]));
   await vis(p.getByTestId("account-email"));
-  ok("COMPTE : adresse et nom réels (aucune identité de démonstration) ; statut « Compte membre · réservation non vérifiée »", /newbie1@example\.test/.test(await p.getByTestId("account-email").innerText()) && (await vis(p.getByTestId("account-status").filter({ hasText: "Compte membre · réservation non vérifiée" }))) && (await p.getByText(/Alex/).count()) === 0);
+  ok("COMPTE : adresse et nom réels (aucune identité de démonstration) ; statut « Membre CLUB · réservation non vérifiée »", /newbie1@example\.test/.test(await p.getByTestId("account-email").innerText()) && (await vis(p.getByTestId("account-status").filter({ hasText: "Membre CLUB · réservation non vérifiée" }))) && (await p.getByText(/Alex/).count()) === 0);
   const me = await (await N1.ctx.request.get(D + "/api/participant/me")).json(); ok("API : « ready », traveler = none, aucun rôle ni métadonnée", me.status === "ready" && me.traveler === "none" && me.profile.displayName === "Cam D." && !("role" in me) && !JSON.stringify(me).includes("user_metadata"));
 
   /* ===== 4. Membre gratuit ≠ voyageur vérifié ===== */
   await p.goto(D + "/v3/flight", { waitUntil: "domcontentloaded" }); await vis(p.getByRole("heading", { level: 1 }));
   ok("PASS : « Réservation à confirmer », aucun QR ni statut confirmé sans preuve serveur", (await vis(p.getByText(/Réservation à confirmer/))) && (await p.getByText(/Réservation confirmée/).count()) === 0 && (await p.getByText(/à la confirmation/).count()) === 0 && (await p.locator("canvas, img[alt*=QR], svg[aria-label*=QR]").count()) === 0);
-  await p.goto(D + "/v3/club/space", { waitUntil: "domcontentloaded" }); await vis(p.getByTestId("club-create")); await p.getByTestId("club-create").click(); await vis(p.locator("#club-pseudo")); await p.locator("#club-pseudo").fill("Skylar"); await p.getByTestId("club-save").click(); await vis(p.getByTestId("club-pseudo"));
+  await p.goto(D + "/v3/club/space", { waitUntil: "domcontentloaded" }); await vis(p.getByTestId("club-pseudo"));
+  ok("PROFIL CLUB AUTOMATIQUE : créé à l'inscription, PRIVÉ, pseudo dérivé du nom affiché (« Cam D. »), aucune action requise", /^cam d\.$/i.test((await p.getByTestId("club-pseudo").innerText()).trim()) && (await p.getByTestId("club-create").count()) === 0 && (await state()).clubs.newbie1 && (await state()).clubs.newbie1.visible === false && !((await state()).consents.newbie1 || []).length);
   ok("CLUB (membre gratuit) : peut créer son profil CLUB PRIVÉ ; la publication est réservée aux voyageurs vérifiés (aucun interrupteur)", (await vis(p.getByTestId("club-traveler-only"))) && (await p.getByTestId("club-visibility").locator("input[role=switch]").count()) === 0 && (await state()).clubs.newbie1.visible === false);
   await p.goto(D + "/v3/club/members", { waitUntil: "domcontentloaded" }); ok("CLUB (membre gratuit) : annuaire fermé « Réservé aux voyageurs vérifiés » ; aucun membre, aucun profil fictif", (await vis(p.getByTestId("dir-traveler"))) && (await p.getByTestId("dir-list").count()) === 0 && !/Alba|Noé|Sacha/.test(await p.locator("body").innerText()));
   await p.goto(D + "/v3/club/messages", { waitUntil: "domcontentloaded" }); ok("CLUB (membre gratuit) : messagerie « Bientôt disponible »", await vis(p.getByTestId("club-soon")));
 
   /* ===== 5. Voyageur vérifié (preuve serveur) ===== */
   const T = await mk(D); const lp = T.p; await lp.goto(D + "/v3/login"); await lp.locator("#login-email").fill("lea@example.test"); await lp.getByRole("button", { name: "Recevoir un code" }).click(); await lp.locator("#login-code").fill("123456"); await lp.getByRole("button", { name: "Se connecter" }).click(); await lp.waitForURL("**/v3/account");
-  ok("VOYAGEUR (réservation confirmée côté serveur) : statut « Voyageur · réservation vérifiée »", await vis(lp.getByTestId("account-status").filter({ hasText: "Voyageur · réservation vérifiée" })));
+  ok("VOYAGEUR (réservation confirmée côté serveur) : statut « Voyageur vérifié · réservation confirmée »", await vis(lp.getByTestId("account-status").filter({ hasText: "Voyageur vérifié · réservation confirmée" })));
   await lp.goto(D + "/v3/club/space", { waitUntil: "domcontentloaded" }); await vis(lp.getByTestId("club-create")); await lp.getByTestId("club-create").click(); await vis(lp.locator("#club-pseudo")); await lp.locator("#club-pseudo").fill("Nova"); await lp.getByTestId("club-save").click(); await vis(lp.getByTestId("club-pseudo"));
   ok("VOYAGEUR : l'interrupteur de publication est disponible", (await lp.getByTestId("club-visibility").locator("input[role=switch]").count()) === 1);
   await T.ctx.close();
@@ -69,7 +70,7 @@ const state = () => fetch(MOCK + "/__state").then((r) => r.json());
   /* ===== 6. Isolation entre deux inscrits ===== */
   const N2 = await mk(D); await signup(N2.p, "newbie2", { first: "Bruno", last: "Martin", display: "Bru" }); await N2.p.locator("#login-code").fill("123456"); await N2.p.getByRole("button", { name: "Créer mon compte" }).click(); await N2.p.waitForURL("**/v3/account"); await vis(N2.p.getByTestId("account-email"));
   const t2 = await N2.p.locator("body").innerText(); ok("ISOLATION : le second inscrit voit SES données, aucune trace du premier (nom, e-mail, profil CLUB)", /newbie2@/.test(t2) && !/newbie1|Camille|Dupont|Skylar|Cam D\./.test(t2));
-  await N2.p.goto(D + "/v3/club/space", { waitUntil: "domcontentloaded" }); ok("ISOLATION : son espace CLUB est vide (pas le profil « Skylar »)", (await vis(N2.p.getByTestId("club-empty"))) && !/Skylar/.test(await N2.p.locator("body").innerText()));
+  await N2.p.goto(D + "/v3/club/space", { waitUntil: "domcontentloaded" }); ok("ISOLATION : son espace CLUB est SON profil automatique (pseudo « Bru », privé), jamais celui du premier (« Cam D. », « Skylar »)", (await vis(N2.p.getByTestId("club-pseudo"))) && /^bru$/i.test((await N2.p.getByTestId("club-pseudo").innerText()).trim()) && !/Skylar|Cam D\.|Camille/i.test(await N2.p.locator("body").innerText()) && (await state()).clubs.newbie2.visible === false);
   st = await state(); ok("ISOLATION : deux comptes distincts côté serveur", st.signups.newbie1.display === "Cam D." && st.signups.newbie2.display === "Bru");
   await N2.ctx.close();
 

@@ -5,6 +5,7 @@ import { Wordmark } from "@/components/ui/Wordmark";
 import { Consents, NameFields, btn, lab, type SignupView } from "./SignupFlow";
 import { validateSignupInput, type SignupErrors } from "@/domain/signup";
 import { claimMemberAccount } from "@/lib/participant/signupService";
+import { ensureMyClubProfile } from "@/lib/club/clubService";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import { rememberSpace } from "@/lib/space";
 import { cn } from "@/lib/cn";
@@ -18,7 +19,7 @@ export function SignupComplete({ view }: { view: SignupView }) {
     e.preventDefault(); const v = validateSignupInput({ firstName: f.first, lastName: f.last, displayName: f.display, email: "", acceptTerms: terms, adult }, { needEmail: false, minAge: view.minAge });
     if (!v.ok) { setErrs(v.errors); return; } setErrs({}); setErr(null); setBusy(true);
     const r = await claimMemberAccount(createBrowserSupabase(), { firstName: f.first, lastName: f.last, displayName: f.display }, view.termsVersion);
-    if (r.ok || r.kind === "not_eligible") { rememberSpace("members"); window.location.assign("/v3/account"); return; }
+    if (r.ok || r.kind === "not_eligible") { await ensureMyClubProfile(createBrowserSupabase()); rememberSpace("members"); window.location.assign("/v3/account"); return; }
     setBusy(false); setErr(r.message);
   };
   return (

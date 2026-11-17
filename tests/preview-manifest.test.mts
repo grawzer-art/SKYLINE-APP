@@ -18,6 +18,7 @@ const STEPS: { file: string; kind: string; sharedDbVersion: string | null; share
   { file: "supabase/proposals/B4_2b_club_traveler_gate.sql", kind: "proposal", sharedDbVersion: null, sharedDbStatus: "not_applied" },
   { file: "supabase/proposals/B4_2c_revoke_rls_auto_enable.sql", kind: "proposal", sharedDbVersion: null, sharedDbStatus: "not_applied" },
   { file: "supabase/proposals/B4_4_club_consent.sql", kind: "proposal", sharedDbVersion: null, sharedDbStatus: "not_applied" },
+  { file: "supabase/proposals/B4_5_club_profile_auto.sql", kind: "proposal", sharedDbVersion: null, sharedDbStatus: "not_applied" },
 ];
 if (process.argv.includes("--write")) {
   writeFileSync(MANIFEST, JSON.stringify({ schema: 1, purpose: "Reconstruire un projet Supabase de TEST isolé, dans cet ordre. Ne jamais appliquer ces étapes sur le projet partagé sans autorisation.", steps: STEPS.map((s, i) => ({ order: i + 1, ...s, sha256: sha(s.file) })) }, null, 2) + "\n"); console.log("manifeste régénéré"); process.exit(0);

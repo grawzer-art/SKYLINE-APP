@@ -7,6 +7,7 @@ import { useEmailCodeLogin } from "@/lib/auth/useEmailCodeLogin";
 import { suggestDisplayName, PROFILE_LIMITS } from "@/domain/participant";
 import { validateSignupInput, type SignupErrors } from "@/domain/signup";
 import { claimMemberAccount } from "@/lib/participant/signupService";
+import { ensureMyClubProfile } from "@/lib/club/clubService";
 import { createBrowserSupabase } from "@/lib/supabase/client";
 import { rememberSpace } from "@/lib/space";
 import type { CaptchaConfig } from "@/lib/participant/signupConfig";
@@ -59,7 +60,7 @@ export function SignupFlow({ view }: { view: SignupView }) {
   const claim = async () => {
     setClaiming(true); setClaimErr(null);
     const r = await claimMemberAccount(createBrowserSupabase(), { firstName: f.first, lastName: f.last, displayName: f.display }, view.termsVersion);
-    if (r.ok || r.kind === "not_eligible") { rememberSpace("members"); window.location.assign(HOME); return; }   // compte existant : le serveur décide de l'accès (/v3/account)
+    if (r.ok || r.kind === "not_eligible") { await ensureMyClubProfile(createBrowserSupabase()); rememberSpace("members"); window.location.assign(HOME); return; }   // compte existant : le serveur décide de l'accès (/v3/account)
     setClaiming(false); setClaimErr(r.message);
   };
   const login = useEmailCodeLogin({ next: COMPLETE, allowCreate: true, captchaToken: token, onVerified: () => { void claim(); } });

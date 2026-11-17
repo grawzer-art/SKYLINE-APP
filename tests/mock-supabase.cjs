@@ -42,6 +42,12 @@ function rpc(fn, a, me) {
     S.profiles[me] = { user_id: U[me], first_name: a.p_first_name.trim(), last_name: a.p_last_name.trim(), display_name: a.p_display_name.trim(), avatar_path: null, created_at: now(), updated_at: now() };
     ROLES[me].spaces = ["members"]; return { body: [{ outcome: "created" }] };
   }
+  if (fn === "ensure_my_club_profile") {   // B4.5 : profil CLUB PRIVÉ créé pour SOI-MÊME s'il n'existe pas (idempotent) ; réservé aux membres
+    if (S.ctl.clubTable === "missing") return { status: 404, body: { code: "PGRST202", message: "Could not find the function public.ensure_my_club_profile in the schema cache" } };
+    if (!ROLES[me].spaces.includes("members")) return FORB; if (S.clubs[me]) return { body: false };
+    let p = String((S.profiles[me] && S.profiles[me].display_name) || "").replace(/[^\p{L}\p{N} ._'-]/gu, "").trim().slice(0, 24).trim(); if (p.length < 2) p = "Membre";
+    S.clubs[me] = { pseudo: p, city: null, bio: "", genres: [], avatar_path: null, visible: false }; return { body: true };
+  }
   if (fn === "get_my_traveler_status") {
     if (S.ctl.signupTable === "missing") return { status: 404, body: { code: "PGRST202", message: "Could not find the function public.get_my_traveler_status in the schema cache" } };
     return { body: ROLES[me].spaces.includes("members") && S.travelers[me] ? "verified" : "none" };
