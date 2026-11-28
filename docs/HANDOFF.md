@@ -4,9 +4,10 @@
 - Branche de coordination : `chore/agent-coordination` (docs + CI + modèles), issue de `feat/b4-4-club-consent` (`2033090`). Rien de poussé sur `main`.
 - Le clone local de l'agent a été réinitialisé sur `main` : toujours repartir de `origin/<branche>`.
 - Accès de l'agent : Supabase TEST (SQL/migrations/logs via MCP) ; `gh` REST de dépôt ; **aucun** accès Vercel, Brevo, Cloudflare, API Actions, GraphQL.
-- Supabase TEST était « possibly not accessible » à plusieurs appels le 2026-11-26 : revérifier avant toute écriture.
+- **SKYLINE-TEST est en pause (statut `INACTIVE`, constaté le 2026-11-28)** : toute lecture/écriture échoue (« Database is possibly not accessible »). À relancer par GRAW (tableau de bord Supabase → projet → Restore) ; l'agent ne le fait pas (coût potentiel = validation). Après reprise : relancer `supabase/test-env/postcheck_after_b44.sql`, vérifier B4.5, puis poursuivre.
 
 ## Prochaines actions
+0. (GRAW) Relancer SKYLINE-TEST (en pause).
 1. (ChatGPT/GRAW) Vérifier et renseigner dans `INFRASTRUCTURE.md` : SMTP Brevo de TEST, modèles d'e-mail avec `{{ .Token }}`, URL de redirection Auth, Turnstile, variables Vercel de la branche, projet utilisé par STAFF HQ.
 2. (GRAW) Enregistrer la version CGU sur TEST (une ligne SQL, voir `PROJECT_STATUS.md`).
 3. (Claude) Quand 1 et 2 sont faits : activer `PARTICIPANT_SIGNUP` sur la Preview de la branche, valider les parcours réels (phase 3), préparer le dossier de production.

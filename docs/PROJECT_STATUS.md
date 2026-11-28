@@ -19,7 +19,7 @@ Mis à jour : 2026-11-26 · branche de développement : `feat/b4-4-club-consent`
 | Turnstile : site, clé publique, secret Supabase | GRAW | Secret jamais hors Supabase |
 | CGU : version `cgu-test-1` absente de TEST (0 version) | à appliquer | `insert into public.terms_versions (version, min_age) values ('cgu-test-1', 18);` |
 | Variables Vercel de la branche (inscription) | GRAW/ChatGPT | Voir `INFRASTRUCTURE.md` ; redéploiement requis |
-| Accès Supabase TEST intermittent | — | « Database is possibly not accessible » observé le 2026-11-26 ; à revérifier |
+| **SKYLINE-TEST en pause (`INACTIVE`)** | GRAW | Constaté le 2026-11-28 ; reprise depuis le tableau de bord Supabase ; état de la base non revérifiable tant qu'elle est en pause |
 | `apply_migration` expire sans approbation UI | GRAW | Ne rien contourner ; application manuelle possible |
 
 ## Hors périmètre actuel

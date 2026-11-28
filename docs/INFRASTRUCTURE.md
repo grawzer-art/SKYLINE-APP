@@ -7,7 +7,7 @@ Dernière vérification : 2026-11-26 par Claude Code. « Non vérifié » = aucu
 | GitHub | `grawzer-art/skyline-app` (public) | Source de vérité, PR, Issues | Accès REST de dépôt OK ; API Actions et GraphQL bloquées ; `main` non protégée ; pas de workflow avant `.github/workflows/ci.yml` |
 | Vercel | projets `skyline-app` et `skyline-ap` (équipe `jarvis-1348`) | Hébergement ; une Preview par push, dans **les deux** projets | Constructions réussies sur les derniers pushs ; **variables Preview, portée par branche, projet STAFF HQ : non vérifiés** |
 | Supabase production | `nyneujukydxjvbwcoste` (SKYLINE-APP) | Base partagée STAFF HQ / production | **Jamais modifiée par les agents** |
-| Supabase TEST | `tbjzzrlidtkclvhwudhb` (SKYLINE-TEST, eu-west-1) | Seule base autorisée pour migrations et essais | Migrations B0, B4.1, B4.2, B4.3, B4.2b, B4.2c, B4.5 enregistrées ; B4.4 appliquée à la main (SQL Editor) ; voir `PROJECT_STATUS.md` |
+| Supabase TEST | `tbjzzrlidtkclvhwudhb` (SKYLINE-TEST, eu-west-1) | Seule base autorisée pour migrations et essais | **EN PAUSE (INACTIVE) au 2026-11-28** ; derniers faits connus : migrations B0, B4.1, B4.2, B4.3, B4.2b, B4.2c, B4.5 enregistrées ; B4.4 appliquée à la main (SQL Editor) ; voir `PROJECT_STATUS.md` |
 | Domaine | `skyline-event.fr` (OVH) | Domaine public | Non vérifié (DNS, SPF/DKIM/DMARC pour l'envoi d'e-mails) |
 | Brevo | e-mails transactionnels (SMTP) | Envoi des codes OTP | **Non vérifié** : configuration SMTP de TEST illisible depuis l'agent |
 | Cloudflare Turnstile | site `skyline-test` à créer/vérifier | CAPTCHA d'inscription | **Non vérifié** ; secret à saisir uniquement dans Supabase (Authentication → Attack Protection) |
